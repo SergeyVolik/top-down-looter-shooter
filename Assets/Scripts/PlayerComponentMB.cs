@@ -18,7 +18,8 @@ namespace SV.ECS
     {
         public override void Bake(PlayerComponentMB authoring)
         {
-            AddComponent<PlayerComponent>();
+            var entity = GetEntity(TransformUsageFlags.Dynamic);
+            AddComponent<PlayerComponent>(entity);
         }
     }
 

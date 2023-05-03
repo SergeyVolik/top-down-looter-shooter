@@ -109,71 +109,8 @@ namespace SV.ECS
         }
 
     }
-    [UpdateInGroup(typeof(FixedStepSimulationSystemGroup))]
-    [UpdateAfter(typeof(PhysicsSimulationGroup))] // We are updating after `PhysicsSimulationGroup` - this means that we will get the events of the current frame.
-    public partial struct ApplyDamageSystem : ISystem
-    {
-
-
-        [BurstCompile]
-        public partial struct ApplayDamageJob : IJobEntity
-        {
-            
-            public ComponentLookup<HealthComponent> healthLookUp;
-
-            [ReadOnly]
-            public ComponentLookup<DamageComponent> damageLookUp;
-
-            public void Execute(Entity entity, DynamicBuffer<StatefulTriggerEvent> triggerEventBuffer)
-            {
-                for (int i = 0; i < triggerEventBuffer.Length; i++)
-                {
-                    var triggerEvent = triggerEventBuffer[i];
-
-                    if (triggerEvent.State != StatefulEventState.Enter)
-                        continue;
-
-                    var healthEntity = triggerEvent.EntityB;
-                    var damageEntity = triggerEvent.EntityA;
-
-
-
-                    if (!healthLookUp.HasComponent(healthEntity))
-                    {
-                        var buffer = healthEntity;
-                        healthEntity = damageEntity;
-                        damageEntity = buffer;
-
-
-                    }
-
-                    if (healthLookUp.HasComponent(healthEntity) && damageLookUp.HasComponent(damageEntity))
-                    {
-                        var damageCom = damageLookUp.GetRefRO(damageEntity);
-                        var healthComp = healthLookUp.GetRefRW(healthEntity, false);
-
-                        var damage = damageCom.ValueRO.damage;
-                        healthComp.ValueRW.health -= damage;
-
-                    }
-                }
-            }
-        }
-
-        [BurstCompile]
-        public void OnUpdate(ref SystemState state)
-        {
-            var job = new ApplayDamageJob
-            {
-                healthLookUp = SystemAPI.GetComponentLookup<HealthComponent>(),
-                damageLookUp = SystemAPI.GetComponentLookup<DamageComponent>(isReadOnly: true)
-
-            };
-
-            state.Dependency = job.Schedule(state.Dependency);
-
-        }
-    }
+  
+    
 
 
 

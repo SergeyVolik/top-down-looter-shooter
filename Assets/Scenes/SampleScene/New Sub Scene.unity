@@ -682,7 +682,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4612de921db2abe4da892725001b7ab4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  aimDistance: 10
+  aimDistance: 5
   belongTo:
     Category00: 1
     Category01: 0
@@ -749,6 +749,19 @@ MonoBehaviour:
     Category29: 0
     Category30: 0
     Category31: 0
+--- !u!114 &1991700071
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1991700052}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c765fddab22ad774f92d3ac8e68ebc34, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  health: 10
 --- !u!114 &315851596679335196
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -942,7 +955,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2233684451103297448, guid: 60a25a117e2b81c4c8f7a396eba9e7ab, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 8.62
+      value: 13.05
       objectReference: {fileID: 0}
     - target: {fileID: 2233684451103297448, guid: 60a25a117e2b81c4c8f7a396eba9e7ab, type: 3}
       propertyPath: m_LocalPosition.y
@@ -950,7 +963,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2233684451103297448, guid: 60a25a117e2b81c4c8f7a396eba9e7ab, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -0.46
+      value: -5
       objectReference: {fileID: 0}
     - target: {fileID: 2233684451103297448, guid: 60a25a117e2b81c4c8f7a396eba9e7ab, type: 3}
       propertyPath: m_LocalRotation.w
@@ -1003,6 +1016,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 5577740025753993694, guid: 60a25a117e2b81c4c8f7a396eba9e7ab, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1991700066}
+    - targetCorrespondingSourceObject: {fileID: 5577740025753993694, guid: 60a25a117e2b81c4c8f7a396eba9e7ab, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1991700071}
   m_SourcePrefab: {fileID: 100100000, guid: 60a25a117e2b81c4c8f7a396eba9e7ab, type: 3}
 --- !u!114 &1988284152577683146
 MonoBehaviour:

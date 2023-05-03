@@ -7,20 +7,37 @@ namespace SV.ECS
 {
     public class HealthComponentMB : MonoBehaviour
     {
-        public int health;   
+        public int health;
     }
     public struct HealthComponent : IComponentData
     {
-        public int health;
+        public int value;
+    }
+    public struct MaxHealthComponent : IComponentData
+    {
+        public int value;
+    }
+
+    public struct DamageableComponent : IComponentData
+    {
+
     }
 
     public class HealthBaker : Baker<HealthComponentMB>
     {
         public override void Bake(HealthComponentMB authoring)
         {
-            AddComponent<HealthComponent>(new HealthComponent { 
-                 health = authoring.health,
+            var entity = GetEntity(TransformUsageFlags.Dynamic);
+            AddComponent(entity, new HealthComponent
+            {
+                value = authoring.health,
             });
+            AddComponent(entity, new MaxHealthComponent
+            {
+                value = authoring.health,
+            });
+
+            AddComponent(entity, new DamageableComponent());
         }
     }
 
