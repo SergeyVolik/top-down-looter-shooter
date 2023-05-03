@@ -46,8 +46,11 @@ namespace SV.ECS
                 collideWith = authoring.collideWith.Value,
 
             });
+
             AddComponent(entity, new DetectedTargetComponent());
-            World.DefaultGameObjectInjectionWorld.EntityManager.SetComponentEnabled<DetectedTargetComponent>(entity, false);
+           
+            
+          
         }
     }
 
