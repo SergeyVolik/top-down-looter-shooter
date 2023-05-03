@@ -9,6 +9,10 @@ using Unity.Mathematics;
 using UnityEngine.UIElements;
 using Unity.Transforms;
 using Unity.Physics;
+using System.Numerics;
+using Unity.Burst;
+using Unity.Physics.Systems;
+using Unity.Physics.Stateful;
 
 namespace SV.ECS
 {
@@ -18,7 +22,7 @@ namespace SV.ECS
         public GameObject bulletSpawnPos;
         public float shotDelay;
         public float speed;
-      
+
     }
     public struct GunComponent : IComponentData
     {
@@ -33,7 +37,7 @@ namespace SV.ECS
     {
         public override void Bake(GunComponentMB authoring)
         {
-           
+
             AddComponent<GunComponent>(new GunComponent
             {
 
@@ -53,7 +57,7 @@ namespace SV.ECS
         protected override void OnCreate()
         {
             base.OnCreate();
-         
+
         }
 
         protected override void OnUpdate()
@@ -68,7 +72,7 @@ namespace SV.ECS
 
                 if (gun.nextShotTime <= time)
                 {
-                   
+
 
                     if (ltw.TryGetComponent(gun.bulletSpawnPos, out var wordPos) && transLookUp.TryGetComponent(gun.bulletSpawnPos, out var localTrans))
                     {
@@ -80,18 +84,19 @@ namespace SV.ECS
                         {
                             Position = wordPos.Position,
                             Scale = localTrans.Scale,
-                             Rotation = quaternion.identity
-                             
+                            Rotation = quaternion.LookRotation(wordPos.Forward, math.up())
                         });
 
-                        
+
+
+
                         ecb.SetComponent<PhysicsVelocity>(bullet, new PhysicsVelocity
                         {
                             Linear = wordPos.Forward * gun.bulletSpeed
                         });
                     }
 
-                    
+
                 }
             }).Schedule();
 
@@ -102,5 +107,61 @@ namespace SV.ECS
         }
 
     }
+    [UpdateInGroup(typeof(FixedStepSimulationSystemGroup))]
+    [UpdateAfter(typeof(PhysicsSimulationGroup))] // We are updating after `PhysicsSimulationGroup` - this means that we will get the events of the current frame.
+    public partial struct ApplyDamageSystem : ISystem
+    {
+
+
+
+
+        //[BurstCompile]
+        public void OnUpdate(ref SystemState state)
+        {
+            var healthLookUp = SystemAPI.GetComponentLookup<HealthComponent>();
+            var damageLookUp = SystemAPI.GetComponentLookup<DamageComponent>(true);
+
+            foreach (var (triggerEventBuffer, entity) in SystemAPI.Query<DynamicBuffer<StatefulTriggerEvent>>().WithEntityAccess())
+            {
+                for (int i = 0; i < triggerEventBuffer.Length; i++)
+                {
+                    var triggerEvent = triggerEventBuffer[i];
+
+                    if (triggerEvent.State != StatefulEventState.Enter)
+                        continue;
+
+                    var healthEntity = triggerEvent.EntityB;
+                    var damageEntity = triggerEvent.EntityA;
+
+
+
+                    if (!healthLookUp.HasComponent(healthEntity))
+                    {
+                        var buffer = healthEntity;
+                        healthEntity = damageEntity;
+                        damageEntity = buffer;
+
+
+                    }
+
+                    if (healthLookUp.HasComponent(healthEntity) && damageLookUp.HasComponent(damageEntity))
+                    {
+                        var damageCom = damageLookUp.GetRefRO(damageEntity);
+                        var healthComp = healthLookUp.GetRefRW(healthEntity, false);
+
+                        var damage = damageCom.ValueRO.damage;
+                        healthComp.ValueRW.health -= damage;
+
+                    }
+                }
+            }
+
+
+
+        }
+    }
+
+
+
 
 }

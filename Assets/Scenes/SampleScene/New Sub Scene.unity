@@ -257,7 +257,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Prefab: {fileID: 9194150915235131657, guid: 6e2ae364338c423478cff3ad5cb40b56, type: 3}
   bulletSpawnPos: {fileID: 1076339882}
-  shotDelay: 0.3
+  shotDelay: 2
   speed: 20
 --- !u!1 &1020584752
 GameObject:
@@ -1068,6 +1068,8 @@ GameObject:
   - component: {fileID: 1988284152577683146}
   - component: {fileID: 426229636}
   - component: {fileID: 5577740025642892893}
+  - component: {fileID: 5577740025642892894}
+  - component: {fileID: 5577740025642892895}
   m_Layer: 0
   m_Name: enemy
   m_TagString: Untagged
@@ -1085,5 +1087,30 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 1c560e895dbfa4a4db0ce32a470d019f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &5577740025642892894
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5577740025642892892}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c765fddab22ad774f92d3ac8e68ebc34, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  health: 10
+--- !u!114 &5577740025642892895
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5577740025642892892}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 71242163ba188c04b8b904b94ff79242, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
