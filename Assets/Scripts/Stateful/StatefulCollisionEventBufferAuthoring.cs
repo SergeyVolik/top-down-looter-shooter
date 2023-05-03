@@ -27,6 +27,7 @@ namespace Unity.Physics.Stateful
 
                     AddComponent(entity, dynamicBufferTag);
                 }
+
                 AddBuffer<StatefulCollisionEvent>(entity);
             }
         }

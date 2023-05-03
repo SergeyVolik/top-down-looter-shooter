@@ -13,6 +13,7 @@ using System.Numerics;
 using Unity.Burst;
 using Unity.Physics.Systems;
 using Unity.Physics.Stateful;
+using static Unity.Entities.EntitiesJournaling;
 
 namespace SV.ECS
 {
@@ -37,12 +38,13 @@ namespace SV.ECS
     {
         public override void Bake(GunComponentMB authoring)
         {
-
-            AddComponent<GunComponent>(new GunComponent
+            var entity = GetEntity(TransformUsageFlags.Dynamic);
+           
+            AddComponent<GunComponent>(entity, new GunComponent
             {
 
-                bulletPrefab = GetEntity(authoring.Prefab),
-                bulletSpawnPos = GetEntity(authoring.bulletSpawnPos),
+                bulletPrefab = GetEntity(authoring.Prefab, TransformUsageFlags.Dynamic),
+                bulletSpawnPos = GetEntity(authoring.bulletSpawnPos, TransformUsageFlags.Dynamic),
                 shotDelay = authoring.shotDelay,
                 nextShotTime = Time.time,
                 bulletSpeed = authoring.speed
@@ -113,15 +115,16 @@ namespace SV.ECS
     {
 
 
-
-
-        //[BurstCompile]
-        public void OnUpdate(ref SystemState state)
+        [BurstCompile]
+        public partial struct ApplayDamageJob : IJobEntity
         {
-            var healthLookUp = SystemAPI.GetComponentLookup<HealthComponent>();
-            var damageLookUp = SystemAPI.GetComponentLookup<DamageComponent>(true);
+            
+            public ComponentLookup<HealthComponent> healthLookUp;
 
-            foreach (var (triggerEventBuffer, entity) in SystemAPI.Query<DynamicBuffer<StatefulTriggerEvent>>().WithEntityAccess())
+            [ReadOnly]
+            public ComponentLookup<DamageComponent> damageLookUp;
+
+            public void Execute(Entity entity, DynamicBuffer<StatefulTriggerEvent> triggerEventBuffer)
             {
                 for (int i = 0; i < triggerEventBuffer.Length; i++)
                 {
@@ -155,8 +158,19 @@ namespace SV.ECS
                     }
                 }
             }
+        }
 
+        [BurstCompile]
+        public void OnUpdate(ref SystemState state)
+        {
+            var job = new ApplayDamageJob
+            {
+                healthLookUp = SystemAPI.GetComponentLookup<HealthComponent>(),
+                damageLookUp = SystemAPI.GetComponentLookup<DamageComponent>(isReadOnly: true)
 
+            };
+
+            state.Dependency = job.Schedule(state.Dependency);
 
         }
     }

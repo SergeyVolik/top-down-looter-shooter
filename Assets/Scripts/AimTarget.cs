@@ -18,7 +18,8 @@ namespace SV.ECS
     {
         public override void Bake(AimTarget authoring)
         {
-            AddComponent<AimTargetComponent>();
+            var entity =GetEntity(TransformUsageFlags.Dynamic);
+            AddComponent<AimTargetComponent>(entity);
         }
     }
 

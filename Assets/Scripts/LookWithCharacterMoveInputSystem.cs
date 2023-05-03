@@ -35,7 +35,7 @@ namespace SV.ECS
                     transform.Rotation = quaternion.LookRotation(vector, math.up());
                 }
 
-            }).Run();
+            }).WithNone<DetectedTargetComponent>().Run();
         }
 
     }

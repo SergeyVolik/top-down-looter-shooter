@@ -14,7 +14,7 @@ namespace SV.ECS
         protected override void OnUpdate()
         {
 
-
+          
             Entities.ForEach((ref PhysicsVelocity vel, in CharacterMoveInputComponent moveInput, in CharacterControllerComponent cc) =>
             {
 
