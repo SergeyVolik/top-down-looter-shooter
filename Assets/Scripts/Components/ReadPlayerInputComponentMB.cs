@@ -18,7 +18,8 @@ namespace SV.ECS
     {
         public override void Bake(ReadPlayerInputComponentMB authoring)
         {
-            AddComponent<ReadPlayerInputComponent>();
+            var entity = GetEntity(TransformUsageFlags.Dynamic);
+            AddComponent<ReadPlayerInputComponent>(entity);
         }
     }
 

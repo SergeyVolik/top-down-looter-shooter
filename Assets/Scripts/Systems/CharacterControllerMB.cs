@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Unity.Entities;
 using UnityEngine;
 
+
 namespace SV.ECS
 {
     public class CharacterControllerMB : MonoBehaviour
@@ -24,12 +25,14 @@ namespace SV.ECS
     {
         public override void Bake(CharacterControllerMB authoring)
         {
-            AddComponent(new CharacterControllerComponent
+            var entity = GetEntity(TransformUsageFlags.Dynamic);
+
+            AddComponent(entity, new CharacterControllerComponent
             {
                 speed = authoring.speed
             });
 
-            AddComponent(new CharacterMoveInputComponent());
+            AddComponent(entity, new CharacterMoveInputComponent());
         }
     }
 
