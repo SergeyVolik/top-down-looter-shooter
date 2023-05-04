@@ -42,4 +42,43 @@ namespace SV.ECS
         }
 
     }
+
+
+    public struct DestroyComponent : IComponentData
+    {
+        
+    }
+
+    public partial struct DestroySystem : ISystem
+    {
+
+        public partial struct DestroyJob : IJobEntity
+        {
+            public EntityCommandBuffer buffer;
+            public void Execute(Entity entity, in DestroyComponent dc)
+            {
+                buffer.DestroyEntity(entity);
+            }
+        }
+
+        public void OnCreate(ref SystemState state)
+        {
+          
+
+        }
+
+        public void OnUpdate(ref SystemState state)
+        {
+
+            var ecbSingleton = SystemAPI.GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>();
+            var ecb = ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged);
+
+            var job = new DestroyJob
+            {
+                buffer = ecb
+            };
+
+            state.Dependency = job.Schedule(state.Dependency);
+        }
+    }
 }

@@ -27,7 +27,7 @@ namespace SV
 
         private void Update()
         {
-            Debug.Log(colorTablesQ.CalculateEntityCount());
+           
             var health = colorTablesQ.ToComponentDataArray<HealthComponent>(Allocator.Temp);
             var maxhealth = colorTablesQ.ToComponentDataArray<MaxHealthComponent>(Allocator.Temp);
 
