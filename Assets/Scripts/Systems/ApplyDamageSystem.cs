@@ -10,11 +10,11 @@ using Unity.Physics.Systems;
 namespace SV.ECS
 {
 
-    [RequireMatchingQueriesForUpdate]
+
     [UpdateAfter(typeof(AddDamageFromTriggerSystem))]
     public partial class ApplyDamageSystem : SystemBase
     {
-      
+
         EntityQuery query;
 
         [BurstCompile]
@@ -36,11 +36,11 @@ namespace SV.ECS
                         if (health <= 0)
                         {
                             health = 0;
-                            buffer.AddComponent<DestroyComponent>(entity);
+                            buffer.DestroyEntity(entity);
                             break;
                         }
                     }
-                  
+
                     damageToApply.SetBufferEnabled(entity, false);
                     triggerEventBuffer.Clear();
                     healthComp.value = health;
@@ -52,20 +52,24 @@ namespace SV.ECS
         protected override void OnCreate()
         {
             // Get respective queries, that includes components required by `CopyPositionsJob` described earlier.
+
+
             query = GetEntityQuery(typeof(HealthComponent), typeof(DamageToApplyComponent));
+            RequireForUpdate(query);
+
+
         }
 
 
         protected override void OnUpdate()
-        {           
+        {
             if (query.CalculateEntityCount() == 0)
-            {
                 return;
-            }
 
-            var ecbSys =SystemAPI.GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>();
+
+            var ecbSys = SystemAPI.GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>();
             var ecb = ecbSys.CreateCommandBuffer(World.Unmanaged);
-            UnityEngine.Debug.Log($"{query.CalculateEntityCount()} ApplyDamageSystem");
+
 
             Dependency = new ApplayDamageJob
             {
@@ -73,9 +77,9 @@ namespace SV.ECS
                 buffer = ecb
             }.Schedule(query, Dependency);
 
-            
 
-          
+
+
         }
     }
 

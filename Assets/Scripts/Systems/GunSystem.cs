@@ -23,8 +23,12 @@ namespace SV.ECS
         {
             float time = (float)SystemAPI.Time.ElapsedTime;
 
-            EntityCommandBuffer ecb = new EntityCommandBuffer(Allocator.TempJob);
+            var ecsSystem = SystemAPI.GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>();
+
+           
+            EntityCommandBuffer ecb = ecsSystem.CreateCommandBuffer(World.Unmanaged);
             var ltw = GetComponentLookup<LocalToWorld>();
+          
             var transLookUp = GetComponentLookup<LocalTransform>();
             Entities.ForEach((ref Entity e, ref GunComponent gun) =>
             {
@@ -59,11 +63,12 @@ namespace SV.ECS
                 }
             }).Schedule();
 
-            Dependency.Complete();
 
-            ecb.Playback(EntityManager);
-            ecb.Dispose();
         }
 
     }
+
+
+
+   
 }

@@ -20,7 +20,8 @@ namespace SV.ECS
         {
             var delatTime = SystemAPI.Time.DeltaTime;
 
-            EntityCommandBuffer ecb = new EntityCommandBuffer(Allocator.TempJob);
+            var ecbSingleton = SystemAPI.GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>();
+            EntityCommandBuffer ecb = ecbSingleton.CreateCommandBuffer(World.Unmanaged);
 
             Entities.ForEach((ref Entity e, ref CurrentLifetimeComponent vel, in LifetimeComponent moveInput) =>
             {
@@ -35,50 +36,9 @@ namespace SV.ECS
 
             }).Schedule();
 
-            Dependency.Complete();
 
-            ecb.Playback(EntityManager);
-            ecb.Dispose();
         }
 
     }
 
-
-    public struct DestroyComponent : IComponentData
-    {
-        
-    }
-
-    public partial struct DestroySystem : ISystem
-    {
-
-        public partial struct DestroyJob : IJobEntity
-        {
-            public EntityCommandBuffer buffer;
-            public void Execute(Entity entity, in DestroyComponent dc)
-            {
-                buffer.DestroyEntity(entity);
-            }
-        }
-
-        public void OnCreate(ref SystemState state)
-        {
-          
-
-        }
-
-        public void OnUpdate(ref SystemState state)
-        {
-
-            var ecbSingleton = SystemAPI.GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>();
-            var ecb = ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged);
-
-            var job = new DestroyJob
-            {
-                buffer = ecb
-            };
-
-            state.Dependency = job.Schedule(state.Dependency);
-        }
-    }
 }
