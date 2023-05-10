@@ -7,22 +7,25 @@ namespace SV.ECS
 {
     public class MoveToPlayerAuthoring : MonoBehaviour
     {
-        
+        public float stopDistance;
     }
-    public struct MoveToPlayerComponent : IComponentData, IEnableableComponent
+    public struct MoveToPlayerComponent : IComponentData
     {
-      
+        public float stopDistance;
+
     }
 
 
-    public class MoveToPlayerBaker : Baker<AimTarget>
+    public class MoveToPlayerBaker : Baker<MoveToPlayerAuthoring>
     {
-        public override void Bake(AimTarget authoring)
+        public override void Bake(MoveToPlayerAuthoring authoring)
         {
            
            
             var entity = GetEntity(TransformUsageFlags.Dynamic);
-            AddComponent<MoveToPlayerComponent>(entity);
+            AddComponent<MoveToPlayerComponent>(entity, new MoveToPlayerComponent { 
+                 stopDistance = authoring.stopDistance
+            });
 
 
 

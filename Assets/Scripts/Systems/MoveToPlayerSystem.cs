@@ -24,7 +24,7 @@ namespace SV.ECS
             {
                 playerPos = ltw.Position;
             }
-            Entities.ForEach((ref Entity e, ref CharacterMoveInputComponent input, in MoveToPlayerComponent moveTOTarget) =>
+            Entities.ForEach((ref Entity e, ref CharacterMoveInputComponent input, in MoveToPlayerComponent moveToTarget) =>
             {
 
 
@@ -32,7 +32,17 @@ namespace SV.ECS
                 var vecotr = (playerPos - selfPos);
                 vecotr = math.normalize(vecotr);
 
-                input.value = new Vector2(vecotr.x, vecotr.z);
+                var dist = math.distance(selfPos, playerPos);
+
+                var vector = new Vector2(vecotr.x, vecotr.z);
+
+                if (dist < moveToTarget.stopDistance + 1f && dist > moveToTarget.stopDistance - 1f)
+                    vector = Vector2.zero;
+
+                else if (dist < moveToTarget.stopDistance)
+                    vector *= -1;
+               
+                input.value = vector;
 
             }).Schedule();
         }
