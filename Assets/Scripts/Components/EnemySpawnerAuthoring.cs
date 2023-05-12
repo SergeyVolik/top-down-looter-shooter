@@ -1,4 +1,5 @@
 using Unity.Entities;
+using Unity.Mathematics;
 using UnityEngine;
 
 namespace SV.ECS
@@ -9,14 +10,14 @@ namespace SV.ECS
     {
         public GameObject enemyPrefab;
         public float spawnDelay;
-        public Bounds spawnBound;
+        public AABB spawnBound;
 
         private void OnDrawGizmos()
         {
             Gizmos.color = Color.red;
             var ls = transform.localScale;
-            var size = spawnBound.size;
-            Gizmos.DrawWireCube(transform.position + spawnBound.center, new Vector3(size.x * ls.x, size.y * ls.y, size.z * ls.z));
+            var size = spawnBound.Size;
+            Gizmos.DrawWireCube(transform.position + (Vector3)spawnBound.Center, new Vector3(size.x * ls.x, size.y * ls.y, size.z * ls.z));
             Gizmos.DrawWireSphere(transform.position, 1f);
         }
     }
@@ -25,6 +26,7 @@ namespace SV.ECS
         public Entity enemyPrefab;
         public float spawnDelay;
         public float nextSpawnTime;
+        public AABB spawnBound;
     }
 
 
@@ -35,10 +37,11 @@ namespace SV.ECS
 
 
             var entity = GetEntity(TransformUsageFlags.Dynamic);
-            AddComponent<EnemySpawnerComponent>(entity, new EnemySpawnerComponent
+            AddComponent(entity, new EnemySpawnerComponent
             {
                 enemyPrefab = GetEntity(authoring.enemyPrefab, TransformUsageFlags.Dynamic),
-                spawnDelay = authoring.spawnDelay
+                spawnDelay = authoring.spawnDelay,
+                spawnBound = authoring.spawnBound,
             });
 
 

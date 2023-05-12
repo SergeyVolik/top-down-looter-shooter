@@ -21,7 +21,9 @@ namespace SV.ECS
         {
             var delatTime = SystemAPI.Time.DeltaTime;
             var time = SystemAPI.Time.ElapsedTime;
-            var ecbSingleton = SystemAPI.GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>();
+            var ecbSingleton = SystemAPI.GetSingleton<BeginSimulationEntityCommandBufferSystem.Singleton>();
+
+            var random = SystemAPI.GetSingleton<RandomDataComponent>();
             EntityCommandBuffer ecb = ecbSingleton.CreateCommandBuffer(World.Unmanaged);
 
             Entities.ForEach((ref Entity e, ref EnemySpawnerComponent vel, ref LocalToWorld ltw) =>
@@ -36,9 +38,23 @@ namespace SV.ECS
 
                     vel.nextSpawnTime = nextSpawnTime;
 
+                  
+
+
+                    var pos = ltw.Position;
+
+
+                    var min = vel.spawnBound.Min;
+                    var max = vel.spawnBound.Max;
+
+                    pos += vel.spawnBound.Center;
+                    pos.x += random.Value.NextFloat(min.x, max.x);
+                    pos.z += random.Value.NextFloat(min.z, max.z);
+
+
                     ecb.SetComponent(spawnedEntity, new LocalTransform
                     {
-                        Position = ltw.Position,
+                        Position = pos,
                         Scale = 1f,
                         Rotation = quaternion.identity
                     });

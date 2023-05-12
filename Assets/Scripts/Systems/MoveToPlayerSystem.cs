@@ -17,34 +17,37 @@ namespace SV.ECS
 
         protected override void OnUpdate()
         {
-            var ltwLookUp = SystemAPI.GetComponentLookup<LocalToWorld>();
-            var player = SystemAPI.GetSingletonEntity<PlayerComponent>();
-            float3 playerPos = default;
-            if (ltwLookUp.TryGetComponent(player, out var ltw))
+          
+            if (SystemAPI.TryGetSingletonEntity<PlayerComponent>(out var player))
             {
-                playerPos = ltw.Position;
+                var ltwLookUp = SystemAPI.GetComponentLookup<LocalToWorld>();
+                float3 playerPos = default;
+                if (ltwLookUp.TryGetComponent(player, out var ltw))
+                {
+                    playerPos = ltw.Position;
+                }
+                Entities.ForEach((ref Entity e, ref CharacterMoveInputComponent input, in MoveToPlayerComponent moveToTarget) =>
+                {
+
+
+                    var selfPos = ltwLookUp.GetRefRO(e).ValueRO.Position;
+                    var vecotr = (playerPos - selfPos);
+                    vecotr = math.normalize(vecotr);
+
+                    var dist = math.distance(selfPos, playerPos);
+
+                    var vector = new Vector2(vecotr.x, vecotr.z);
+
+                    if (dist < moveToTarget.stopDistance + 1f && dist > moveToTarget.stopDistance - 1f)
+                        vector = Vector2.zero;
+
+                    else if (dist < moveToTarget.stopDistance)
+                        vector *= -1;
+
+                    input.value = vector;
+
+                }).Schedule();
             }
-            Entities.ForEach((ref Entity e, ref CharacterMoveInputComponent input, in MoveToPlayerComponent moveToTarget) =>
-            {
-
-
-                var selfPos = ltwLookUp.GetRefRO(e).ValueRO.Position;
-                var vecotr = (playerPos - selfPos);
-                vecotr = math.normalize(vecotr);
-
-                var dist = math.distance(selfPos, playerPos);
-
-                var vector = new Vector2(vecotr.x, vecotr.z);
-
-                if (dist < moveToTarget.stopDistance + 1f && dist > moveToTarget.stopDistance - 1f)
-                    vector = Vector2.zero;
-
-                else if (dist < moveToTarget.stopDistance)
-                    vector *= -1;
-               
-                input.value = vector;
-
-            }).Schedule();
         }
 
     }
