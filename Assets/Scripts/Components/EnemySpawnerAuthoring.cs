@@ -18,7 +18,7 @@ namespace SV.ECS
             var ls = transform.localScale;
             var size = spawnBound.Size;
             Gizmos.DrawWireCube(transform.position + (Vector3)spawnBound.Center, new Vector3(size.x * ls.x, size.y * ls.y, size.z * ls.z));
-            Gizmos.DrawWireSphere(transform.position, 1f);
+            Gizmos.DrawWireSphere(transform.position + (Vector3)spawnBound.Center, 1f);
         }
     }
     public struct EnemySpawnerComponent : IComponentData

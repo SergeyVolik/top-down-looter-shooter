@@ -4,9 +4,10 @@ using Unity.Mathematics;
 using Unity.Transforms;
 using UnityEngine;
 
+
 namespace SV.ECS
 {
-    [UpdateAfter(typeof(LocalToWorldSystem))]
+    [UpdateBefore(typeof(LocalToWorldSystem))]
     public partial class SpawnerSystem : SystemBase
     {
 
@@ -24,6 +25,7 @@ namespace SV.ECS
             var ecbSingleton = SystemAPI.GetSingleton<BeginSimulationEntityCommandBufferSystem.Singleton>();
 
             var random = SystemAPI.GetSingleton<RandomDataComponent>();
+            
             EntityCommandBuffer ecb = ecbSingleton.CreateCommandBuffer(World.Unmanaged);
 
             Entities.ForEach((ref Entity e, ref EnemySpawnerComponent vel, ref LocalToWorld ltw) =>
@@ -48,9 +50,12 @@ namespace SV.ECS
                     var max = vel.spawnBound.Max;
 
                     pos += vel.spawnBound.Center;
-                    pos.x += random.Value.NextFloat(min.x, max.x);
-                    pos.z += random.Value.NextFloat(min.z, max.z);
 
+                    var rnd = random.Value;
+                    pos.x += rnd.NextFloat(min.x, max.x);
+                    pos.z += rnd.NextFloat(min.z, max.z);
+
+                    random.Value = rnd;
 
                     ecb.SetComponent(spawnedEntity, new LocalTransform
                     {
@@ -58,6 +63,64 @@ namespace SV.ECS
                         Scale = 1f,
                         Rotation = quaternion.identity
                     });
+                }
+
+            }).Run();
+
+            SystemAPI.SetSingleton(random);
+
+        }
+
+    }
+
+    [UpdateBefore(typeof(LocalToWorldSystem))]
+    public partial class SpawnPointSystem : SystemBase
+    {
+
+
+        protected override void OnCreate()
+        {
+            base.OnCreate();
+            this.RequireForUpdate<RandomDataComponent>();
+
+        }
+
+        protected override void OnUpdate()
+        {
+
+            var time = SystemAPI.Time.ElapsedTime;
+            var ecbSingleton = SystemAPI.GetSingleton<BeginSimulationEntityCommandBufferSystem.Singleton>();
+
+
+            EntityCommandBuffer ecb = ecbSingleton.CreateCommandBuffer(World.Unmanaged);
+
+            Entities.ForEach((ref Entity e, in SpawnPointComponent vel) =>
+            {
+
+                ecb.AddComponent(e, new SpawnTimeComponent
+                {
+                    spawnTime = (float)time + vel.spawnDelay
+                });
+
+            }).WithNone<SpawnTimeComponent>().Run();
+
+            Entities.ForEach((ref Entity e, in SpawnPointComponent vel, in SpawnTimeComponent spawnTime, in LocalToWorld ltw) =>
+            {
+
+                if (spawnTime.spawnTime < time)
+                {
+                    var spawnedEntity = ecb.Instantiate(vel.prefab);
+
+
+
+                    ecb.SetComponent(spawnedEntity, new LocalTransform
+                    {
+                        Position = ltw.Position,
+                        Scale = 1f,
+                        Rotation = quaternion.identity
+
+                    });
+                    ecb.DestroyEntity(e);
                 }
 
             }).Run();
