@@ -77,6 +77,28 @@ namespace SV.ECS
 
     }
 
+    public static class LocalTransformExtentions
+    {
+        public static void LookAt(this ref LocalTransform transform, Entity selfEntity, float3 tragetWorldPosition, ref ComponentLookup<Parent> parentLookup, ref ComponentLookup<LocalToWorld> localTransformLookup)
+        {
+
+           
+
+       
+            if (parentLookup.TryGetComponent(selfEntity, out var parent) && localTransformLookup.TryGetComponent(parent.Value, out var parentL2W))
+            {
+
+                tragetWorldPosition = math.inverse(parentL2W.Value).TransformPoint(tragetWorldPosition);
+            }
+
+            tragetWorldPosition -= transform.Position;
+            quaternion rotation = quaternion.LookRotationSafe(tragetWorldPosition, math.up());
+            transform.Rotation = rotation;
+
+        }
+            
+    }
+
     [UpdateInGroup(typeof(LateSimulationSystemGroup))]
     [UpdateBefore(typeof(PresentationSystemGroup))]
     [UpdateAfter(typeof(TransformSystemGroup))]
@@ -107,11 +129,11 @@ namespace SV.ECS
             SystemAPI.SetComponent(e, transform.WithRotation(rotation));
         }
 
-      
+
         protected unsafe override void OnUpdate()
         {
 
-            
+
             var aimTargetLookup = SystemAPI.GetComponentLookup<AimTargetComponent>();
             var detectedTargetLookUp = SystemAPI.GetComponentLookup<DetectedTargetComponent>();
 
@@ -130,22 +152,22 @@ namespace SV.ECS
 
                 target.y = localToWorld.Position.y;
 
-                if (parentLookup.TryGetComponent(e, out var parent) && localTransformLookup.TryGetComponent(parent.Value, out var parentL2W))
-                {
+                //if (parentLookup.TryGetComponent(e, out var parent) && localTransformLookup.TryGetComponent(parent.Value, out var parentL2W))
+                //{
 
 
 
-                    target = math.inverse(parentL2W.Value).TransformPoint(target);
-                }
+                //    target = math.inverse(parentL2W.Value).TransformPoint(target);
+                //}
 
-                target -= transform.Position;
+                //target -= transform.Position;
 
 
-                quaternion rotation = quaternion.LookRotationSafe(target, math.up());
+                //quaternion rotation = quaternion.LookRotationSafe(target, math.up());
 
-                transform.Rotation = rotation;
+                //transform.Rotation = rotation;
 
-               
+                transform.LookAt(e, target, ref parentLookup, ref localTransformLookup);
 
             }).Run();
         }
