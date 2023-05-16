@@ -19,6 +19,13 @@ public class PlayerTracker : MonoBehaviour
 [UpdateInGroup(typeof(TransformSystemGroup), OrderLast = true)]
 public partial class PlayerTrackerSystem : SystemBase
 {
+
+    protected override void OnCreate()
+    {
+        base.OnCreate();
+        RequireForUpdate<PlayerComponent>();
+    }
+
     protected override void OnUpdate()
     {
         if (!SystemAPI.TryGetSingletonEntity<PlayerComponent>(out var playerEntity))
@@ -29,6 +36,7 @@ public partial class PlayerTrackerSystem : SystemBase
         Entities.ForEach((PlayerTracker tracker) =>
         {
             tracker.transform.SetPositionAndRotation(localToWorld.Position, localToWorld.Rotation);
+
         }).WithoutBurst().Run();
     }
 }

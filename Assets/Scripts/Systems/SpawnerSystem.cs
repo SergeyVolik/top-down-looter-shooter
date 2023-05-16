@@ -80,8 +80,8 @@ namespace SV.ECS
         protected override void OnCreate()
         {
             base.OnCreate();
-           
 
+            RequireForUpdate<PlayerComponent>();
         }
 
         protected override void OnUpdate()
