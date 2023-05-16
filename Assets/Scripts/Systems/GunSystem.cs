@@ -16,7 +16,7 @@ namespace SV.ECS
         protected override void OnCreate()
         {
             base.OnCreate();
-
+            
         }
 
         protected override void OnUpdate()
@@ -24,39 +24,55 @@ namespace SV.ECS
             float time = (float)SystemAPI.Time.ElapsedTime;
 
             var ecsSystem = SystemAPI.GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>();
-
            
+
             EntityCommandBuffer ecb = ecsSystem.CreateCommandBuffer(World.Unmanaged);
             var ltw = GetComponentLookup<LocalToWorld>();
           
             var transLookUp = GetComponentLookup<LocalTransform>();
-            Entities.ForEach((ref Entity e, ref GunComponent gun) =>
+            Entities.ForEach((Entity e, ref GunComponent gun, ref IndividualRandomComponent rnd) =>
             {
 
                 if (gun.nextShotTime <= time)
                 {
-
+                   
+                    
 
                     if (ltw.TryGetComponent(gun.bulletSpawnPos, out var wordPos) && transLookUp.TryGetComponent(gun.bulletSpawnPos, out var localTrans))
                     {
-                        var bullet = ecb.Instantiate(gun.bulletPrefab);
-                        gun.nextShotTime = time + gun.shotDelay;
 
-
-                        ecb.SetComponent(bullet, new LocalTransform
+                        for (int i = 0; i < gun.bulletsInShot; i++)
                         {
-                            Position = wordPos.Position,
-                            Scale = localTrans.Scale,
-                            Rotation = quaternion.LookRotation(wordPos.Forward, math.up())
-                        });
+                            var bullet = ecb.Instantiate(gun.bulletPrefab);
+                            gun.nextShotTime = time + gun.shotDelay;
+
+                            var vector = wordPos.Forward;
+
+                            var rndValue = rnd.Value.NextFloat(-gun.Angle, gun.Angle);
+
+                            
+                            var rot = quaternion.AxisAngle(wordPos.Up, math.radians(rndValue));
+                            var nexVector = math.mul(rot, vector);
+
+                          
+                            vector = nexVector;
+
+                            ecb.SetComponent(bullet, new LocalTransform
+                            {
+                                Position = wordPos.Position,
+                                Scale = localTrans.Scale,
+                                Rotation = quaternion.LookRotation(vector, math.up())
+                            });
 
 
 
 
-                        ecb.SetComponent<PhysicsVelocity>(bullet, new PhysicsVelocity
-                        {
-                            Linear = wordPos.Forward * gun.bulletSpeed
-                        });
+                            ecb.SetComponent(bullet, new PhysicsVelocity
+                            {
+                                Linear = vector * gun.bulletSpeed
+                            });
+                        }
+                        
                     }
 
 

@@ -15,7 +15,7 @@ namespace SV.ECS
         protected override void OnCreate()
         {
             base.OnCreate();
-
+         
         }
 
         protected override void OnUpdate()
@@ -24,11 +24,11 @@ namespace SV.ECS
             var time = SystemAPI.Time.ElapsedTime;
             var ecbSingleton = SystemAPI.GetSingleton<BeginSimulationEntityCommandBufferSystem.Singleton>();
 
-            var random = SystemAPI.GetSingleton<RandomDataComponent>();
+        
             
             EntityCommandBuffer ecb = ecbSingleton.CreateCommandBuffer(World.Unmanaged);
 
-            Entities.ForEach((ref Entity e, ref EnemySpawnerComponent vel, ref LocalToWorld ltw) =>
+            Entities.ForEach((ref Entity e, ref EnemySpawnerComponent vel, ref LocalToWorld ltw, ref IndividualRandomComponent random) =>
             {
 
                 var nextSpawnTime = vel.nextSpawnTime;
@@ -67,7 +67,6 @@ namespace SV.ECS
 
             }).Run();
 
-            SystemAPI.SetSingleton(random);
 
         }
 
@@ -81,7 +80,7 @@ namespace SV.ECS
         protected override void OnCreate()
         {
             base.OnCreate();
-            this.RequireForUpdate<RandomDataComponent>();
+           
 
         }
 
@@ -103,6 +102,7 @@ namespace SV.ECS
                 });
 
             }).WithNone<SpawnTimeComponent>().Run();
+
 
             Entities.ForEach((ref Entity e, in SpawnPointComponent vel, in SpawnTimeComponent spawnTime, in LocalToWorld ltw) =>
             {

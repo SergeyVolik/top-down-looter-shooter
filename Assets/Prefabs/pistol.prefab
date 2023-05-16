@@ -24,7 +24,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3051478558162382078}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0.623}
+  m_LocalPosition: {x: 0, y: 0, z: 1.022}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -126,6 +126,7 @@ GameObject:
   - component: {fileID: 364994231762457833}
   - component: {fileID: 5177227354163818619}
   - component: {fileID: 5331751606891150003}
+  - component: {fileID: 1580408296561887584}
   m_Layer: 0
   m_Name: pistol
   m_TagString: Untagged
@@ -162,10 +163,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 59337fcc556572a409f657b4ff6d0638, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  Angle: 20
   Prefab: {fileID: 9194150915235131657, guid: 6e2ae364338c423478cff3ad5cb40b56, type: 3}
   bulletSpawnPos: {fileID: 3051478558162382078}
-  shotDelay: 0.1
-  speed: 20
+  shotDelay: 0.5
+  speed: 35
+  bulletsInShot: 5
 --- !u!114 &5177227354163818619
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -258,3 +261,15 @@ MonoBehaviour:
     Category29: 0
     Category30: 0
     Category31: 0
+--- !u!114 &1580408296561887584
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7826399767812890284}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d9edc7ea590890a4ab7fbe603040d999, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 

@@ -4,9 +4,7 @@ using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Physics;
 using Unity.Transforms;
-using UnityEngine;
-using UnityEngine.UIElements;
-using static UnityEngine.Rendering.DebugUI;
+
 
 namespace SV.ECS
 {
@@ -150,22 +148,9 @@ namespace SV.ECS
                     target = ltwTarget.Position;
                 }
 
-                target.y = localToWorld.Position.y;
+                //target.y = localToWorld.Position.y;
 
-                //if (parentLookup.TryGetComponent(e, out var parent) && localTransformLookup.TryGetComponent(parent.Value, out var parentL2W))
-                //{
-
-
-
-                //    target = math.inverse(parentL2W.Value).TransformPoint(target);
-                //}
-
-                //target -= transform.Position;
-
-
-                //quaternion rotation = quaternion.LookRotationSafe(target, math.up());
-
-                //transform.Rotation = rotation;
+               
 
                 transform.LookAt(e, target, ref parentLookup, ref localTransformLookup);
 

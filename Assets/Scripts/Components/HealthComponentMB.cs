@@ -22,6 +22,9 @@ namespace SV.ECS
     public struct DamageToApplyComponent : IBufferElementData, IEnableableComponent
     {
         public int damage;
+        public Entity producer;
+        public Entity owner;
+
     }
 
     public struct DamageableComponent : IComponentData

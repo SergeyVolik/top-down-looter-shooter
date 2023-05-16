@@ -25,11 +25,11 @@ namespace SV.ECS
             public void Execute(Entity entity, ref HealthComponent healthComp)
             {
                 var health = healthComp.value;
-                if (damageToApply.TryGetBuffer(entity, out var triggerEventBuffer))
+                if (damageToApply.TryGetBuffer(entity, out var damageList))
                 {
-                    for (int i = 0; i < triggerEventBuffer.Length; i++)
+                    for (int i = 0; i < damageList.Length; i++)
                     {
-                        var damage = triggerEventBuffer[i];
+                        var damage = damageList[i];
 
                         health -= damage.damage;
 
@@ -42,7 +42,7 @@ namespace SV.ECS
                     }
 
                     damageToApply.SetBufferEnabled(entity, false);
-                    triggerEventBuffer.Clear();
+                    damageList.Clear();
                     healthComp.value = health;
                 }
             }
@@ -83,6 +83,63 @@ namespace SV.ECS
         }
     }
 
+    [UpdateBefore(typeof(ApplyDamageSystem))]
+    public partial class DecreaseProjectilePowerPenetrationSystem : SystemBase
+    {
+
+       
+        [BurstCompile]
+        public partial struct DecreasePenetrationJob : IJobEntity
+        {
+            public EntityCommandBuffer buffer;
+            public ComponentLookup<ProjectilePenetrationPowerComponent> penetrationLookup;
+
+            public void Execute(Entity entity, in DynamicBuffer<DamageToApplyComponent> damageList, in DecreaseProjectilePenetrationPowerComponent decrease)
+            {
+                for (int i = 0; i < damageList.Length; i++)
+                {
+                    var damageInfo = damageList[i];
+
+                    if (penetrationLookup.HasComponent(damageInfo.producer))
+                    {
+                        var refPenPonwer = penetrationLookup.GetRefRW(damageInfo.producer);
+
+                        var value = refPenPonwer.ValueRW.value;
+                        value -= decrease.value;
+                        refPenPonwer.ValueRW.value = value;
+                        if (value <= 0)
+                        {
+                            buffer.DestroyEntity(damageInfo.producer);
+                        }
+                    }
+                    
+
+                }
+            }
+
+        }
+
+
+
+        protected override void OnUpdate()
+        {
+           
+            var ecbSys = SystemAPI.GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>();
+            var ecb = ecbSys.CreateCommandBuffer(World.Unmanaged);
+
+
+            Dependency = new DecreasePenetrationJob
+            {
+                penetrationLookup = SystemAPI.GetComponentLookup<ProjectilePenetrationPowerComponent>(),
+                buffer = ecb
+            }.Schedule(Dependency);
+
+
+
+
+        }
+    }
+
     public partial struct DamageValidationSystem : ISystem
     {
 
@@ -102,6 +159,8 @@ namespace SV.ECS
 
             [ReadOnly]
             public ComponentLookup<DamageComponent> damageLookUp;
+            [ReadOnly]
+            public ComponentLookup<OwnerComponent> ownerLookUp;
 
             public BufferLookup<DamageToApplyComponent> damageToApply;
 
@@ -135,9 +194,18 @@ namespace SV.ECS
                         if (damageToApply.TryGetBuffer(addDamageEntity, out var damageToApplyBuffer))
                         {
 
+                            var owner = Entity.Null;
+
+                            if (ownerLookUp.TryGetComponent(damageEntity, out var ownerComp))
+                            {
+                                owner = ownerComp.value;
+                            }
+
                             damageToApplyBuffer.Add(new DamageToApplyComponent
                             {
-                                damage = damage
+                                damage = damage,
+                                producer = damageEntity,
+                                owner = owner
                             });
                         }
 
@@ -153,7 +221,8 @@ namespace SV.ECS
             var job = new AddDamageToEntityJob
             {
                 damageToApply = SystemAPI.GetBufferLookup<DamageToApplyComponent>(),
-                damageLookUp = SystemAPI.GetComponentLookup<DamageComponent>(isReadOnly: true)
+                damageLookUp = SystemAPI.GetComponentLookup<DamageComponent>(isReadOnly: true),
+                ownerLookUp = SystemAPI.GetComponentLookup<OwnerComponent>(isReadOnly: true)
 
             };
 

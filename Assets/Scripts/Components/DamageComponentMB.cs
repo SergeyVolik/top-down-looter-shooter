@@ -18,7 +18,8 @@ namespace SV.ECS
     {
         public override void Bake(DamageComponentMB authoring)
         {
-            AddComponent<DamageComponent>(new DamageComponent { 
+           
+            AddComponent(GetEntity(TransformUsageFlags.Dynamic), new DamageComponent { 
                  damage = authoring.damage,
             });
         }
