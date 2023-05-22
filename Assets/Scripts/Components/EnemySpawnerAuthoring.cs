@@ -12,6 +12,11 @@ namespace SV.ECS
         public float spawnDelay;
         public AABB spawnBound;
 
+        private void OnEnable()
+        {
+            
+        }
+
         private void OnDrawGizmos()
         {
             Gizmos.color = Color.red;
@@ -35,6 +40,8 @@ namespace SV.ECS
         public override void Bake(EnemySpawnerAuthoring authoring)
         {
 
+            if (!authoring.enabled)
+                return;
 
             var entity = GetEntity(TransformUsageFlags.Dynamic);
             AddComponent(entity, new EnemySpawnerComponent
