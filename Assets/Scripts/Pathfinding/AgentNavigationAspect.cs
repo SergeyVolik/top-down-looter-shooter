@@ -11,7 +11,7 @@ public readonly partial struct AgentNavigationAspect : IAspect
 {
     public readonly RefRW<Agent> agent;
     public readonly RefRW<AgentMovement> agentMovement;
-    public readonly DynamicBuffer<AgentBuffer> agentBuffer;
+    public readonly DynamicBuffer<AgentPathBuffer> agentBuffer;
     public readonly DynamicBuffer<AgentPathValidityBuffer> agentPathValidityBuffer;
     public readonly RefRW<LocalTransform> trans;
 
@@ -19,7 +19,7 @@ public readonly partial struct AgentNavigationAspect : IAspect
     {
         if (agentBuffer.Length > 0 && agent.ValueRO.pathCalculated && !agentMovement.ValueRO.reached)
         {
-            agentMovement.ValueRW.waypointDirection = math.normalize(agentBuffer[agentMovement.ValueRO.currentBufferIndex].wayPoints - trans.ValueRO.Position);
+            agentMovement.ValueRW.waypointDirection = math.normalize(agentBuffer[agentMovement.ValueRO.currentBufferIndex].wayPoint - trans.ValueRO.Position);
             if (!float.IsNaN(agentMovement.ValueRW.waypointDirection.x))
             {
                 trans.ValueRW.Position += agentMovement.ValueRW.waypointDirection * agentSpeed * deltaTime;
@@ -27,11 +27,11 @@ public readonly partial struct AgentNavigationAspect : IAspect
                                         trans.ValueRW.Rotation, 
                                         quaternion.LookRotation(agentMovement.ValueRW.waypointDirection, math.up()), 
                                         deltaTime * agentRotationSpeed);
-                if (math.distance(trans.ValueRO.Position, agentBuffer[agentBuffer.Length - 1].wayPoints) <= minDistanceReached)
+                if (math.distance(trans.ValueRO.Position, agentBuffer[agentBuffer.Length - 1].wayPoint) <= minDistanceReached)
                 {
                     agentMovement.ValueRW.reached = true;
                 }
-                else if (math.distance(trans.ValueRO.Position, agentBuffer[agentMovement.ValueRO.currentBufferIndex].wayPoints) <= minDistanceReached)
+                else if (math.distance(trans.ValueRO.Position, agentBuffer[agentMovement.ValueRO.currentBufferIndex].wayPoint) <= minDistanceReached)
                 {
                     agentMovement.ValueRW.currentBufferIndex = agentMovement.ValueRW.currentBufferIndex + 1;
                 }
@@ -52,7 +52,7 @@ public struct PathValidityJob : IJob
     public int currentBufferIndex;
     public LocalTransform trans;
     public float unitsInDirection;
-    [NativeDisableContainerSafetyRestriction] public DynamicBuffer<AgentBuffer> ab;
+    [NativeDisableContainerSafetyRestriction] public DynamicBuffer<AgentPathBuffer> ab;
     [NativeDisableContainerSafetyRestriction] public DynamicBuffer<AgentPathValidityBuffer> apvb;
     NavMeshLocation startLocation;
     UnityEngine.AI.NavMeshHit navMeshHit;
@@ -62,19 +62,19 @@ public struct PathValidityJob : IJob
     {
         if (currentBufferIndex < ab.Length)
         {
-            if (!query.IsValid(query.MapLocation(ab.ElementAt(currentBufferIndex).wayPoints, extents, 0)))
+            if (!query.IsValid(query.MapLocation(ab.ElementAt(currentBufferIndex).wayPoint, extents, 0)))
             {
                 apvb.Add(new AgentPathValidityBuffer { isPathInvalid = true });
             }
             else
             {
                 startLocation = query.MapLocation(trans.Position + (trans.Forward() * unitsInDirection), extents, 0);
-                status = query.Raycast(out navMeshHit, startLocation, ab.ElementAt(currentBufferIndex).wayPoints);
+                status = query.Raycast(out navMeshHit, startLocation, ab.ElementAt(currentBufferIndex).wayPoint);
                 
                 if (status == PathQueryStatus.Success)
                 {
-                    if ((math.ceil(navMeshHit.position).x != math.ceil(ab.ElementAt(currentBufferIndex).wayPoints.x)) &&
-                        (math.ceil(navMeshHit.position).z != math.ceil(ab.ElementAt(currentBufferIndex).wayPoints.z)))
+                    if ((math.ceil(navMeshHit.position).x != math.ceil(ab.ElementAt(currentBufferIndex).wayPoint.x)) &&
+                        (math.ceil(navMeshHit.position).z != math.ceil(ab.ElementAt(currentBufferIndex).wayPoint.z)))
                     {
                         apvb.Add(new AgentPathValidityBuffer { isPathInvalid = true });
                     }
@@ -92,7 +92,7 @@ public struct PathValidityJob : IJob
 public struct NavigateJob : IJob
 {
     public NavMeshQuery query;
-    [NativeDisableContainerSafetyRestriction] public DynamicBuffer<AgentBuffer> ab;
+    [NativeDisableContainerSafetyRestriction] public DynamicBuffer<AgentPathBuffer> ab;
     public float3 fromLocation;
     public float3 toLocation;
     public float3 extents;
@@ -140,7 +140,7 @@ public struct NavigateJob : IJob
                         {
                             if (!(math.distance(fromLocation, res[i].position) < 1) && query.IsValid(query.MapLocation(res[i].position, extents, 0)))
                             {
-                                ab.Add(new AgentBuffer { wayPoints = new float3(res[i].position.x, fromLocation.y, res[i].position.z) });
+                                ab.Add(new AgentPathBuffer { wayPoint = new float3(res[i].position.x, fromLocation.y, res[i].position.z) });
                             }
                         }
                     }

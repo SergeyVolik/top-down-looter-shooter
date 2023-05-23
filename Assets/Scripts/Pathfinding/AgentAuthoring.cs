@@ -2,9 +2,9 @@ using Unity.Entities;
 using Unity.Mathematics;
 using UnityEngine;
 
-public struct AgentBuffer : IBufferElementData
+public struct AgentPathBuffer : IBufferElementData
 {
-    public float3 wayPoints;
+    public float3 wayPoint;
 }
 
 public struct AgentPathValidityBuffer : IBufferElementData
@@ -47,7 +47,7 @@ public class AgentBaker : Baker<AgentAuthoring>
         {
             currentBufferIndex = 0
         });
-        AddBuffer<AgentBuffer>(entity);
+        AddBuffer<AgentPathBuffer>(entity);
         AddBuffer<AgentPathValidityBuffer>(entity);
     }
 }

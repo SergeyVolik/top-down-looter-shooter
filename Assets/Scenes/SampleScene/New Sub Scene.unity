@@ -768,7 +768,7 @@ MonoBehaviour:
     z: 36
   agentMovementEnabled: 1
   minimumDistanceToWaypoint: 0.5
-  agentSpeed: 20
+  agentSpeed: 10
   rotationSpeed: 10
   retracePath: 1
 --- !u!4 &370553385
