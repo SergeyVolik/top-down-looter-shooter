@@ -15,6 +15,7 @@ public partial struct AgentNavigationSystem : ISystem, ISystemStartStop
     NativeArray<NavMeshQuery> pathFindingQueries;
     NativeArray<NavMeshQuery> pathRecaclulatingQueries;
 
+   
 
     public void OnStartRunning(ref SystemState state)
     {
@@ -26,14 +27,20 @@ public partial struct AgentNavigationSystem : ISystem, ISystemStartStop
     {
         state.RequireForUpdate<NavigationGlobalProperties>();
     }
+
+   
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
+       
 
         int i = 0;
-        pathFindingQueries = new NativeArray<NavMeshQuery>(eq.CalculateEntityCount(), Allocator.Temp);
+        var entitiesCount = eq.CalculateEntityCount();
+        pathFindingQueries = new NativeArray<NavMeshQuery>(entitiesCount, Allocator.Temp);
+
+      
         properties = SystemAPI.GetSingletonRW<NavigationGlobalProperties>();
-        pathFindingJobs = new NativeArray<JobHandle>(eq.CalculateEntityCount(), Allocator.Temp);
+        pathFindingJobs = new NativeArray<JobHandle>(entitiesCount, Allocator.Temp);
         foreach (AgentNavigationAspect ana in SystemAPI.Query<AgentNavigationAspect>())
         {
             if (properties.ValueRO.dynamicPathFinding && ana.agentPathValidityBuffer.Length > 0 && ana.agentPathValidityBuffer.ElementAt(0).isPathInvalid)
@@ -61,7 +68,8 @@ public partial struct AgentNavigationSystem : ISystem, ISystemStartStop
                     ana.agent.ValueRW.toLocation = ana.trans.ValueRO.Position + properties.ValueRO.units;
                     ana.agent.ValueRW.usingGlobalRelativeLoction = true;
                 }
-                pathFindingJobs[i] = new NavigateJob
+
+                var job = new NavigateJob
                 {
                     query = pathFindingQueries[i],
                     ab = ana.agentBuffer,
@@ -70,13 +78,19 @@ public partial struct AgentNavigationSystem : ISystem, ISystemStartStop
                     extents = properties.ValueRO.extents,
                     maxIteration = properties.ValueRO.maxIteration,
                     maxPathSize = properties.ValueRO.maxPathSize
-                }.Schedule(state.Dependency);
+                };
+
+                //job.Run();
+                pathFindingJobs[i] = job.Schedule(state.Dependency);
                 ana.agent.ValueRW.pathCalculated = true;
                 ana.agent.ValueRW.pathFindingQueryDisposed = false;
             }
             i++;
         }
+       
+       
         JobHandle.CompleteAll(pathFindingJobs);
+
         foreach (AgentNavigationAspect ana in SystemAPI.Query<AgentNavigationAspect>())
         {
             if (ana.agent.ValueRO.pathCalculated && !ana.agent.ValueRW.pathFindingQueryDisposed)

@@ -1,6 +1,7 @@
 using Unity.Entities;
 using Unity.Mathematics;
 using UnityEngine;
+using UnityEngine.Experimental.AI;
 
 public struct AgentPathBuffer : IBufferElementData
 {
@@ -14,6 +15,7 @@ public struct AgentPathValidityBuffer : IBufferElementData
 
 public struct Agent : IComponentData
 {
+    
     public float3 toLocation;
     public bool pathCalculated;
     public bool usingGlobalRelativeLoction;
@@ -31,14 +33,14 @@ public struct AgentMovement : IComponentData
 
 public class AgentAuthoring : MonoBehaviour
 {
-    
+  
 }
 
 public class AgentBaker : Baker<AgentAuthoring>
 {
     public override void Bake(AgentAuthoring authoring)
     {
-        Entity entity = GetEntity(TransformUsageFlags.None);
+        Entity entity = GetEntity(TransformUsageFlags.Dynamic);
         AddComponent(entity, new Agent
         {
             

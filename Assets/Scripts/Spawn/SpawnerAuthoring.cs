@@ -31,12 +31,20 @@ public class SpawnerAuthoring : MonoBehaviour
     public bool relativeToSpawner;
     public int maxCycles;
     public float spawnEvery;
+
+    private void OnEnable()
+    {
+        
+    }
 }
 
 public class SpawnerBaker : Baker<SpawnerAuthoring>
 {
     public override void Bake(SpawnerAuthoring authoring)
     {
+        if (!authoring.enabled)
+            return;
+
         Entity entity = GetEntity(TransformUsageFlags.None);
         LocalTransform lt = new LocalTransform();
         lt.Position = authoring.transform.position;

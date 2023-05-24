@@ -6,6 +6,7 @@ using Unity.Collections.LowLevel.Unsafe;
 using Unity.Jobs;
 using UnityEngine.Experimental.AI;
 using Unity.Collections;
+using System.Diagnostics;
 
 public readonly partial struct AgentNavigationAspect : IAspect
 {
@@ -98,16 +99,21 @@ public struct NavigateJob : IJob
     public float3 extents;
     public int maxIteration;
     public int maxPathSize;
-    NavMeshLocation nml_FromLocation;
-    NavMeshLocation nml_ToLocation;
-    PathQueryStatus status;
-    PathQueryStatus returningStatus;
+   
+   
 
     public void Execute()
     {
-        nml_FromLocation = query.MapLocation(fromLocation, extents, 0);
-        nml_ToLocation = query.MapLocation(toLocation, extents, 0);
-        if (query.IsValid(nml_FromLocation) && query.IsValid(nml_ToLocation))
+        var nml_FromLocation = query.MapLocation(fromLocation, extents, 0);
+        var nml_ToLocation = query.MapLocation(toLocation, extents, 0);
+        PathQueryStatus status;
+        PathQueryStatus returningStatus;
+
+        var starLocIsValid = query.IsValid(nml_FromLocation);
+        var toLocIsValid = query.IsValid(nml_ToLocation);
+
+
+        if (starLocIsValid && toLocIsValid)
         {
             status = query.BeginFindPath(nml_FromLocation, nml_ToLocation, -1);
             if (status == PathQueryStatus.InProgress)
@@ -136,20 +142,26 @@ public struct NavigateJob : IJob
                     );
                     if (returningStatus == PathQueryStatus.Success)
                     {
+
                         for (int i = 0; i < straightPathCount; i++)
                         {
                             if (!(math.distance(fromLocation, res[i].position) < 1) && query.IsValid(query.MapLocation(res[i].position, extents, 0)))
                             {
                                 ab.Add(new AgentPathBuffer { wayPoint = new float3(res[i].position.x, fromLocation.y, res[i].position.z) });
                             }
+
                         }
                     }
+                    //UnityEngine.Debug.Log($"path points {straightPathCount}");
                     res.Dispose();
                     straightPathFlag.Dispose();
                     polys.Dispose();
                     vertexSide.Dispose();
                 }
             }
+        }
+        else {
+            //UnityEngine.Debug.LogError($"starLocIsValid {starLocIsValid} toLocIsValid {toLocIsValid}");
         }
     }
 }
