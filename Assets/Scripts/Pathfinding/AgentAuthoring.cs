@@ -31,6 +31,11 @@ public struct AgentMovement : IComponentData
     public float3 waypointDirection;
 }
 
+public struct UpdateNavigationTarget : IComponentData, IEnableableComponent
+{
+    public float3 Position;
+}
+
 public class AgentAuthoring : MonoBehaviour
 {
   
@@ -47,8 +52,13 @@ public class AgentBaker : Baker<AgentAuthoring>
         });
         AddComponent(entity, new AgentMovement
         {
-            currentBufferIndex = 0
+            currentBufferIndex = 0,
+             reached = true
         });
+
+        AddComponent(entity, new UpdateNavigationTarget());
+        this.SetComponentEnabled<UpdateNavigationTarget>(entity, false);
+
         AddBuffer<AgentPathBuffer>(entity);
         AddBuffer<AgentPathValidityBuffer>(entity);
     }
