@@ -6,11 +6,14 @@ using UnityEngine;
 public class FollowTarget : MonoBehaviour
 {
     public GameObject obj;
+    public float updateRate = 0.1f;
 }
 
 public struct FollowTargetComponent : IComponentData
 {
     public Entity entity;
+    public float updateRate;
+    public float nextUpdateTime;
 }
 public class FollowTarget_Baker : Baker<FollowTarget>
 {
@@ -21,7 +24,9 @@ public class FollowTarget_Baker : Baker<FollowTarget>
 
         AddComponent(entity, new FollowTargetComponent
         {
-             entity = followEntity
+            entity = followEntity,
+            updateRate = authoring.updateRate,
+            nextUpdateTime = Time.time + authoring.updateRate
         });
     }
 }

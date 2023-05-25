@@ -89,6 +89,22 @@ public struct PathValidityJob : IJob
     }
 }
 
+
+public static class NavMeshQueryExt
+{
+    public static void DebugPathStatus(this NavMeshQuery qury, string debugstr, PathQueryStatus status)
+    {
+        UnityEngine.Debug.Log(debugstr +
+               $"Failure: {status.HasFlag(PathQueryStatus.Failure)} " +
+               $"InProgress: {status.HasFlag(PathQueryStatus.InProgress)} " +
+               $"Success: {status.HasFlag(PathQueryStatus.Success)} " +
+               $"OutOfNodes: {status.HasFlag(PathQueryStatus.OutOfNodes)} " +
+               $"OutOfMemory: {status.HasFlag(PathQueryStatus.OutOfMemory)} " +
+               $"BufferTooSmall: {status.HasFlag(PathQueryStatus.BufferTooSmall)} " +
+               $"PartialResult: {status.HasFlag(PathQueryStatus.PartialResult)}");
+    }
+}
+
 [BurstCompile]
 public struct NavigateJob : IJob
 {
@@ -99,9 +115,9 @@ public struct NavigateJob : IJob
     public float3 extents;
     public int maxIteration;
     public int maxPathSize;
-   
-   
 
+
+   
     public void Execute()
     {
         var nml_FromLocation = query.MapLocation(fromLocation, extents, 0);
@@ -115,13 +131,21 @@ public struct NavigateJob : IJob
 
         if (starLocIsValid && toLocIsValid)
         {
-            status = query.BeginFindPath(nml_FromLocation, nml_ToLocation, -1);
-            if (status == PathQueryStatus.InProgress)
+
+            status = query.BeginFindPath(nml_FromLocation, nml_ToLocation);
+            query.DebugPathStatus("BeginPath flags:", status);
+           
+
+            if (status.HasFlag(PathQueryStatus.InProgress))
             {
+               
                 status = query.UpdateFindPath(maxIteration, out int iterationPerformed);
-                if (status == PathQueryStatus.Success)
+                UnityEngine.Debug.Log($"UpdateFindPath status: {status}");
+
+                if (status.HasFlag(PathQueryStatus.Success))
                 {
                     status = query.EndFindPath(out int polygonSize);
+                    UnityEngine.Debug.Log($"EndFindPath status: {status}");
                     NativeArray<NavMeshLocation> res = new NativeArray<NavMeshLocation>(polygonSize, Allocator.Temp);
                     NativeArray<StraightPathFlags> straightPathFlag = new NativeArray<StraightPathFlags>(maxPathSize, Allocator.Temp);
                     NativeArray<float> vertexSide = new NativeArray<float>(maxPathSize, Allocator.Temp);
@@ -140,9 +164,9 @@ public struct NavigateJob : IJob
                         ref straightPathCount,
                         maxPathSize
                     );
-                    if (returningStatus == PathQueryStatus.Success)
+                    if (returningStatus.HasFlag(PathQueryStatus.Success))
                     {
-
+                        UnityEngine.Debug.Log($"Finish status: {returningStatus}");
                         for (int i = 0; i < straightPathCount; i++)
                         {
                             if (!(math.distance(fromLocation, res[i].position) < 1) && query.IsValid(query.MapLocation(res[i].position, extents, 0)))
@@ -152,7 +176,10 @@ public struct NavigateJob : IJob
 
                         }
                     }
-                    //UnityEngine.Debug.Log($"path points {straightPathCount}");
+                    else {
+                        UnityEngine.Debug.Log($"failed status: {returningStatus}");
+                    }
+                    UnityEngine.Debug.Log($"path points {straightPathCount}");
                     res.Dispose();
                     straightPathFlag.Dispose();
                     polys.Dispose();
@@ -161,7 +188,7 @@ public struct NavigateJob : IJob
             }
         }
         else {
-            //UnityEngine.Debug.LogError($"starLocIsValid {starLocIsValid} toLocIsValid {toLocIsValid}");
+            UnityEngine.Debug.LogError($"starLocIsValid {starLocIsValid} toLocIsValid {toLocIsValid}");
         }
     }
 }

@@ -20,7 +20,6 @@ public struct Agent : IComponentData
     public bool pathCalculated;
     public bool usingGlobalRelativeLoction;
     public float elapsedSinceLastPathCalculation;
-    public int pathFindingQueryIndex;
     public bool pathFindingQueryDisposed;
 }
 
