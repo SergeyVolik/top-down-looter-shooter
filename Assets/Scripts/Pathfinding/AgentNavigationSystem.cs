@@ -4,10 +4,8 @@ using Unity.Collections;
 using Unity.Entities;
 using Unity.Jobs;
 using UnityEngine.Experimental.AI;
-using Unity.Mathematics;
 using Unity.Transforms;
 using Unity.Collections.LowLevel.Unsafe;
-using System.Linq;
 
 [BurstCompile]
 public partial struct MoveJob : IJobEntity
@@ -34,32 +32,47 @@ public partial struct UpdateFollowTargetSystem : ISystem
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
-        var worldToLocalLookUp = SystemAPI.GetComponentLookup<LocalToWorld>(true);
+       
 
         var time = SystemAPI.Time.ElapsedTime;
 
         var updNavPointLookup = SystemAPI.GetComponentLookup<UpdateNavigationTarget>();
-        foreach (var (ft, entity) in 
-            SystemAPI.Query<RefRW<FollowTargetComponent>>()
-            .WithEntityAccess())
-        {
 
-            if (time > ft.ValueRO.nextUpdateTime)
+
+        var job = new UpdateFollowJob()
+        {
+            time = (float)time,
+            updNavPointLookup = updNavPointLookup
+        };
+
+        state.Dependency = job.Schedule(state.Dependency);
+    }
+
+
+    [BurstCompile]
+    public partial struct UpdateFollowJob : IJobEntity
+    {
+        public ComponentLookup<UpdateNavigationTarget> updNavPointLookup;
+        public float time;
+
+        [BurstCompile]
+        public void Execute(Entity entity, ref FollowTargetComponent ft, in LocalToWorld ltw)
+        {
+            if (time > ft.nextUpdateTime)
             {
-                ft.ValueRW.nextUpdateTime = (float)time + ft.ValueRO.updateRate;
+                ft.nextUpdateTime = (float)time + ft.updateRate;
                 UnityEngine.Debug.Log($"Update Follow Target");
-                var pos = worldToLocalLookUp.GetRefRO(ft.ValueRO.entity).ValueRO.Position;
+                var pos = ltw.Position;
                 updNavPointLookup.GetRefRW(entity).ValueRW.Position = pos;
                 updNavPointLookup.SetComponentEnabled(entity, true);
             }
-            
         }
     }
 }
 
 public struct DebugPath : IComponentData
 {
-    
+
 }
 
 public partial struct DebugPathSystem : ISystem
@@ -70,7 +83,7 @@ public partial struct DebugPathSystem : ISystem
     }
     public void OnUpdate(ref SystemState state)
     {
-    
+
         foreach (var (path, entity) in SystemAPI.Query<DynamicBuffer<AgentPathBuffer>>().WithEntityAccess())
         {
 
@@ -82,13 +95,13 @@ public partial struct DebugPathSystem : ISystem
         }
     }
 }
-    public partial struct AgentNavigationSystemV2 : ISystem, ISystemStartStop
+public partial struct AgentNavigationSystemV2 : ISystem, ISystemStartStop
 {
     NativeArray<JobHandle> pathFindingJobs;
     NativeArray<JobHandle> pathValidyJobs;
     EntityQuery eq;
- 
-   
+
+
     NativeArray<NavMeshQuery> pathRecaclulatingQueries;
 
     UnsafeHashMap<Entity, NavMeshQuery> allNavMeshQueries;
@@ -109,10 +122,10 @@ public partial struct DebugPathSystem : ISystem
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
-      
+
         var entitiesCount = eq.CalculateEntityCount();
-      
-        
+
+
         var updNavPointLookup = SystemAPI.GetComponentLookup<UpdateNavigationTarget>();
         var navQueryStateLookUp = SystemAPI.GetComponentLookup<NavQueryStateComponent>();
 
@@ -122,9 +135,9 @@ public partial struct DebugPathSystem : ISystem
         foreach (var (ana, entity) in SystemAPI.Query<AgentNavigationAspect>().WithEntityAccess().WithAll<UpdateNavigationTarget>())
         {
             var updateCOmp = updNavPointLookup.GetRefRO(entity);
-           
+
             ana.agent.ValueRW.toLocation = updateCOmp.ValueRO.Position;
-            ana.agentBuffer.Clear();           
+            ana.agentBuffer.Clear();
             ana.agent.ValueRW.pathCalculated = false;
             ana.agentPathValidityBuffer.Clear();
             ana.agentMovement.ValueRW.reached = false;
@@ -133,21 +146,21 @@ public partial struct DebugPathSystem : ISystem
 
             if (allNavMeshQueries.TryGetValue(entity, out var query))
             {
-                
+
                 query.Dispose();
                 allNavMeshQueries.Remove(entity);
 
-               
+
             }
 
             query = new NavMeshQuery(NavMeshWorld.GetDefaultWorld(), Allocator.TempJob, propertiesRW.ValueRO.maxPathNodePoolSize);
 
-            allNavMeshQueries.Add(entity, query);   
-            
+            allNavMeshQueries.Add(entity, query);
+
 
             navQueryStateLookUp.SetComponentEnabled(entity, true);
             navQueryStateLookUp.GetRefRW(entity).ValueRW.Value = NavQueryState.None;
-            
+
         }
 
         foreach (var (ana, e) in SystemAPI.Query<AgentNavigationAspect>().WithEntityAccess().WithAll<UpdateNavigationTarget>())
@@ -174,7 +187,7 @@ public partial struct DebugPathSystem : ISystem
         job.Run();
         //state.Dependency = job.Schedule(state.Dependency);
 
-       
+
 
         //if (propertiesRW.ValueRO.dynamicPathFinding)
         //{
@@ -388,5 +401,5 @@ public partial struct DebugPathSystem : ISystem
 
 //    }
 //}
-   
+
 
