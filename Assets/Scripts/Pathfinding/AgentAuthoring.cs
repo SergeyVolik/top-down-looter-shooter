@@ -35,6 +35,19 @@ public struct UpdateNavigationTarget : IComponentData, IEnableableComponent
     public float3 Position;
 }
 
+public enum NavQueryState
+{
+    None,
+    Started,
+    Finished,
+    //Updating,
+    Failed
+}
+public struct NavQueryStateComponent : IComponentData, IEnableableComponent
+{
+    public NavQueryState Value;
+}
+
 public class AgentAuthoring : MonoBehaviour
 {
   
@@ -55,6 +68,10 @@ public class AgentBaker : Baker<AgentAuthoring>
              reached = true
         });
 
+        AddComponent(entity, new NavQueryStateComponent());
+        this.SetComponentEnabled<NavQueryStateComponent>(entity, false);
+
+     
         AddComponent(entity, new UpdateNavigationTarget());
         this.SetComponentEnabled<UpdateNavigationTarget>(entity, false);
 

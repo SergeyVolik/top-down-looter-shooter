@@ -73,6 +73,11 @@ public class PathUtils
                 }
             }
         }
+
+        if (n >= straightPath.Length)
+        {
+            n = straightPath.Length - 1;
+        }
         straightPath[n] = query.CreateLocation(termPos, path[endIndex]);
         straightPathFlags[n] = query.GetPolygonType(path[endIndex]) == NavMeshPolyTypes.OffMeshConnection ? StraightPathFlags.OffMeshConnection : 0;
         return ++n;

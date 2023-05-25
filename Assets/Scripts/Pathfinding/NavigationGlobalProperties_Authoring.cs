@@ -15,9 +15,11 @@ public struct NavigationGlobalProperties : IComponentData
     public bool setGlobalRelativeLocation;
     public float dynamicPathRecalculatingFrequency;
     public float unitsInForwardDirection;
+    public float reachDistance;
     public bool retracePath;
     public float agentSpeed;
     public float rotationSpeed;
+
 }
 
 public class NavigationGlobalProperties_Authoring : MonoBehaviour
@@ -38,9 +40,11 @@ public class NavigationGlobalProperties_Authoring : MonoBehaviour
     [Header("Agent Movement")]
     public bool agentMovementEnabled;
     public float minimumDistanceToWaypoint;
+    public float reachDistance;
     public float agentSpeed;
     public float rotationSpeed;
     public bool retracePath;
+    public bool debugPath;
 }
 
 public class NavigationGlobalProperties_Baker : Baker<NavigationGlobalProperties_Authoring>
@@ -58,12 +62,18 @@ public class NavigationGlobalProperties_Baker : Baker<NavigationGlobalProperties
             minimumDistanceToWaypoint = authoring.minimumDistanceToWaypoint,
             agentMovementEnabled = authoring.agentMovementEnabled,
             units = authoring.units,
-            setGlobalRelativeLocation= authoring.setGlobalRelativeLocation,
-            unitsInForwardDirection= authoring.unitsInForwardDirection,
+            setGlobalRelativeLocation = authoring.setGlobalRelativeLocation,
+            unitsInForwardDirection = authoring.unitsInForwardDirection,
             dynamicPathRecalculatingFrequency = authoring.dynamicPathRecalculatingFrequency,
-            retracePath= authoring.retracePath,
+            retracePath = authoring.retracePath,
             agentSpeed = authoring.agentSpeed,
-            rotationSpeed = authoring.rotationSpeed
+            rotationSpeed = authoring.rotationSpeed,
+            reachDistance = authoring.reachDistance,
         });
+
+        if (authoring.debugPath)
+        {
+            AddComponent(entity, new DebugPath());
+        }
     }
 }

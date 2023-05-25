@@ -16,23 +16,26 @@ public readonly partial struct AgentNavigationAspect : IAspect
     public readonly DynamicBuffer<AgentPathValidityBuffer> agentPathValidityBuffer;
     public readonly RefRW<LocalTransform> trans;
 
-    public void moveAgent(float deltaTime, float minDistanceReached, float agentSpeed, float agentRotationSpeed)
+    public void moveAgent(float deltaTime, float distToNextPoint, float reachDist, float agentSpeed, float agentRotationSpeed)
     {
         if (agentBuffer.Length > 0 && agent.ValueRO.pathCalculated && !agentMovement.ValueRO.reached)
         {
+            if (math.distance(trans.ValueRO.Position, agentBuffer[agentBuffer.Length - 1].wayPoint) <= reachDist)
+            {
+                agentMovement.ValueRW.reached = true;
+                return;
+            }
+
             agentMovement.ValueRW.waypointDirection = math.normalize(agentBuffer[agentMovement.ValueRO.currentBufferIndex].wayPoint - trans.ValueRO.Position);
             if (!float.IsNaN(agentMovement.ValueRW.waypointDirection.x))
             {
                 trans.ValueRW.Position += agentMovement.ValueRW.waypointDirection * agentSpeed * deltaTime;
                 trans.ValueRW.Rotation = math.slerp(
-                                        trans.ValueRW.Rotation, 
-                                        quaternion.LookRotation(agentMovement.ValueRW.waypointDirection, math.up()), 
+                                        trans.ValueRW.Rotation,
+                                        quaternion.LookRotation(agentMovement.ValueRW.waypointDirection, math.up()),
                                         deltaTime * agentRotationSpeed);
-                if (math.distance(trans.ValueRO.Position, agentBuffer[agentBuffer.Length - 1].wayPoint) <= minDistanceReached)
-                {
-                    agentMovement.ValueRW.reached = true;
-                }
-                else if (math.distance(trans.ValueRO.Position, agentBuffer[agentMovement.ValueRO.currentBufferIndex].wayPoint) <= minDistanceReached)
+               
+                if (math.distance(trans.ValueRO.Position, agentBuffer[agentMovement.ValueRO.currentBufferIndex].wayPoint) <= distToNextPoint)
                 {
                     agentMovement.ValueRW.currentBufferIndex = agentMovement.ValueRW.currentBufferIndex + 1;
                 }
@@ -71,7 +74,7 @@ public struct PathValidityJob : IJob
             {
                 startLocation = query.MapLocation(trans.Position + (trans.Forward() * unitsInDirection), extents, 0);
                 status = query.Raycast(out navMeshHit, startLocation, ab.ElementAt(currentBufferIndex).wayPoint);
-                
+
                 if (status == PathQueryStatus.Success)
                 {
                     if ((math.ceil(navMeshHit.position).x != math.ceil(ab.ElementAt(currentBufferIndex).wayPoint.x)) &&
@@ -105,90 +108,161 @@ public static class NavMeshQueryExt
     }
 }
 
+[WithAll(typeof(UpdateNavigationTarget), typeof(NavQueryStateComponent))]
 [BurstCompile]
-public struct NavigateJob : IJob
+public partial struct NavigateJob : IJobEntity
 {
-    public NavMeshQuery query;
-    [NativeDisableContainerSafetyRestriction] public DynamicBuffer<AgentPathBuffer> ab;
-    public float3 fromLocation;
-    public float3 toLocation;
-    public float3 extents;
-    public int maxIteration;
-    public int maxPathSize;
 
+    [ReadOnly]
+    public UnsafeHashMap<Entity, NavMeshQuery>.ReadOnly queryMap;
+    [ReadOnly]
+    public NavigationGlobalProperties properties;
 
-   
-    public void Execute()
+    public ComponentLookup<NavQueryStateComponent> compLookup;
+    public ComponentLookup<UpdateNavigationTarget> updNavPointLookup;
+
+    public void Execute(AgentNavigationAspect ana, Entity entity)
     {
+
+       
+        if (!compLookup.HasComponent(entity))
+            return;
+
+        if (!queryMap.TryGetValue(entity, out var query))
+            return;
+
+        updNavPointLookup.SetComponentEnabled(entity, false);
+        float3 fromLocation = ana.trans.ValueRO.Position;
+        float3 toLocation = ana.agent.ValueRO.toLocation;
+        float3 extents = properties.extents;
+        int maxIteration = properties.maxIteration;
+        int maxPathSize = properties.maxPathSize;
+
+        var ab = ana.agentBuffer;
+
+        PathQueryStatus status = default;
+        PathQueryStatus returningStatus = default;
+
+
+        var state = compLookup.GetRefRO(entity).ValueRO.Value;
+
         var nml_FromLocation = query.MapLocation(fromLocation, extents, 0);
         var nml_ToLocation = query.MapLocation(toLocation, extents, 0);
-        PathQueryStatus status;
-        PathQueryStatus returningStatus;
-
-        var starLocIsValid = query.IsValid(nml_FromLocation);
-        var toLocIsValid = query.IsValid(nml_ToLocation);
 
 
-        if (starLocIsValid && toLocIsValid)
+
+
+        if (state == NavQueryState.None)
         {
+            var starLocIsValid = query.IsValid(nml_FromLocation);
+            var toLocIsValid = query.IsValid(nml_ToLocation);
 
-            status = query.BeginFindPath(nml_FromLocation, nml_ToLocation);
-            query.DebugPathStatus("BeginPath flags:", status);
-           
-
-            if (status.HasFlag(PathQueryStatus.InProgress))
+            if (starLocIsValid && toLocIsValid)
             {
+                
+                status = query.BeginFindPath(nml_FromLocation, nml_ToLocation);
+                //query.DebugPathStatus($"BeginPath flags: state: {state}", status);
                
-                status = query.UpdateFindPath(maxIteration, out int iterationPerformed);
-                UnityEngine.Debug.Log($"UpdateFindPath status: {status}");
-
-                if (status.HasFlag(PathQueryStatus.Success))
+                if ((status & PathQueryStatus.InProgress) == PathQueryStatus.InProgress || (status & PathQueryStatus.Success) == PathQueryStatus.Success)
                 {
-                    status = query.EndFindPath(out int polygonSize);
-                    UnityEngine.Debug.Log($"EndFindPath status: {status}");
-                    NativeArray<NavMeshLocation> res = new NativeArray<NavMeshLocation>(polygonSize, Allocator.Temp);
-                    NativeArray<StraightPathFlags> straightPathFlag = new NativeArray<StraightPathFlags>(maxPathSize, Allocator.Temp);
-                    NativeArray<float> vertexSide = new NativeArray<float>(maxPathSize, Allocator.Temp);
-                    NativeArray<PolygonId> polys = new NativeArray<PolygonId>(polygonSize, Allocator.Temp);
-                    int straightPathCount = 0;
-                    int a = query.GetPathResult(polys);
-                    returningStatus = PathUtils.FindStraightPath(
-                        query,
-                        fromLocation,
-                        toLocation,
-                        polys,
-                        polygonSize,
-                        ref res,
-                        ref straightPathFlag,
-                        ref vertexSide,
-                        ref straightPathCount,
-                        maxPathSize
-                    );
-                    if (returningStatus.HasFlag(PathQueryStatus.Success))
-                    {
-                        UnityEngine.Debug.Log($"Finish status: {returningStatus}");
-                        for (int i = 0; i < straightPathCount; i++)
-                        {
-                            if (!(math.distance(fromLocation, res[i].position) < 1) && query.IsValid(query.MapLocation(res[i].position, extents, 0)))
-                            {
-                                ab.Add(new AgentPathBuffer { wayPoint = new float3(res[i].position.x, fromLocation.y, res[i].position.z) });
-                            }
-
-                        }
-                    }
-                    else {
-                        UnityEngine.Debug.Log($"failed status: {returningStatus}");
-                    }
-                    UnityEngine.Debug.Log($"path points {straightPathCount}");
-                    res.Dispose();
-                    straightPathFlag.Dispose();
-                    polys.Dispose();
-                    vertexSide.Dispose();
+                    state = NavQueryState.Started;
+                }
+                else if ((status & PathQueryStatus.Failure) == PathQueryStatus.Failure)
+                {
+                    state = NavQueryState.Failed;
+                    //UnityEngine.Debug.LogError($"BeginPath nav mesh query failed!");
                 }
             }
+            else
+            {
+                //UnityEngine.Debug.LogError($"starLocIsValid {starLocIsValid} toLocIsValid {toLocIsValid}");
+            }
         }
-        else {
-            UnityEngine.Debug.LogError($"starLocIsValid {starLocIsValid} toLocIsValid {toLocIsValid}");
+
+        if (state == NavQueryState.Started)
+        {
+
+            status = query.UpdateFindPath(maxIteration, out int iterationPerformed);
+
+
+            if ((status & PathQueryStatus.Success) == PathQueryStatus.Success)
+            {
+                state = NavQueryState.Finished;
+            }
+            else if ((status & PathQueryStatus.Failure) == PathQueryStatus.Failure)
+            {
+                //UnityEngine.Debug.LogError($"UpdateFindPath nav mesh query failed!");
+            }
+
+            //query.DebugPathStatus($"UpdateFindPath flags: state: {state}", status);
         }
+
+        if (state == NavQueryState.Finished)
+        {
+
+            status = query.EndFindPath(out int polygonSize);
+            //query.DebugPathStatus($"EndFindPath flags: state: {state}", status);
+
+           
+            NativeArray<NavMeshLocation> res = new NativeArray<NavMeshLocation>(polygonSize, Allocator.Temp);
+            NativeArray<StraightPathFlags> straightPathFlag = new NativeArray<StraightPathFlags>(maxPathSize, Allocator.Temp);
+            NativeArray<float> vertexSide = new NativeArray<float>(maxPathSize, Allocator.Temp);
+            NativeArray<PolygonId> polys = new NativeArray<PolygonId>(polygonSize, Allocator.Temp);
+            int straightPathCount = 0;
+            int a = query.GetPathResult(polys);
+
+            //UnityEngine.Debug.Log($"polygonSize {polygonSize}");
+            returningStatus = PathUtils.FindStraightPath(
+                query,
+                fromLocation,
+                toLocation,
+                polys,
+                polygonSize,
+                ref res,
+                ref straightPathFlag,
+                ref vertexSide,
+                ref straightPathCount,
+                maxPathSize
+            );
+            
+
+            if ((returningStatus & PathQueryStatus.Success) == PathQueryStatus.Success)
+            {
+                //query.DebugPathStatus($"EndFindPath flags: state: {state}", status);
+                //UnityEngine.Debug.Log($"Finish status: {returningStatus}");
+                for (int i = 0; i < straightPathCount; i++)
+                {
+                    if (!(math.distance(fromLocation, res[i].position) < 1) && query.IsValid(query.MapLocation(res[i].position, extents, 0)))
+                    {
+                        var wayPointPos = new float3(res[i].position.x, fromLocation.y, res[i].position.z);
+                        var wayPointPosV2 = new float3(res[i].position.x, res[i].position.y, res[i].position.z);
+                        ab.Add(new AgentPathBuffer { wayPoint = wayPointPosV2 });
+
+                        //UnityEngine.Debug.Log($"wayPointPos {wayPointPos} wayPointPosV2 {wayPointPosV2}");
+                    }
+
+                }
+            }
+            else
+            {
+                //query.DebugPathStatus($"failed flags: state: {state}", status);
+               
+            }
+           
+            res.Dispose();
+            straightPathFlag.Dispose();
+            polys.Dispose();
+            vertexSide.Dispose();
+            ana.agent.ValueRW.pathCalculated = true;
+
+        }
+
+        compLookup.GetRefRW(entity).ValueRW.Value = state;
+
+
+
+
+
     }
 }
+
