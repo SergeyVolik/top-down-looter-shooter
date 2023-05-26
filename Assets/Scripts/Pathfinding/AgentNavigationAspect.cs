@@ -48,50 +48,6 @@ public readonly partial struct AgentNavigationAspect : IAspect
     }
 }
 
-[BurstCompile]
-public struct PathValidityJob : IJob
-{
-    public NavMeshQuery query;
-    public float3 extents;
-    public int currentBufferIndex;
-    public LocalTransform trans;
-    public float unitsInDirection;
-    [NativeDisableContainerSafetyRestriction] public DynamicBuffer<AgentPathBuffer> ab;
-    [NativeDisableContainerSafetyRestriction] public DynamicBuffer<AgentPathValidityBuffer> apvb;
-    NavMeshLocation startLocation;
-    UnityEngine.AI.NavMeshHit navMeshHit;
-    PathQueryStatus status;
-
-    public void Execute()
-    {
-        if (currentBufferIndex < ab.Length)
-        {
-            if (!query.IsValid(query.MapLocation(ab.ElementAt(currentBufferIndex).wayPoint, extents, 0)))
-            {
-                apvb.Add(new AgentPathValidityBuffer { isPathInvalid = true });
-            }
-            else
-            {
-                startLocation = query.MapLocation(trans.Position + (trans.Forward() * unitsInDirection), extents, 0);
-                status = query.Raycast(out navMeshHit, startLocation, ab.ElementAt(currentBufferIndex).wayPoint);
-
-                if (status == PathQueryStatus.Success)
-                {
-                    if ((math.ceil(navMeshHit.position).x != math.ceil(ab.ElementAt(currentBufferIndex).wayPoint.x)) &&
-                        (math.ceil(navMeshHit.position).z != math.ceil(ab.ElementAt(currentBufferIndex).wayPoint.z)))
-                    {
-                        apvb.Add(new AgentPathValidityBuffer { isPathInvalid = true });
-                    }
-                }
-                else
-                {
-                    apvb.Add(new AgentPathValidityBuffer { isPathInvalid = true });
-                }
-            }
-        }
-    }
-}
-
 
 public static class NavMeshQueryExt
 {

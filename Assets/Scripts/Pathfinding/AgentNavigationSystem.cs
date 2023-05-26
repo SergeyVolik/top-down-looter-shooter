@@ -60,8 +60,7 @@ public partial struct UpdateFollowTargetSystem : ISystem
         {
             if (time > ft.nextUpdateTime)
             {
-                ft.nextUpdateTime = (float)time + ft.updateRate;
-                UnityEngine.Debug.Log($"Update Follow Target");
+                ft.nextUpdateTime = (float)time + ft.updateRate;              
                 var pos = ltw.Position;
                 updNavPointLookup.GetRefRW(entity).ValueRW.Position = pos;
                 updNavPointLookup.SetComponentEnabled(entity, true);
@@ -97,18 +96,18 @@ public partial struct DebugPathSystem : ISystem
 }
 public partial struct AgentNavigationSystemV2 : ISystem, ISystemStartStop
 {
-    NativeArray<JobHandle> pathFindingJobs;
-    NativeArray<JobHandle> pathValidyJobs;
     EntityQuery eq;
-
-
-    NativeArray<NavMeshQuery> pathRecaclulatingQueries;
 
     UnsafeHashMap<Entity, NavMeshQuery> allNavMeshQueries;
 
     public void OnCreate(ref SystemState state)
     {
         allNavMeshQueries = new UnsafeHashMap<Entity, NavMeshQuery>(10, Allocator.Persistent);
+    }
+
+    public void OnDestroy(ref SystemState state)
+    {
+        allNavMeshQueries.Dispose();
     }
     public void OnStartRunning(ref SystemState state)
     {
@@ -123,9 +122,7 @@ public partial struct AgentNavigationSystemV2 : ISystem, ISystemStartStop
     public void OnUpdate(ref SystemState state)
     {
 
-        var entitiesCount = eq.CalculateEntityCount();
-
-
+     
         var updNavPointLookup = SystemAPI.GetComponentLookup<UpdateNavigationTarget>();
         var navQueryStateLookUp = SystemAPI.GetComponentLookup<NavQueryStateComponent>();
 
@@ -177,6 +174,24 @@ public partial struct AgentNavigationSystemV2 : ISystem, ISystemStartStop
             }
         }
 
+
+        var ecb = SystemAPI.GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>().CreateCommandBuffer(state.WorldUnmanaged);
+
+        foreach (var (ana, e) in SystemAPI.Query<Agent>().WithNone<ClearNavMeshQueryComponent>().WithEntityAccess())
+        {
+            ecb.AddComponent(e, new ClearNavMeshQueryComponent());
+        }
+
+        foreach (var (ana, e) in SystemAPI.Query<ClearNavMeshQueryComponent>().WithNone<Agent>().WithEntityAccess())
+        {
+            ecb.RemoveComponent<ClearNavMeshQueryComponent>(e);
+
+            if (allNavMeshQueries.TryGetValue(e, out var navMeshQuery))
+            {
+                navMeshQuery.Dispose();
+            }
+        }
+
         var job = new NavigateJob
         {
             properties = propertiesRO,
@@ -184,53 +199,9 @@ public partial struct AgentNavigationSystemV2 : ISystem, ISystemStartStop
             compLookup = navQueryStateLookUp,
             updNavPointLookup = updNavPointLookup,
         };
-        job.Run();
-        //state.Dependency = job.Schedule(state.Dependency);
 
 
-
-        //if (propertiesRW.ValueRO.dynamicPathFinding)
-        //{
-        //    int j = 0;
-        //    pathRecaclulatingQueries = new NativeArray<NavMeshQuery>(eq.CalculateEntityCount(), Allocator.Temp);
-        //    pathValidyJobs = new NativeArray<JobHandle>(eq.CalculateEntityCount(), Allocator.Temp);
-        //    foreach (var (ana, e) in SystemAPI.Query<AgentNavigationAspect>().WithEntityAccess().WithAll<UpdateNavigationTarget>())
-        //    {
-        //        if (!ana.agentMovement.ValueRO.reached)
-        //        {
-        //            ana.agent.ValueRW.elapsedSinceLastPathCalculation += SystemAPI.Time.DeltaTime;
-        //            if (ana.agent.ValueRW.elapsedSinceLastPathCalculation > propertiesRW.ValueRO.dynamicPathRecalculatingFrequency)
-        //            {
-        //                pathRecaclulatingQueries[j] = new NavMeshQuery(NavMeshWorld.GetDefaultWorld(), Allocator.TempJob, propertiesRW.ValueRO.maxPathNodePoolSize);
-        //                ana.agent.ValueRW.elapsedSinceLastPathCalculation = 0;
-
-        //                pathValidyJobs[j] = new PathValidityJob
-        //                {
-        //                    query = pathRecaclulatingQueries[j],
-        //                    extents = propertiesRW.ValueRO.extents,
-        //                    currentBufferIndex = ana.agentMovement.ValueRW.currentBufferIndex,
-        //                    trans = ana.trans.ValueRW,
-        //                    unitsInDirection = propertiesRW.ValueRO.unitsInForwardDirection,
-        //                    ab = ana.agentBuffer,
-        //                    apvb = ana.agentPathValidityBuffer
-        //                }.Schedule(state.Dependency);
-
-        //                j++;
-        //            }
-        //        }
-
-
-
-        //    }
-        //    JobHandle.CompleteAll(pathValidyJobs);
-
-        //    for (int k = 0; k < j; k++)
-        //    {
-        //        pathRecaclulatingQueries[k].Dispose();
-        //    }
-
-        //    pathRecaclulatingQueries.Dispose();
-        //}
+        state.Dependency = job.Schedule(state.Dependency);
 
 
         if (propertiesRW.ValueRO.agentMovementEnabled)

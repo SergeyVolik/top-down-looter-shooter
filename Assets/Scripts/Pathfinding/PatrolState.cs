@@ -14,6 +14,8 @@ public class PatrolState : MonoBehaviour
 public struct PatrolStateComponent : IComponentData, IEnableableComponent
 {
     public int partolIndex;
+    public bool rndExecuted;
+   
 }
 
 public class PatrolStateBaker : Baker<PatrolState>

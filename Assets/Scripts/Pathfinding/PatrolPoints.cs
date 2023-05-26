@@ -1,3 +1,4 @@
+using SV.ECS;
 using System.Collections;
 using System.Collections.Generic;
 using Unity.Burst;
@@ -9,7 +10,7 @@ using UnityEngine;
 public class PatrolPoints : MonoBehaviour
 {
     public Transform[] points;
-    
+
 }
 
 public struct PatrolPointsComponent : IBufferElementData
@@ -36,46 +37,56 @@ public class PatrolPointsBaker : Baker<PatrolPoints>
                 });
             }
         }
-        
+
     }
 }
 
 
 public partial struct PartolSystem : ISystem
 {
-  
+
 
     public void OnCreate(ref SystemState state)
     {
-        
+
     }
 
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
 
-
+        
         if (SystemAPI.TryGetSingletonBuffer<PatrolPointsComponent>(out var points))
         {
+            SystemAPI.TryGetSingletonEntity<PatrolPointsComponent>(out var bufEntity);
             var Lookup = SystemAPI.GetComponentLookup<UpdateNavigationTarget>();
+            var rndLookUp = SystemAPI.GetComponentLookup<IndividualRandomComponent>();
             foreach (var (partolData, agent, e) in SystemAPI.Query<RefRW<PatrolStateComponent>, RefRO<AgentMovement>>().WithEntityAccess())
             {
                 if (agent.ValueRO.reached)
                 {
                     var nextPointIndex = partolData.ValueRO.partolIndex;
-                    nextPointIndex++;
+                    //nextPointIndex++;
 
-                    if (points.Length <= nextPointIndex)
-                    {
-                        nextPointIndex = 0;
-                    }
+                    var rnd = rndLookUp.GetRefRW(bufEntity).ValueRO.Value;
+                    //if (points.Length <= nextPointIndex)
+                    //{
+                    //    nextPointIndex = 0;
+                    //}
+
+                    //if (!partolData.ValueRO.rndExecuted)
+                    //{
+                        partolData.ValueRW.rndExecuted = true;
+                        nextPointIndex = rnd.NextInt(0, points.Length - 1);
+                    //}
+                    rndLookUp.GetRefRW(bufEntity).ValueRW.Value = rnd;
                     Lookup.SetComponentEnabled(e, true);
-
+                    
                     Lookup.GetRefRW(e).ValueRW.Position = points[nextPointIndex].position;
                     partolData.ValueRW.partolIndex = nextPointIndex;
                 }
             }
         }
     }
-    
+
 }

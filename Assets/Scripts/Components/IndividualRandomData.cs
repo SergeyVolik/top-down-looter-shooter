@@ -15,6 +15,11 @@ namespace SV.ECS
     {
         public Unity.Mathematics.Random Value;
     }
+    public struct IndividualRandomInited : IComponentData
+    {
+        
+    }
+
 
     public class IndividualRandomBaker : Baker<IndividualRandomData>
     {
@@ -33,16 +38,19 @@ namespace SV.ECS
         protected override void OnStartRunning()
         {
             base.OnStartRunning();
+
+
+        }
+        
+        protected override void OnUpdate()
+        {
+            var ecb = SystemAPI.GetSingleton<BeginSimulationEntityCommandBufferSystem.Singleton>().CreateCommandBuffer(World.Unmanaged);
             Entities.ForEach((Entity entity, int entityInQueryIndex, ref IndividualRandomComponent randomData) =>
             {
                 randomData.Value = Unity.Mathematics.Random.CreateFromIndex((uint)entityInQueryIndex);
+                ecb.AddComponent(entity, new IndividualRandomInited());
+            }).WithNone<IndividualRandomInited>().Run();
 
-            }).ScheduleParallel();
-                
-        }
-        protected override void OnUpdate()
-        {
-            this.Enabled = false;
         }
     }
 

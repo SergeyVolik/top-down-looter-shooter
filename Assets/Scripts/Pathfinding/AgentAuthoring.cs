@@ -1,7 +1,7 @@
 using Unity.Entities;
 using Unity.Mathematics;
 using UnityEngine;
-using UnityEngine.Experimental.AI;
+
 
 public struct AgentPathBuffer : IBufferElementData
 {
@@ -13,6 +13,10 @@ public struct AgentPathValidityBuffer : IBufferElementData
     public bool isPathInvalid;
 }
 
+public struct ClearNavMeshQueryComponent : ICleanupComponentData
+{
+    
+}
 public struct Agent : IComponentData
 {
     
