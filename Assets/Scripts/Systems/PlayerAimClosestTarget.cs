@@ -23,7 +23,7 @@ namespace SV.ECS
 
     public struct DetectedTargetComponent : IComponentData, IEnableableComponent
     {
-        public DistanceHit target;
+        public Entity target;
     }
 
     public struct PlayerAimClosestTargetComponent : IComponentData

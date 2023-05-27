@@ -44,16 +44,16 @@ namespace SV.ECS
                 if (hasObj)
                 {
                     DistanceHit hitedTarget = default;
-
+                    Entity detectedEntity = default;
                     bool hasTarget = false;
                     for (int i = 0; i < targets.Length; i++)
                     {
                         hitedTarget = targets[i];
-                        if (aimTargetLookup.HasComponent(hitedTarget.Entity))
+                        if (aimTargetLookup.TryGetComponent(hitedTarget.Entity, out var aimTarg1))
                         {
                             hasTarget = true;
                             //var vector = hitedTarget.Position - selfPos;
-
+                            detectedEntity = aimTarg1.AimPointEntity;
                             //lTrans.Rotation = quaternion.LookRotation(vector, math.up());
 
                             break;
@@ -65,7 +65,7 @@ namespace SV.ECS
                     detectedTargetLookUp.SetComponentEnabled(entity, hasTarget);
                     var refObj = detectedTargetLookUp.GetRefRW(entity);
 
-                    refObj.ValueRW.target = hitedTarget;
+                    refObj.ValueRW.target = detectedEntity;
 
                 }
 
@@ -143,7 +143,7 @@ namespace SV.ECS
             {
 
                 float3 target = default;
-                if (localTransformLookup.TryGetComponent(detected.target.Entity, out var ltwTarget))
+                if (localTransformLookup.TryGetComponent(detected.target, out var ltwTarget))
                 {
                     target = ltwTarget.Position;
                 }

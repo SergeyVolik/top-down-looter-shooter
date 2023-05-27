@@ -37,12 +37,13 @@ public partial struct UpdateFollowTargetSystem : ISystem
         var time = SystemAPI.Time.ElapsedTime;
 
         var updNavPointLookup = SystemAPI.GetComponentLookup<UpdateNavigationTarget>();
-
+        var ltwLookup = SystemAPI.GetComponentLookup<LocalToWorld>(true);
 
         var job = new UpdateFollowJob()
         {
             time = (float)time,
-            updNavPointLookup = updNavPointLookup
+            updNavPointLookup = updNavPointLookup,
+            ltwLookup = ltwLookup
         };
 
         state.Dependency = job.Schedule(state.Dependency);
@@ -53,15 +54,19 @@ public partial struct UpdateFollowTargetSystem : ISystem
     public partial struct UpdateFollowJob : IJobEntity
     {
         public ComponentLookup<UpdateNavigationTarget> updNavPointLookup;
+
+        [ReadOnly]
+        public ComponentLookup<LocalToWorld> ltwLookup;
+
         public float time;
 
         [BurstCompile]
-        public void Execute(Entity entity, ref FollowTargetComponent ft, in LocalToWorld ltw)
+        public void Execute(Entity entity, ref FollowTargetComponent ft)
         {
             if (time > ft.nextUpdateTime)
             {
                 ft.nextUpdateTime = (float)time + ft.updateRate;              
-                var pos = ltw.Position;
+                var pos = ltwLookup.GetRefRO(ft.entity).ValueRO.Position;
                 updNavPointLookup.GetRefRW(entity).ValueRW.Position = pos;
                 updNavPointLookup.SetComponentEnabled(entity, true);
             }
@@ -103,6 +108,8 @@ public partial struct AgentNavigationSystemV2 : ISystem, ISystemStartStop
     public void OnCreate(ref SystemState state)
     {
         allNavMeshQueries = new UnsafeHashMap<Entity, NavMeshQuery>(10, Allocator.Persistent);
+
+        state.RequireForUpdate<NavigationGlobalProperties>();
     }
 
     public void OnDestroy(ref SystemState state)

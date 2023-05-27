@@ -1312,7 +1312,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   prefab: {fileID: 8599641753126581788, guid: d7414e7146d26034fbc0c2c0fc698246, type: 3}
   gridSize:
-    x: 500
+    x: 10
     y: 1
     z: 1
   gridOffset:
@@ -2355,7 +2355,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8599641753126581788, guid: d7414e7146d26034fbc0c2c0fc698246, type: 3}
       propertyPath: m_IsActive
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents:
     - {fileID: 5165070201144459798, guid: d7414e7146d26034fbc0c2c0fc698246, type: 3}
@@ -2965,14 +2965,6 @@ PrefabInstance:
     - target: {fileID: 5577740025753993694, guid: 60a25a117e2b81c4c8f7a396eba9e7ab, type: 3}
       propertyPath: m_Name
       value: Player
-      objectReference: {fileID: 0}
-    - target: {fileID: 5577740025753993694, guid: 60a25a117e2b81c4c8f7a396eba9e7ab, type: 3}
-      propertyPath: m_IsActive
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 7229119781135392727, guid: 60a25a117e2b81c4c8f7a396eba9e7ab, type: 3}
-      propertyPath: speed
-      value: 15
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
