@@ -14,7 +14,7 @@ namespace SV.ECS
         public float speed;
         [Range(1, 10)]
         public int bulletsInShot;
-       
+
 
         private void OnDrawGizmos()
         {
@@ -40,6 +40,10 @@ namespace SV.ECS
         public int bulletsInShot;
         public float Angle;
     }
+    public struct GunActivated : IComponentData, IEnableableComponent
+    {
+
+    }
 
     public class GunBakerBaker : Baker<GunComponentMB>
     {
@@ -58,6 +62,9 @@ namespace SV.ECS
                 Angle = authoring.Angle,
                 bulletsInShot = authoring.bulletsInShot
             });
+
+            AddComponent(entity, new GunActivated());
+            SetComponentEnabled<GunActivated>(entity, false);
         }
     }
 

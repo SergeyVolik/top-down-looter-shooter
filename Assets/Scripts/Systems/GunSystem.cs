@@ -31,7 +31,8 @@ namespace SV.ECS
 
             var transLookUp = GetComponentLookup<LocalTransform>();
             var ownerlookup = GetComponentLookup<OwnerComponent>();
-            Entities.ForEach((Entity e, ref GunComponent gun, ref IndividualRandomComponent rnd) =>
+
+            Entities.WithAll<GunActivated>().ForEach((Entity e, ref GunComponent gun, ref IndividualRandomComponent rnd) =>
             {
 
                 if (gun.nextShotTime <= time)

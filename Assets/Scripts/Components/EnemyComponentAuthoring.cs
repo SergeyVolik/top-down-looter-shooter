@@ -14,7 +14,7 @@ namespace SV.ECS
 
     }
 
-    public class ReadPlayerInputBaker4 : Baker<EnemyComponentAuthoring>
+    public class EnemyComponentAuthoringBaker : Baker<EnemyComponentAuthoring>
     {
         public override void Bake(EnemyComponentAuthoring authoring)
         {

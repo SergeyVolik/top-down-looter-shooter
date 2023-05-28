@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Numerics;
 using Unity.Collections;
 using Unity.Entities;
@@ -18,12 +19,28 @@ namespace SV.ECS
             base.OnCreate();
         }
 
+        public struct SortDistaceHit : IComparer<DistanceHit>
+        {
+            public int Compare(DistanceHit x, DistanceHit y)
+            {
+                if (x.Distance > y.Distance)
+                {
+                    return 1;
+                }
+                if (x.Distance < y.Distance)
+                {
+                    return -1;
+                }
+                return 0;
+            }
+        }
+
         protected unsafe override void OnUpdate()
         {
             var physics = SystemAPI.GetSingleton<PhysicsWorldSingleton>();
             var aimTargetLookup = SystemAPI.GetComponentLookup<AimTargetComponent>();
             var detectedTargetLookUp = SystemAPI.GetComponentLookup<DetectedTargetComponent>();
-
+            var gunActivatedLookUp = SystemAPI.GetComponentLookup<GunActivated>();
             Entities.ForEach((Entity entity, ref PlayerAimClosestTargetComponent aimTarg, ref LocalTransform lTrans, in LocalToWorld localToWorld) =>
             {
                 var targets = new NativeList<DistanceHit>(Allocator.Temp);
@@ -32,13 +49,15 @@ namespace SV.ECS
                 {
                     Position = selfPos,
                     MaxDistance = 10,
-
+                    
                     Filter = new CollisionFilter
                     {
                         BelongsTo = aimTarg.belongTo,
                         CollidesWith = aimTarg.collideWith,
                     }
                 }, ref targets);
+
+                targets.Sort(new SortDistaceHit());
 
 
                 if (hasObj)
@@ -52,9 +71,9 @@ namespace SV.ECS
                         if (aimTargetLookup.TryGetComponent(hitedTarget.Entity, out var aimTarg1))
                         {
                             hasTarget = true;
-                            //var vector = hitedTarget.Position - selfPos;
+                            
                             detectedEntity = aimTarg1.AimPointEntity;
-                            //lTrans.Rotation = quaternion.LookRotation(vector, math.up());
+                           
 
                             break;
                         }
@@ -63,6 +82,7 @@ namespace SV.ECS
                     }
 
                     detectedTargetLookUp.SetComponentEnabled(entity, hasTarget);
+                    gunActivatedLookUp.SetComponentEnabled(entity, hasTarget);
                     var refObj = detectedTargetLookUp.GetRefRW(entity);
 
                     refObj.ValueRW.target = detectedEntity;

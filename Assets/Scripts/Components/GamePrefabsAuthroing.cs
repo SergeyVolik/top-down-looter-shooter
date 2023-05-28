@@ -35,6 +35,7 @@ namespace SV.ECS
     {
         public override void Bake(GamePrefabsAuthroing authoring)
         {
+         
             var entity = GetEntity(TransformUsageFlags.Dynamic);
             AddComponent(entity, new GamePrefabsComponent
             {

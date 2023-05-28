@@ -48,7 +48,7 @@ namespace SV.ECS
             });
 
             AddComponent(entity, new DetectedTargetComponent());
-           
+            SetComponentEnabled<DetectedTargetComponent>(entity, false);
             
           
         }
