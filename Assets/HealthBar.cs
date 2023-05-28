@@ -11,6 +11,8 @@ namespace SV
     public class HealthBar : MonoBehaviour
     {
         private Slider slider;
+        [SerializeField]
+        private TMPro.TMP_Text healthText;
         private EntityManager _entityManager;
         private EntityQuery colorTablesQ;
 
@@ -40,7 +42,7 @@ namespace SV
 
 
                 slider.value = (currentHealth / (float)maxHealth);
-
+                healthText.text = $"{currentHealth}/{maxHealth}";
             }
             health.Dispose();
             maxhealth.Dispose();

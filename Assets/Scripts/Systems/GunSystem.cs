@@ -16,7 +16,7 @@ namespace SV.ECS
         protected override void OnCreate()
         {
             base.OnCreate();
-            
+
         }
 
         protected override void OnUpdate()
@@ -24,19 +24,22 @@ namespace SV.ECS
             float time = (float)SystemAPI.Time.ElapsedTime;
 
             var ecsSystem = SystemAPI.GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>();
-           
+
 
             EntityCommandBuffer ecb = ecsSystem.CreateCommandBuffer(World.Unmanaged);
             var ltw = GetComponentLookup<LocalToWorld>();
-          
+
             var transLookUp = GetComponentLookup<LocalTransform>();
+            var ownerlookup = GetComponentLookup<OwnerComponent>();
             Entities.ForEach((Entity e, ref GunComponent gun, ref IndividualRandomComponent rnd) =>
             {
 
                 if (gun.nextShotTime <= time)
                 {
-                   
-                    
+                    var gunOwnerEntity = Entity.Null;
+
+                    if (ownerlookup.TryGetComponent(e, out var gunOwner))
+                        gunOwnerEntity = gunOwner.value;
 
                     if (ltw.TryGetComponent(gun.bulletSpawnPos, out var wordPos) && transLookUp.TryGetComponent(gun.bulletSpawnPos, out var localTrans))
                     {
@@ -50,11 +53,11 @@ namespace SV.ECS
 
                             var rndValue = rnd.Value.NextFloat(-gun.Angle, gun.Angle);
 
-                            
+
                             var rot = quaternion.AxisAngle(wordPos.Up, math.radians(rndValue));
                             var nexVector = math.mul(rot, vector);
 
-                          
+
                             vector = nexVector;
 
                             ecb.SetComponent(bullet, new LocalTransform
@@ -65,14 +68,17 @@ namespace SV.ECS
                             });
 
 
-
+                            ecb.SetComponent(bullet, new OwnerComponent
+                            {
+                                value = gunOwnerEntity
+                            });
 
                             ecb.SetComponent(bullet, new PhysicsVelocity
                             {
                                 Linear = vector * gun.bulletSpeed
                             });
                         }
-                        
+
                     }
 
 
@@ -86,5 +92,5 @@ namespace SV.ECS
 
 
 
-   
+
 }
