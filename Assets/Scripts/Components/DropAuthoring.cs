@@ -5,8 +5,10 @@ using System.Numerics;
 using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Physics;
+using Unity.Physics.Extensions;
 using Unity.Transforms;
 using UnityEngine;
+using static Unity.Burst.Intrinsics.X86.Avx;
 
 namespace SV.ECS
 {
@@ -18,6 +20,11 @@ namespace SV.ECS
         public Transform dropSpawnPoint;
         public bool instantDrop;
         public float dropForce;
+
+        private void OnEnable()
+        {
+
+        }
     }
 
     [System.Serializable]
@@ -70,14 +77,19 @@ namespace SV.ECS
     }
     public class DropAuthoringBaker : Baker<DropAuthoring>
     {
+
         public override void Bake(DropAuthoring authoring)
         {
+            if (authoring.enabled == false)
+                return;
+
             var entity = GetEntity(TransformUsageFlags.Dynamic);
 
             var buffer = AddBuffer<DropDataBuffElement>(entity);
             AddComponent<ExecuteDropProcessComponent>(entity);
             SetComponentEnabled<ExecuteDropProcessComponent>(entity, false);
             AddComponent<DropExecutedComponent>(entity);
+           
             SetComponentEnabled<DropExecutedComponent>(entity, false);
             AddComponent(entity, new DropSettingComponents
             {
@@ -99,6 +111,28 @@ namespace SV.ECS
         }
     }
 
+
+    public struct AddImpulsComponent : IBufferElementData, IEnableableComponent
+    {
+        public float3 impuls;
+    }
+    public partial struct PhysicsImpulsExecuterSystem : ISystem
+    {
+        public void OnUpdate(ref SystemState state)
+        {
+            foreach (var (pv, m, imp, trans) in SystemAPI.Query<RefRW<PhysicsVelocity>, RefRO<PhysicsMass>, DynamicBuffer<AddImpulsComponent>, RefRW<LocalTransform>>())
+            {
+                foreach (var item in imp)
+                {
+                    pv.ValueRW.ApplyImpulse(m.ValueRO, trans.ValueRO.Position, trans.ValueRO.Rotation, item.impuls, trans.ValueRO.Position);
+
+                }
+                imp.Clear();
+            }
+
+
+        }
+    }
     public partial struct DropExecuterSystem : ISystem
     {
 
@@ -107,12 +141,13 @@ namespace SV.ECS
             public EntityCommandBuffer ecb;
             public ComponentLookup<LocalToWorld> wtlLookup;
 
-            public void Execute(DynamicBuffer<DropDataBuffElement> dropItems, ref ExecuteDropProcessComponent exeteState, ref DropSettingComponents DropSettings, Entity entity)
+
+            public void Execute(DynamicBuffer<DropDataBuffElement> dropItems, ref ExecuteDropProcessComponent exeteState, ref DropSettingComponents DropSettings, Entity entity, ref IndividualRandomComponent random)
             {
 
                 ecb.SetComponentEnabled<ExecuteDropProcessComponent>(entity, false);
                 ecb.SetComponentEnabled<DropExecutedComponent>(entity, true);
-
+                var rnd = random.Value;
 
                 var spawnPos = wtlLookup.GetRefRW(DropSettings.dropSpawnEntity).ValueRW.Position;
 
@@ -128,23 +163,31 @@ namespace SV.ECS
                         {
                             var droppedEntity = ecb.Instantiate(dropItems[exeteState.currentDropIndex].prefab);
 
-                            //ecb.SetComponent(droppedEntity, new PhysicsVelocity
-                            //{
-                            //    Linear = DropSettings.dropForce
-                            //});
 
-                            ecb.SetComponent(droppedEntity, new LocalTransform
+                            var localToWorld = new LocalTransform
                             {
                                 Position = spawnPos,
                                 Rotation = quaternion.identity,
                                 Scale = 1f
+                            };
+
+                            ecb.SetComponent(droppedEntity, localToWorld);
+
+                          
+                            var buffer = ecb.AddBuffer<AddImpulsComponent>(droppedEntity);
+                            buffer.Add(new AddImpulsComponent
+                            {
+                                impuls = math.up()/* rnd.NextFloat3() */* DropSettings.dropForce,
                             });
+
+
+
                         }
 
                     }
 
                 }
-
+                random.Value = rnd;
                 ecb.DestroyEntity(entity);
             }
         }

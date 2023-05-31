@@ -582,8 +582,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   dropInfo:
   - prefab: {fileID: 9194150915235131657, guid: b5c9acde1f4a102469c3d637405516f1, type: 3}
-    number: 5
+    number: 1
   delayBetweenDrops: 200
   dropSpawnPoint: {fileID: 899338963094941641}
   instantDrop: 1
-  dropForce: 100
+  dropForce: 20

@@ -1416,7 +1416,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   prefab: {fileID: 8599641753126581788, guid: d7414e7146d26034fbc0c2c0fc698246, type: 3}
   gridSize:
-    x: 20
+    x: 2
     y: 1
     z: 1
   gridOffset:
@@ -1428,7 +1428,7 @@ MonoBehaviour:
     y: 1
     z: -30
   relativeToSpawner: 1
-  maxCycles: 20
+  maxCycles: 5
   spawnEvery: 0.2
 --- !u!1 &447914323
 GameObject:
@@ -3170,9 +3170,33 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 2670814382361955369, guid: 60a25a117e2b81c4c8f7a396eba9e7ab, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2964957616142688075, guid: 60a25a117e2b81c4c8f7a396eba9e7ab, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3523785415785309368, guid: 60a25a117e2b81c4c8f7a396eba9e7ab, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5070982638218781568, guid: 60a25a117e2b81c4c8f7a396eba9e7ab, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 5577740025753993694, guid: 60a25a117e2b81c4c8f7a396eba9e7ab, type: 3}
       propertyPath: m_Name
       value: Player
+      objectReference: {fileID: 0}
+    - target: {fileID: 5578322410157905098, guid: 60a25a117e2b81c4c8f7a396eba9e7ab, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7907933489443019144, guid: 60a25a117e2b81c4c8f7a396eba9e7ab, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
