@@ -114,6 +114,37 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!1 &3720423941395931806
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 899338963094941641}
+  m_Layer: 0
+  m_Name: dropSpawnpoint
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &899338963094941641
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3720423941395931806}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 1.08, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 5507862886333369643}
+  m_RootOrder: -1
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &8454540360707493380
 GameObject:
   m_ObjectHideFlags: 0
@@ -216,6 +247,7 @@ GameObject:
   - component: {fileID: 380853252869571817}
   - component: {fileID: 7820143024443913129}
   - component: {fileID: 8636448513910523720}
+  - component: {fileID: 7942821410171611602}
   m_Layer: 0
   m_Name: enemyNavMesh (1)
   m_TagString: Untagged
@@ -238,6 +270,7 @@ Transform:
   - {fileID: 7789069010549330233}
   - {fileID: 1675324267420072266}
   - {fileID: 2679970711351929104}
+  - {fileID: 899338963094941641}
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -535,3 +568,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5ddcb25194a432e459daacb276c3e426, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &7942821410171611602
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8599641753126581788}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3a96edcb8f6bda647801e2a233bd46cb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  dropInfo:
+  - prefab: {fileID: 9194150915235131657, guid: b5c9acde1f4a102469c3d637405516f1, type: 3}
+    number: 5
+  delayBetweenDrops: 200
+  dropSpawnPoint: {fileID: 899338963094941641}
+  instantDrop: 1
+  dropForce: 100

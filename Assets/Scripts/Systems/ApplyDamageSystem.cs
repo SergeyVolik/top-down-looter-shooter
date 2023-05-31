@@ -1,11 +1,7 @@
-using System;
-using System.Diagnostics;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
-using Unity.Physics.Stateful;
-using Unity.Physics.Systems;
-
+using Unity.Transforms;
 
 namespace SV.ECS
 {
@@ -21,6 +17,8 @@ namespace SV.ECS
         public partial struct ApplayDamageJob : IJobEntity
         {
             public BufferLookup<DamageToApplyComponent> damageToApply;
+            public ComponentLookup<DeadComponent> deadLookup;
+            public BufferLookup<Child> childs;
             public EntityCommandBuffer buffer;
             public void Execute(Entity entity, ref HealthComponent healthComp)
             {
@@ -36,7 +34,16 @@ namespace SV.ECS
                         if (health <= 0)
                         {
                             health = 0;
-                            buffer.DestroyEntity(entity);
+
+
+                            buffer.SetComponentEnabled<DeadComponent>(entity, true);
+                            //buffer.DisableWithChilds(entity, ref childs);
+                            buffer.SetComponent(entity, new DeadComponent
+                            {
+                                killDamageIfno = damage
+                            });
+
+
                             break;
                         }
                     }
@@ -74,7 +81,9 @@ namespace SV.ECS
             Dependency = new ApplayDamageJob
             {
                 damageToApply = SystemAPI.GetBufferLookup<DamageToApplyComponent>(),
-                buffer = ecb
+                buffer = ecb,
+                deadLookup = SystemAPI.GetComponentLookup<DeadComponent>(),
+                childs = SystemAPI.GetBufferLookup<Child>(),
             }.Schedule(query, Dependency);
 
 
@@ -84,9 +93,9 @@ namespace SV.ECS
     }
 
 
-    
 
-   
+
+
 
 
 

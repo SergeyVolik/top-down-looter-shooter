@@ -18,6 +18,13 @@ namespace SV.ECS
         public int value;
     }
 
+    public struct DeadComponent : IComponentData, IEnableableComponent
+    {
+        public DamageToApplyComponent killDamageIfno;
+    }
+
+
+
     [InternalBufferCapacity(3)]
     public struct DamageToApplyComponent : IBufferElementData, IEnableableComponent
     {
@@ -47,7 +54,8 @@ namespace SV.ECS
             });
 
             AddComponent(entity, new DamageableComponent());
-
+            AddComponent(entity, new DeadComponent());
+            SetComponentEnabled<DeadComponent>(entity, false);
             AddBuffer<DamageToApplyComponent>(entity);
         }
     }
