@@ -19,7 +19,7 @@ public class PlayerTracker : MonoBehaviour
 [UpdateInGroup(typeof(PresentationSystemGroup), OrderLast = true)]
 public partial class PlayerTrackerSystem : SystemBase
 {
-    Entity playerEntity;
+    
     protected override void OnCreate()
     {
         base.OnCreate();
@@ -28,11 +28,9 @@ public partial class PlayerTrackerSystem : SystemBase
 
     protected override void OnUpdate()
     {
-        if (playerEntity == Entity.Null)
-        {
-            if (!SystemAPI.TryGetSingletonEntity<PlayerComponent>(out playerEntity))
-                return;
-        }
+       
+        if (!SystemAPI.TryGetSingletonEntity<PlayerComponent>(out var playerEntity))
+            return;
 
         var localToWorld = SystemAPI.GetComponent<LocalToWorld>(playerEntity);
 
