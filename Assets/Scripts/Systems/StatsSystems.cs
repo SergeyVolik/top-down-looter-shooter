@@ -11,11 +11,21 @@ namespace SV.ECS
         public int value;
     }
 
+    public struct CollectedItems : IComponentData
+    {
+        public int value;
+    }
 
     public struct DeadStatUpdatedComponent : IComponentData
     {
         
     }
+
+    public struct CollectedStatUpdatedComponent : IComponentData
+    {
+
+    }
+
     public partial struct InitStatsSystem : ISystem
     {
 
@@ -25,6 +35,7 @@ namespace SV.ECS
             var entity = state.EntityManager.CreateEntity();
 
             state.EntityManager.AddComponent<KilledEnemies>(entity);
+            state.EntityManager.AddComponent<CollectedItems>(entity);
             state.EntityManager.SetName(entity, new Unity.Collections.FixedString64Bytes("Stats"));
         }
 
@@ -33,7 +44,7 @@ namespace SV.ECS
             var ecb = SystemAPI.GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>().CreateCommandBuffer(state.WorldUnmanaged);
 
             var killedEnemies = SystemAPI.GetSingleton<KilledEnemies>();
-
+            var collectedItems = SystemAPI.GetSingleton<CollectedItems>();
 
             foreach (var (dc, ec, e) in SystemAPI.Query<DeadComponent, EnemyComponent>().WithNone<DeadStatUpdatedComponent>().WithEntityAccess())
             {
@@ -41,7 +52,15 @@ namespace SV.ECS
                 ecb.AddComponent<DeadStatUpdatedComponent>(e);
             }
 
+            foreach (var (dc, ec, e) in SystemAPI.Query<CollectableComponent, CollectedComponent>().WithNone<CollectedStatUpdatedComponent>().WithEntityAccess())
+            {
+                collectedItems.value += 1;
+                ecb.AddComponent<CollectedStatUpdatedComponent>(e);
+            }
+
             SystemAPI.SetSingleton(killedEnemies);
+            SystemAPI.SetSingleton(collectedItems);
+
         }
     }
 }

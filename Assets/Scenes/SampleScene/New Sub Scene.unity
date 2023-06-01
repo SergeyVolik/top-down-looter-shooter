@@ -1344,49 +1344,14 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 370553385}
-  - component: {fileID: 370553384}
   - component: {fileID: 370553386}
   m_Layer: 0
-  m_Name: PathFindingGlobalSettings
+  m_Name: Spawner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &370553384
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 370553383}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ada46243617cf1e4f9d912de242b9d56, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  maxIteration: 1024
-  maxPathSize: 512
-  maxPathNodePoolSize: 512
-  extents:
-    x: 20
-    y: 20
-    z: 20
-  dynamicPathFinding: 0
-  dynamicPathRecalculatingFrequency: 0.001
-  unitsInForwardDirection: 4
-  setGlobalRelativeLocation: 1
-  units:
-    x: 0
-    y: 0
-    z: 36
-  agentMovementEnabled: 1
-  minimumDistanceToWaypoint: 2
-  reachDistance: 5
-  agentSpeed: 10
-  rotationSpeed: 5
-  retracePath: 0
-  debugPath: 0
 --- !u!4 &370553385
 Transform:
   m_ObjectHideFlags: 0
@@ -1416,7 +1381,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   prefab: {fileID: 8599641753126581788, guid: d7414e7146d26034fbc0c2c0fc698246, type: 3}
   gridSize:
-    x: 2
+    x: 10
     y: 1
     z: 1
   gridOffset:
@@ -1428,8 +1393,8 @@ MonoBehaviour:
     y: 1
     z: -30
   relativeToSpawner: 1
-  maxCycles: 5
-  spawnEvery: 0.2
+  maxCycles: 10
+  spawnEvery: 0.1
 --- !u!1 &447914323
 GameObject:
   m_ObjectHideFlags: 0
@@ -2471,7 +2436,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5507862886333369643, guid: d7414e7146d26034fbc0c2c0fc698246, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0.42
+      value: 0.505
       objectReference: {fileID: 0}
     - target: {fileID: 5507862886333369643, guid: d7414e7146d26034fbc0c2c0fc698246, type: 3}
       propertyPath: m_LocalPosition.z
@@ -2511,7 +2476,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8599641753126581788, guid: d7414e7146d26034fbc0c2c0fc698246, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents:
     - {fileID: 5165070201144459798, guid: d7414e7146d26034fbc0c2c0fc698246, type: 3}
@@ -2519,7 +2484,7 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 8599641753126581788, guid: d7414e7146d26034fbc0c2c0fc698246, type: 3}
-      insertIndex: -1
+      insertIndex: 12
       addedObject: {fileID: 1461517412}
   m_SourcePrefab: {fileID: 100100000, guid: d7414e7146d26034fbc0c2c0fc698246, type: 3}
 --- !u!1 &1105774229
@@ -3126,6 +3091,50 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 303357090407700040, guid: 60a25a117e2b81c4c8f7a396eba9e7ab, type: 3}
+      propertyPath: m_InertiaTensor.x
+      value: Infinity
+      objectReference: {fileID: 0}
+    - target: {fileID: 303357090407700040, guid: 60a25a117e2b81c4c8f7a396eba9e7ab, type: 3}
+      propertyPath: m_InertiaTensor.z
+      value: Infinity
+      objectReference: {fileID: 0}
+    - target: {fileID: 303357090407700040, guid: 60a25a117e2b81c4c8f7a396eba9e7ab, type: 3}
+      propertyPath: m_OverrideDefaultMassDistribution
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1124084104376738334, guid: 60a25a117e2b81c4c8f7a396eba9e7ab, type: 3}
+      propertyPath: m_SphereRadius
+      value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: 1124084104376738334, guid: 60a25a117e2b81c4c8f7a396eba9e7ab, type: 3}
+      propertyPath: m_Capsule.Height
+      value: 20
+      objectReference: {fileID: 0}
+    - target: {fileID: 1124084104376738334, guid: 60a25a117e2b81c4c8f7a396eba9e7ab, type: 3}
+      propertyPath: m_Capsule.Radius
+      value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: 1124084104376738334, guid: 60a25a117e2b81c4c8f7a396eba9e7ab, type: 3}
+      propertyPath: m_Cylinder.Height
+      value: 20
+      objectReference: {fileID: 0}
+    - target: {fileID: 1124084104376738334, guid: 60a25a117e2b81c4c8f7a396eba9e7ab, type: 3}
+      propertyPath: m_Cylinder.Radius
+      value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: 1124084104376738334, guid: 60a25a117e2b81c4c8f7a396eba9e7ab, type: 3}
+      propertyPath: m_PrimitiveSize.x
+      value: 20
+      objectReference: {fileID: 0}
+    - target: {fileID: 1124084104376738334, guid: 60a25a117e2b81c4c8f7a396eba9e7ab, type: 3}
+      propertyPath: m_PrimitiveSize.y
+      value: 20
+      objectReference: {fileID: 0}
+    - target: {fileID: 1124084104376738334, guid: 60a25a117e2b81c4c8f7a396eba9e7ab, type: 3}
+      propertyPath: m_PrimitiveSize.z
+      value: 20
+      objectReference: {fileID: 0}
     - target: {fileID: 2233684451103297448, guid: 60a25a117e2b81c4c8f7a396eba9e7ab, type: 3}
       propertyPath: m_RootOrder
       value: 6
@@ -5083,6 +5092,10 @@ PrefabInstance:
     - target: {fileID: 1142764082044906467, guid: b03c5787ce530f143a313a950699fdfb, type: 3}
       propertyPath: m_Name
       value: Turret
+      objectReference: {fileID: 0}
+    - target: {fileID: 1142764082044906467, guid: b03c5787ce530f143a313a950699fdfb, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5968076021350486579, guid: b03c5787ce530f143a313a950699fdfb, type: 3}
       propertyPath: owner

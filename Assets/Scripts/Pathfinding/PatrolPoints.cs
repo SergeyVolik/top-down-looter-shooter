@@ -1,3 +1,4 @@
+using ProjectDawn.Navigation;
 using SV.ECS;
 using System.Collections;
 using System.Collections.Generic;
@@ -59,12 +60,12 @@ public partial struct PartolSystem : ISystem
         if (SystemAPI.TryGetSingletonBuffer<PatrolPointsComponent>(out var points))
         {
             SystemAPI.TryGetSingletonEntity<PatrolPointsComponent>(out var bufEntity);
-            var Lookup = SystemAPI.GetComponentLookup<UpdateNavigationTarget>();
             var rndLookUp = SystemAPI.GetComponentLookup<IndividualRandomComponent>();
-            foreach (var (partolData, agent, e) in SystemAPI.Query<RefRW<PatrolStateComponent>, RefRO<AgentMovement>>().WithEntityAccess())
+            foreach (var (partolData, agent, e) in SystemAPI.Query<RefRW<PatrolStateComponent>, RefRW<AgentBody>>().WithEntityAccess())
             {
-                if (agent.ValueRO.reached)
+                if (agent.ValueRO.RemainingDistance < 2f || agent.ValueRO.IsStopped == true)
                 {
+                  
                     var nextPointIndex = partolData.ValueRO.partolIndex;
                     //nextPointIndex++;
 
@@ -80,9 +81,9 @@ public partial struct PartolSystem : ISystem
                         nextPointIndex = rnd.NextInt(0, points.Length - 1);
                     //}
                     rndLookUp.GetRefRW(bufEntity).ValueRW.Value = rnd;
-                    Lookup.SetComponentEnabled(e, true);
-                    
-                    Lookup.GetRefRW(e).ValueRW.Position = points[nextPointIndex].position;
+
+                    agent.ValueRW.Destination = points[nextPointIndex].position;
+                    agent.ValueRW.IsStopped = false;
                     partolData.ValueRW.partolIndex = nextPointIndex;
                 }
             }
