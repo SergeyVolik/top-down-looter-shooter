@@ -166,7 +166,8 @@ MonoBehaviour:
   Angle: 10
   Prefab: {fileID: 9194150915235131657, guid: 6e2ae364338c423478cff3ad5cb40b56, type: 3}
   bulletSpawnPos: {fileID: 3051478558162382078}
-  shotDelay: 0.05
+  sfx: {fileID: 11400000, guid: 0a3ff3e5f48281142b2d58da077596da, type: 2}
+  shotDelay: 0.1
   speed: 35
   bulletsInShot: 1
 --- !u!114 &5177227354163818619

@@ -1,3 +1,4 @@
+using System;
 using Unity.Entities;
 using UnityEditor;
 using UnityEngine;
@@ -10,6 +11,7 @@ namespace SV.ECS
         public float Angle = 20;
         public GameObject Prefab;
         public GameObject bulletSpawnPos;
+        public AudioSFX sfx;
         public float shotDelay;
         public float speed;
         [Range(1, 10)]
@@ -34,6 +36,7 @@ namespace SV.ECS
     {
         public Entity bulletPrefab;
         public Entity bulletSpawnPos;
+        public Guid sfxGuid;
         public float shotDelay;
         public float nextShotTime;
         public float bulletSpeed;
@@ -60,7 +63,9 @@ namespace SV.ECS
                 nextShotTime = Time.time,
                 bulletSpeed = authoring.speed,
                 Angle = authoring.Angle,
-                bulletsInShot = authoring.bulletsInShot
+                bulletsInShot = authoring.bulletsInShot,
+                sfxGuid = authoring.sfx == null ? Guid.Empty : authoring.sfx.GetGuid()
+
             });
 
             AddComponent(entity, new GunActivated());

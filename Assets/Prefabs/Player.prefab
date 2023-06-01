@@ -4976,9 +4976,9 @@ MonoBehaviour:
     y: 0
     z: 0
   m_PrimitiveSize:
-    x: 2
-    y: 2
-    z: 2
+    x: 3
+    y: 3
+    z: 3
   m_PrimitiveOrientation:
     Value:
       x: 0
@@ -4986,15 +4986,15 @@ MonoBehaviour:
       z: 0
     RotationOrder: 4
   m_Capsule:
-    Height: 2
-    Radius: 1
+    Height: 3
+    Radius: 1.5
     Axis: 2
   m_Cylinder:
-    Height: 2
-    Radius: 1
+    Height: 3
+    Radius: 1.5
     Axis: 2
   m_CylinderSideCount: 20
-  m_SphereRadius: 1
+  m_SphereRadius: 1.5
   m_MinimumSkinnedVertexWeight: 0.1
   m_ConvexHullGenerationParameters:
     m_SimplificationTolerance: 0.015
@@ -5656,11 +5656,11 @@ MonoBehaviour:
   slot5: {fileID: 7337740560340938447}
   slot6: {fileID: 8865057254585394595}
   gun1: {fileID: 7826399767812890284, guid: f6c43c952842e8e44aadac2de83afd41, type: 3}
-  gun2: {fileID: 7826399767812890284, guid: f6c43c952842e8e44aadac2de83afd41, type: 3}
-  gun3: {fileID: 7826399767812890284, guid: f6c43c952842e8e44aadac2de83afd41, type: 3}
-  gun4: {fileID: 7826399767812890284, guid: f6c43c952842e8e44aadac2de83afd41, type: 3}
-  gun5: {fileID: 7826399767812890284, guid: f6c43c952842e8e44aadac2de83afd41, type: 3}
-  gun6: {fileID: 7826399767812890284, guid: f6c43c952842e8e44aadac2de83afd41, type: 3}
+  gun2: {fileID: 0}
+  gun3: {fileID: 0}
+  gun4: {fileID: 0}
+  gun5: {fileID: 0}
+  gun6: {fileID: 0}
 --- !u!114 &303357090407700040
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5687,7 +5687,7 @@ MonoBehaviour:
     y: 0
     z: 0
   m_GravityFactor: 4
-  m_OverrideDefaultMassDistribution: 0
+  m_OverrideDefaultMassDistribution: 1
   m_CenterOfMass:
     x: 0
     y: 0
@@ -5699,9 +5699,9 @@ MonoBehaviour:
       z: 0
     RotationOrder: 4
   m_InertiaTensor:
-    x: 0.4
-    y: 0.4
-    z: 0.4
+    x: Infinity
+    y: Infinity
+    z: Infinity
   m_WorldIndex: 0
   m_CustomTags:
     Tag00: 0

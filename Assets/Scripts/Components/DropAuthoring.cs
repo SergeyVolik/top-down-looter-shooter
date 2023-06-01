@@ -201,7 +201,7 @@ namespace SV.ECS
             foreach (var (dropItems, DropSettings, entity) in SystemAPI.Query<DeadComponent, DropSettingComponents>().WithNone<ExecuteDropProcessComponent, DropExecutedComponent>().WithEntityAccess())
             {
                 ecb.SetComponentEnabled<ExecuteDropProcessComponent>(entity, true);
-                Debug.Log("ExecuteDropProcessComponent");
+               
             }
 
             var job = new ExecuteDropJob

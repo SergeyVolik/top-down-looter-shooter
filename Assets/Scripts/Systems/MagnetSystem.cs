@@ -57,6 +57,10 @@ namespace SV.ECS
                         {
                             collectedLookup.SetComponentEnabled(targetEntity, true);
                             ecb.DestroyEntity(targetEntity);
+
+                            var sfx = ecb.CreateEntity();
+
+                            ecb.AddComponent(sfx, new PlaySFX { sfxSettingGuid = collectableLookup.GetRefRO(targetEntity).ValueRO.sfxGuid });
                         }
 
                     }

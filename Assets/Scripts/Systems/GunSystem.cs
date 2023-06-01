@@ -16,7 +16,7 @@ namespace SV.ECS
         protected override void OnCreate()
         {
             base.OnCreate();
-
+            
         }
 
         protected override void OnUpdate()
@@ -32,7 +32,7 @@ namespace SV.ECS
             var transLookUp = GetComponentLookup<LocalTransform>();
             var ownerlookup = GetComponentLookup<OwnerComponent>();
 
-            Entities.WithAll<GunActivated>().ForEach((Entity e, ref GunComponent gun, ref IndividualRandomComponent rnd) =>
+            Entities.WithNone<Disabled>().WithAll<GunActivated>().ForEach((Entity e, ref GunComponent gun, ref IndividualRandomComponent rnd) =>
             {
 
                 if (gun.nextShotTime <= time)
@@ -80,11 +80,18 @@ namespace SV.ECS
                             });
                         }
 
+                        var sfxEntity = ecb.CreateEntity();
+                        ecb.AddComponent(sfxEntity, new PlaySFX
+                        {
+                            sfxSettingGuid = gun.sfxGuid
+                        });
+
                     }
 
+                  
 
                 }
-            }).Schedule();
+            }).Run();
 
 
         }
