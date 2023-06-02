@@ -5337,6 +5337,7 @@ GameObject:
   - component: {fileID: 8376634302411131506}
   - component: {fileID: 303357090407700040}
   - component: {fileID: 8057912930115682359}
+  - component: {fileID: 6186938872637935031}
   m_Layer: 3
   m_Name: Player
   m_TagString: Untagged
@@ -5724,6 +5725,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 71242163ba188c04b8b904b94ff79242, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &6186938872637935031
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5577740025753993694}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7105d553aeb183d4080aafdd07125acf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &5578322410157905098
 GameObject:
   m_ObjectHideFlags: 0
@@ -5810,9 +5823,9 @@ MonoBehaviour:
     y: 0
     z: 0
   m_PrimitiveSize:
-    x: 20
-    y: 20
-    z: 20
+    x: 10
+    y: 10
+    z: 10
   m_PrimitiveOrientation:
     Value:
       x: 0
@@ -5820,15 +5833,15 @@ MonoBehaviour:
       z: 0
     RotationOrder: 4
   m_Capsule:
-    Height: 20
-    Radius: 10
+    Height: 10
+    Radius: 5
     Axis: 2
   m_Cylinder:
-    Height: 20
-    Radius: 10
+    Height: 10
+    Radius: 5
     Axis: 2
   m_CylinderSideCount: 20
-  m_SphereRadius: 10
+  m_SphereRadius: 5
   m_MinimumSkinnedVertexWeight: 0.1
   m_ConvexHullGenerationParameters:
     m_SimplificationTolerance: 0.015

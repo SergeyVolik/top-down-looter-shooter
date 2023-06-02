@@ -71,6 +71,8 @@ namespace SV
     {
         public static AudioManager Instance { get; private set; }
         public AudioSFXDatabase database;
+        public AudioSFX initMusic;
+        private AudioSource musicSource;
         private void Awake()
         {
             Instance = this;
@@ -80,6 +82,8 @@ namespace SV
                 value = database
 
             }, new Unity.Collections.FixedString64Bytes("SFXDatabase"));
+
+            PlayMusic(initMusic);
         }
 
         [HideInEditorMode]
@@ -94,6 +98,27 @@ namespace SV
             audioSFX.Play(source);
 
            
+
+        }
+
+        [HideInEditorMode]
+        [Button]
+        public void PlayMusic(AudioSFX audioSFX)
+        {
+            if (audioSFX == null)
+                return;
+
+            if (musicSource == null)
+            {
+                Pool.Get(out musicSource);
+                musicSource.loop = true;
+            }
+
+        
+
+            audioSFX.Play(musicSource);
+
+
 
         }
 
@@ -128,7 +153,7 @@ namespace SV
 
         AudioSource CreatePooledItem()
         {
-            var go = new GameObject("Pooled Particle System");
+            var go = new GameObject("sfx");
             var ps = go.AddComponent<AudioSource>();
 
             var returnToPool = go.AddComponent<ReturnToPool>();

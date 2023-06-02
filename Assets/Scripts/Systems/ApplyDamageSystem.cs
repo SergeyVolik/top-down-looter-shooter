@@ -1,7 +1,9 @@
+
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Transforms;
+using UnityEngine;
 
 namespace SV.ECS
 {
@@ -16,45 +18,43 @@ namespace SV.ECS
         [BurstCompile]
         public partial struct ApplayDamageJob : IJobEntity
         {
-            public BufferLookup<DamageToApplyComponent> damageToApply;
-            public ComponentLookup<DeadComponent> deadLookup;
-            public BufferLookup<Child> childs;
+
+           
+           
             public EntityCommandBuffer buffer;
-            public void Execute(Entity entity, ref HealthComponent healthComp)
+            public void Execute(Entity entity, ref HealthComponent healthComp, ref DynamicBuffer<DamageToApplyComponent> damageList)
             {
                 var health = healthComp.value;
-                if (damageToApply.TryGetBuffer(entity, out var damageList))
+
+                for (int i = 0; i < damageList.Length; i++)
                 {
-                    for (int i = 0; i < damageList.Length; i++)
+                    var damage = damageList[i];
+
+                    health -= damage.damage;
+
+                    if (health <= 0)
                     {
-                        var damage = damageList[i];
+                        health = 0;
 
-                        health -= damage.damage;
 
-                        if (health <= 0)
+                        buffer.SetComponentEnabled<DeadComponent>(entity, true);
+                        //buffer.DisableWithChilds(entity, ref childs);
+                        buffer.SetComponent(entity, new DeadComponent
                         {
-                            health = 0;
+                            killDamageIfno = damage
+                        });
 
 
-                            buffer.SetComponentEnabled<DeadComponent>(entity, true);
-                            //buffer.DisableWithChilds(entity, ref childs);
-                            buffer.SetComponent(entity, new DeadComponent
-                            {
-                                killDamageIfno = damage
-                            });
-
-
-                            break;
-                        }
+                        break;
                     }
-
-                    damageToApply.SetBufferEnabled(entity, false);
-                    damageList.Clear();
-                    healthComp.value = health;
                 }
+                //damageList.Clear();
+                healthComp.value = health;
+
             }
 
         }
+
 
         protected override void OnCreate()
         {
@@ -74,16 +74,15 @@ namespace SV.ECS
                 return;
 
 
-            var ecbSys = SystemAPI.GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>();
+            var ecbSys = SystemAPI.GetSingleton<BeginSimulationEntityCommandBufferSystem.Singleton>();
             var ecb = ecbSys.CreateCommandBuffer(World.Unmanaged);
 
 
             Dependency = new ApplayDamageJob
             {
-                damageToApply = SystemAPI.GetBufferLookup<DamageToApplyComponent>(),
-                buffer = ecb,
-                deadLookup = SystemAPI.GetComponentLookup<DeadComponent>(),
-                childs = SystemAPI.GetBufferLookup<Child>(),
+
+                buffer = ecb,              
+              
             }.Schedule(query, Dependency);
 
 
@@ -92,7 +91,26 @@ namespace SV.ECS
         }
     }
 
+    [UpdateInGroup(typeof(PresentationSystemGroup))]
+    public partial class ClearDamageListSystem : SystemBase
+    {
+        protected override void OnUpdate()
+        {
+            var ecbSys = SystemAPI.GetSingleton<BeginSimulationEntityCommandBufferSystem.Singleton>();
+            var ecb = ecbSys.CreateCommandBuffer(World.Unmanaged);
 
+            foreach (var (list, e) in SystemAPI.Query<DynamicBuffer<DamageToApplyComponent>>().WithEntityAccess())
+            {
+
+                list.Clear();
+                ecb.SetComponentEnabled<DamageToApplyComponent>(e, false);
+            }
+        }
+    }
+
+
+
+    
 
 
 

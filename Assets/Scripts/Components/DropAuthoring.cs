@@ -177,7 +177,7 @@ namespace SV.ECS
                             var buffer = ecb.AddBuffer<AddImpulsComponent>(droppedEntity);
                             buffer.Add(new AddImpulsComponent
                             {
-                                impuls = math.up()/* rnd.NextFloat3() */* DropSettings.dropForce,
+                                impuls =  rnd.NextFloat3() * DropSettings.dropForce,
                             });
 
 
