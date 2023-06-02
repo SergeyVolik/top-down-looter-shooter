@@ -60,8 +60,17 @@ public partial class VisualMessageSystem : SystemBase
 
 
                 var sm = new ShowVisualMessageComponent();
-                sm.color = Color.red;
-                sm.text = $"-{damage.damage}";
+
+                if (damage.damage > 0)
+                {
+                    sm.color = Color.red;
+                    sm.text = $"-{damage.damage} hp";
+                }
+                else {
+                    sm.color = Color.green;
+                    sm.text = $"+{damage.damage} hp";
+                }
+
                 sm.pos = ltw.ValueRO.Position;
                 ecb.AddComponent(vmEntity, sm);
 
@@ -81,7 +90,7 @@ public partial class VisualMessageSystem : SystemBase
 
             var sm = new ShowVisualMessageComponent();
             sm.color = Color.green;
-            sm.text = $"+1";
+            sm.text = $"+1 m";
             sm.pos = ltw.ValueRO.Position;
             ecb.AddComponent(vmEntity, sm);
 

@@ -252,7 +252,6 @@ GameObject:
   - component: {fileID: 782630691920976806}
   - component: {fileID: 8322544178163840988}
   - component: {fileID: 4025976708875753180}
-  - component: {fileID: 3486995131966430418}
   m_Layer: 0
   m_Name: enemyNavMesh (1)
   m_TagString: Untagged
@@ -472,7 +471,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c765fddab22ad774f92d3ac8e68ebc34, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  health: 100
+  health: 10
 --- !u!114 &4485179422081390282
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -658,17 +657,5 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 6d72058503702eb42aca97d680e69de1, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
---- !u!114 &3486995131966430418
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8599641753126581788}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7105d553aeb183d4080aafdd07125acf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 

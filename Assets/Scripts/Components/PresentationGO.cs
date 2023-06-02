@@ -70,17 +70,6 @@ namespace SV.ECS
             foreach (var (pGO, e) in SystemAPI.Query<PresentationGOComponent>().WithEntityAccess())
             {
 
-                if (pGO == null)
-                {
-                    Debug.LogError("pGO is null");
-                    break;
-                }
-                if (pGO.prefab == null)
-                {
-                    Debug.LogError("prefab is null");
-                    break;
-                }
-
                 var instance = GameObject.Instantiate(pGO.prefab);
                 beginECB.AddComponent(e, new TransformGO { value = instance.transform });
                 instance.AddComponent<EntityLink>().AssignEntity(e, EntityManager);
