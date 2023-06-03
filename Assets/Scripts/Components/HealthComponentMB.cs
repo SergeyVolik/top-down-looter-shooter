@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using Unity.Entities;
+using Unity.VisualScripting;
 using UnityEngine;
 
 namespace SV.ECS
@@ -8,6 +9,8 @@ namespace SV.ECS
     public class HealthComponentMB : MonoBehaviour
     {
         public int health;
+
+        public bool destroyAfterDeath;
     }
     public struct HealthComponent : IComponentData
     {
@@ -21,6 +24,8 @@ namespace SV.ECS
     public struct DeadComponent : IComponentData, IEnableableComponent
     {
         public DamageToApplyComponent killDamageIfno;
+        public bool destroyAfterDeath;
+        public bool frameSkipped;
     }
 
 
@@ -54,7 +59,9 @@ namespace SV.ECS
             });
 
             AddComponent(entity, new DamageableComponent());
-            AddComponent(entity, new DeadComponent());
+            AddComponent(entity, new DeadComponent { 
+                 destroyAfterDeath = authoring.destroyAfterDeath
+            });
             SetComponentEnabled<DeadComponent>(entity, false);
             AddBuffer<DamageToApplyComponent>(entity);
         }

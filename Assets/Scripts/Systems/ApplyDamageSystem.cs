@@ -8,28 +8,37 @@ using UnityEngine;
 namespace SV.ECS
 {
 
+    [UpdateInGroup(typeof(SimulationSystemGroup))]
+    public partial class DamageBufferSystemGroup : ComponentSystemGroup
+    {
+        
+    }
 
+    [UpdateInGroup(typeof(DamageBufferSystemGroup))]
     [UpdateAfter(typeof(AddDamageFromVisitedProjectileSystem))]
     public partial class ApplyDamageSystem : SystemBase
     {
 
+
+
         EntityQuery query;
 
+       
         [BurstCompile]
         public partial struct ApplayDamageJob : IJobEntity
         {
 
-           
-           
+
+            public float time;
             public EntityCommandBuffer buffer;
             public void Execute(Entity entity, ref HealthComponent healthComp, ref DynamicBuffer<DamageToApplyComponent> damageList)
             {
                 var health = healthComp.value;
-
+                //Debug.Log($"time {time} damageList: {damageList.Length}");
                 for (int i = 0; i < damageList.Length; i++)
                 {
                     var damage = damageList[i];
-
+                    //Debug.Log(damage);
                     health -= damage.damage;
 
                     if (health <= 0)
@@ -38,7 +47,7 @@ namespace SV.ECS
 
 
                         buffer.SetComponentEnabled<DeadComponent>(entity, true);
-                        //buffer.DisableWithChilds(entity, ref childs);
+
                         buffer.SetComponent(entity, new DeadComponent
                         {
                             killDamageIfno = damage
@@ -48,7 +57,7 @@ namespace SV.ECS
                         break;
                     }
                 }
-                //damageList.Clear();
+
                 healthComp.value = health;
 
             }
@@ -58,8 +67,6 @@ namespace SV.ECS
 
         protected override void OnCreate()
         {
-            // Get respective queries, that includes components required by `CopyPositionsJob` described earlier.
-
 
             query = GetEntityQuery(typeof(HealthComponent), typeof(DamageToApplyComponent));
             RequireForUpdate(query);
@@ -77,40 +84,43 @@ namespace SV.ECS
             var ecbSys = SystemAPI.GetSingleton<BeginSimulationEntityCommandBufferSystem.Singleton>();
             var ecb = ecbSys.CreateCommandBuffer(World.Unmanaged);
 
-
-            Dependency = new ApplayDamageJob
+            var job = new ApplayDamageJob
             {
+                time = (float)SystemAPI.Time.ElapsedTime,
+                buffer = ecb,
 
-                buffer = ecb,              
-              
-            }.Schedule(query, Dependency);
+            };
 
+
+            Dependency = job.Schedule(query, Dependency);
+            //job.Run();
 
 
 
         }
     }
 
-    [UpdateInGroup(typeof(PresentationSystemGroup))]
+    [UpdateInGroup(typeof(SimulationSystemGroup), OrderFirst = true)]
+    [UpdateBefore(typeof(AddDamageFromVisitedProjectileSystem))]
     public partial class ClearDamageListSystem : SystemBase
     {
         protected override void OnUpdate()
         {
-            var ecbSys = SystemAPI.GetSingleton<BeginSimulationEntityCommandBufferSystem.Singleton>();
-            var ecb = ecbSys.CreateCommandBuffer(World.Unmanaged);
+           
+          
 
             foreach (var (list, e) in SystemAPI.Query<DynamicBuffer<DamageToApplyComponent>>().WithEntityAccess())
             {
 
+                SystemAPI.SetBufferEnabled<DamageToApplyComponent>(e, false);
                 list.Clear();
-                ecb.SetComponentEnabled<DamageToApplyComponent>(e, false);
+               
             }
         }
     }
 
 
 
-    
 
 
 
@@ -118,6 +128,7 @@ namespace SV.ECS
 
 
 
+    [UpdateInGroup(typeof(DamageBufferSystemGroup))]
     [UpdateAfter(typeof(ProjectileVisitorSystem))]
     public partial struct AddDamageFromVisitedProjectileSystem : ISystem
     {

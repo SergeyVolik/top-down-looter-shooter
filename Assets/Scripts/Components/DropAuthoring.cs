@@ -1,14 +1,9 @@
-using Mono.CSharp;
-using System.Collections;
-using System.Collections.Generic;
-using System.Numerics;
 using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Physics;
 using Unity.Physics.Extensions;
 using Unity.Transforms;
 using UnityEngine;
-using static Unity.Burst.Intrinsics.X86.Avx;
 
 namespace SV.ECS
 {
@@ -133,6 +128,8 @@ namespace SV.ECS
 
         }
     }
+
+    [UpdateAfter(typeof(ApplyDamageSystem))]
     public partial struct DropExecuterSystem : ISystem
     {
 
@@ -188,7 +185,7 @@ namespace SV.ECS
 
                 }
                 random.Value = rnd;
-                ecb.DestroyEntity(entity);
+                
             }
         }
         public void OnUpdate(ref SystemState state)
@@ -209,8 +206,8 @@ namespace SV.ECS
                 ecb = ecb,
                 wtlLookup = wtlLookup,
             };
-
-            state.Dependency = job.Schedule(state.Dependency);
+            job.Run();
+            //state.Dependency = job.Schedule(state.Dependency);
 
         }
     }

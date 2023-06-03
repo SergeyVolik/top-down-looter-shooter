@@ -34,8 +34,17 @@ namespace SV.ECS
         public void OnUpdate(ref SystemState state)
         {
             var localToWorldLookup = SystemAPI.GetComponentLookup<LocalToWorld>();
-            foreach (var (trans, mwe) in SystemAPI.Query<RefRW<LocalTransform>, RefRO<MoveWithEntityComponent>>())
+
+            
+            var ecb = SystemAPI.GetSingleton<BeginSimulationEntityCommandBufferSystem.Singleton>().CreateCommandBuffer(state.WorldUnmanaged);
+            foreach (var (trans, mwe, e) in SystemAPI.Query<RefRW<LocalTransform>, RefRO<MoveWithEntityComponent>>().WithEntityAccess())
             {
+                if (mwe.ValueRO.target == Entity.Null)
+                {
+                    ecb.DestroyEntity(e);
+                    continue;
+                   
+                }
                 var pos = localToWorldLookup.GetRefRO(mwe.ValueRO.target).ValueRO.Position;
                 trans.ValueRW.Position = pos;
             }

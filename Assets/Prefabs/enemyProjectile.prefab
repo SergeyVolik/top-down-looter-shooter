@@ -20,7 +20,7 @@ GameObject:
   - component: {fileID: 2571390804054928798}
   - component: {fileID: 7581746474489939817}
   m_Layer: 0
-  m_Name: projectile
+  m_Name: enemyProjectile
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -35,7 +35,7 @@ Transform:
   m_GameObject: {fileID: 9194150915235131657}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 10000, y: 10000, z: 10000}
-  m_LocalScale: {x: 0.2595096, y: 0.2595096, z: 0.2595096}
+  m_LocalScale: {x: 0.5, y: 0.5, z: 0.5}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -69,7 +69,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: f411e2337871ee940ae72d4aab0ffa4c, type: 2}
+  - {fileID: 2100000, guid: 00616548d42cd2b4d9c4cdd698b66abf, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -297,7 +297,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: adb780e9a3047ec47a736023b09d5801, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  value: 1
+  value: 10
 --- !u!114 &-230623347312034969
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -310,7 +310,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2a09550595a8cd048824e255876d2825, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  damage: 5
+  damage: 1
 --- !u!114 &7210011588325855770
 MonoBehaviour:
   m_ObjectHideFlags: 0
