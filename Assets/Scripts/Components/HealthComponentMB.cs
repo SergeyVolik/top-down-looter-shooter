@@ -11,6 +11,7 @@ namespace SV.ECS
         public int health;
 
         public bool destroyAfterDeath;
+        public bool isDamageable = true;
     }
     public struct HealthComponent : IComponentData
     {
@@ -39,7 +40,7 @@ namespace SV.ECS
 
     }
 
-    public struct DamageableComponent : IComponentData
+    public struct DamageableComponent : IComponentData, IEnableableComponent
     {
 
     }
@@ -59,8 +60,14 @@ namespace SV.ECS
             });
 
             AddComponent(entity, new DamageableComponent());
-            AddComponent(entity, new DeadComponent { 
-                 destroyAfterDeath = authoring.destroyAfterDeath
+
+            if (!authoring.isDamageable)
+            {
+                SetComponentEnabled<DamageableComponent>(entity, false);
+            }
+            AddComponent(entity, new DeadComponent
+            {
+                destroyAfterDeath = authoring.destroyAfterDeath
             });
             SetComponentEnabled<DeadComponent>(entity, false);
             AddBuffer<DamageToApplyComponent>(entity);

@@ -15,18 +15,19 @@ namespace SV.ECS
         {
             base.OnCreate();
             input = new PlayerControlls();
+            input.Enable();
 
+        }
 
-
+        protected override void OnDestroy()
+        {
+            base.OnDestroy();
+            input.Disable();
         }
         protected override void OnUpdate()
         {
-
+            
             var moveInput = input.Controlls.Move.ReadValue<Vector2>();
-            var y = Input.GetAxis("Vertical");
-            var x = Input.GetAxis("Horizontal");
-
-            moveInput = new Vector2(x, y);
 
             Entities.ForEach((ref CharacterMoveInputComponent moveInputComp) =>
             {

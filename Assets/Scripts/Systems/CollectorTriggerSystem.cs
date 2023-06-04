@@ -7,6 +7,7 @@ using UnityEngine;
 namespace SV.ECS
 {
     [UpdateAfter(typeof(StatefulTriggerEventBufferSystem))]
+    [UpdateInGroup(typeof(GameFixedStepSystemGroup))]
     public partial struct CollectorTriggerSystem : ISystem
     {
         public void OnUpdate(ref SystemState state)
@@ -19,7 +20,7 @@ namespace SV.ECS
             {
                 foreach (var item in triggers)
                 {
-                    if (item.State == StatefulEventState.Enter)
+                    if (item.State == StatefulEventState.Enter )
                     {
                         var targetEntity = item.EntityA == e ? item.EntityB : item.EntityA;
 

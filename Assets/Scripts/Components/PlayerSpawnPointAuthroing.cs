@@ -23,6 +23,11 @@ namespace SV.ECS
         public Entity spawnPointEntity;
     }
 
+    public struct SpawnPlayerComponent : IComponentData
+    {
+       
+    }
+
     public class PlayerSpawnPointBaker : Baker<PlayerSpawnPointAuthroing>
     {
         public override void Bake(PlayerSpawnPointAuthroing authoring)
@@ -32,41 +37,50 @@ namespace SV.ECS
             {
                 spawnPointEntity = GetEntity(authoring.spawnPoint, TransformUsageFlags.Dynamic)
             });
+            AddComponent(entity, new SpawnPlayerComponent
+            {
+                
+            });
         }
     }
 
 
     public partial class PlayerSpawnSystem : SystemBase
     {
-        private EntityQuery playerQuery;
+     
 
         protected override void OnCreate()
         {
             base.OnCreate();
             RequireForUpdate<GamePrefabsComponent>();
-            RequireForUpdate<PlayerSpawnPointComponent>();
-
-            playerQuery = GetEntityQuery(typeof(PlayerComponent), typeof(HealthComponent));
+            RequireForUpdate(SystemAPI.QueryBuilder().WithAll<PlayerSpawnPointComponent, SpawnPlayerComponent>().Build());
+      
+          
         }
 
         protected override void OnUpdate()
         {
-            if (playerQuery.CalculateEntityCount() != 0)
-                return;
-
-
+          
             var gamePrefabs = SystemAPI.GetSingleton<GamePrefabsComponent>();
-            var spawnPoint = SystemAPI.GetSingleton<PlayerSpawnPointComponent>();
+          
 
             var ecb = SystemAPI.GetSingleton<BeginSimulationEntityCommandBufferSystem.Singleton>().CreateCommandBuffer(World.Unmanaged);
 
+            foreach (var (spawnPoint, spAction, e) in SystemAPI.Query<PlayerSpawnPointComponent, SpawnPlayerComponent>().WithEntityAccess())
+            {
+                var playerEntity = ecb.Instantiate(gamePrefabs.playerPrefab);
 
-            var playerEntity = ecb.Instantiate(gamePrefabs.playerPrefab);
+
+                var spawnPointltw = EntityManager.GetComponentData<LocalToWorld>(spawnPoint.spawnPointEntity);
+
+                ecb.SetComponent(playerEntity, LocalTransform.FromPosition(spawnPointltw.Position));
+
+                ecb.RemoveComponent<SpawnPlayerComponent>(e);
+            }
+    
 
 
-            var spawnPointltw = EntityManager.GetComponentData<LocalToWorld>(spawnPoint.spawnPointEntity);
-
-            ecb.SetComponent(playerEntity, LocalTransform.FromPosition(spawnPointltw.Position));
+        
 
             
 

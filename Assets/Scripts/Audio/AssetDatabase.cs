@@ -27,8 +27,6 @@ public class AssetDatabase<T> : ScriptableObject where T : AssetWithGuid
         {
             var guid = item.GetGuid();
 
-            Debug.Log(guid);
-
             itemsDic.Add(guid, item);
 
         }

@@ -10,8 +10,8 @@ namespace SV.ECS
 {
 
 
-    [UpdateAfter(typeof(StatefulTriggerEventBufferSystem))]
-    [UpdateAfter(typeof(StatefulCollisionEventBufferSystem))]
+   
+    [UpdateInGroup(typeof(GameFixedStepSystemGroup))]
     public partial class ProjectileVisitorSystem : SystemBase
     {
 
@@ -26,6 +26,9 @@ namespace SV.ECS
             [ReadOnly]
             public ComponentLookup<OwnerComponent> ownerLookup;
 
+            [ReadOnly]
+            public ComponentLookup<EnemyComponent> enemyLookup;
+
             public void Execute(Entity entity, ref DynamicBuffer<StatefulTriggerEvent> triggerEventBuffer, in ProjectileAuthoringComponent projectile)
             {
 
@@ -35,9 +38,17 @@ namespace SV.ECS
                     if (item.State != StatefulEventState.Enter)
                         continue;
 
+                   
+
                     var target = item.EntityA != entity ? item.EntityA : item.EntityB;
 
+                  
+
+
                     if (ownerLookup.TryGetComponent(entity, out var owner) && owner.value == target)
+                        continue;
+
+                    if (enemyLookup.HasComponent(target) && enemyLookup.HasComponent(owner.value))
                         continue;
 
                     if (penetrationLookup.TryGetBuffer(target, out var visitBuffer))
@@ -63,6 +74,7 @@ namespace SV.ECS
                 penetrationLookup = SystemAPI.GetBufferLookup<VisitProjectileBufferElem>(),
                 clearDamageToApply = SystemAPI.GetComponentLookup<ClearVisitProjectileBuffer>(),
                 ownerLookup = SystemAPI.GetComponentLookup<OwnerComponent>(true),
+                 enemyLookup = SystemAPI.GetComponentLookup<EnemyComponent>(true),
 
             }.Schedule(Dependency);
 
@@ -73,6 +85,7 @@ namespace SV.ECS
     }
 
     [UpdateBefore(typeof(ProjectileVisitorSystem))]
+    [UpdateInGroup(typeof(GameFixedStepSystemGroup))]
     public partial class ClearVisitedProjectileBUfferSystem : SystemBase
     {
 
