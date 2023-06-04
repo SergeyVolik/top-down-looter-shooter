@@ -15,13 +15,21 @@ namespace SV.UI
         {
             Instance = this;
         }
-  
-        public void Navigate(INavigateable navigateable, bool onlyDisableInput = false)
+
+        private void OnDestroy()
+        {
+            while (Navigateables.Count > 0)
+            {
+                Pop();
+            }
+        }
+
+        public void Navigate(INavigateable navigateable, bool additive = false)
         {
             if (Navigateables.Count > 0)
             {
                 var prev = Navigateables.Pop();
-                prev.Hide(onlyDisableInput);
+                prev.Hide(additive);
                 Navigateables.Push(prev);
             }
 
@@ -38,6 +46,16 @@ namespace SV.UI
                 page = Navigateables.Pop();
 
                 page.Hide(false);
+
+            }
+
+            if (Navigateables.Count > 0)
+            {
+                var prev = Navigateables.Pop();
+
+                prev.Show();
+
+                Navigateables.Push(prev);
 
             }
 

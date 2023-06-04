@@ -46,7 +46,7 @@ namespace SV.ECS
             RequireForUpdate<GamePrefabsComponent>();
             RequireForUpdate<PlayerSpawnPointComponent>();
 
-            playerQuery = GetEntityQuery(typeof(PlayerComponent));
+            playerQuery = GetEntityQuery(typeof(PlayerComponent), typeof(HealthComponent));
         }
 
         protected override void OnUpdate()
@@ -68,7 +68,7 @@ namespace SV.ECS
 
             ecb.SetComponent(playerEntity, LocalTransform.FromPosition(spawnPointltw.Position));
 
-            Enabled = false;
+            
 
         }
     }

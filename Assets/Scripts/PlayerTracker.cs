@@ -7,12 +7,20 @@ using UnityEngine;
 
 public class PlayerTracker : MonoBehaviour
 {
+    private EntityManager em;
+    private Entity entity;
+
     private void Start()
     {
-        var em = World.DefaultGameObjectInjectionWorld.EntityManager;
-        var entity = em.CreateEntity();
+        em = World.DefaultGameObjectInjectionWorld.EntityManager;
+        entity = em.CreateEntity();
         em.SetName(entity, name);
         em.AddComponentObject(entity, this);
+    }
+
+    private void OnDestroy()
+    {
+        em.DestroyEntity(entity);
     }
 }
 

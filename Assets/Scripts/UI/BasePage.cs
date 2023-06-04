@@ -18,10 +18,10 @@ namespace SV.UI
             m_Canvas = GetComponent<Canvas>();
             m_GraphicRaycaster = GetComponent<GraphicRaycaster>();
 
-          
+
             Hide();
 
-           
+
         }
 
         protected virtual void Start()
@@ -32,22 +32,27 @@ namespace SV.UI
         }
         public virtual void Hide(bool onlyDosableInput = false)
         {
-           
+
 
             if (onlyDosableInput)
             {
                 m_GraphicRaycaster.enabled = false;
             }
-            else {
-                m_Canvas.enabled = false;
-                m_GraphicRaycaster.enabled = false;
+            else
+            {
+                if (m_Canvas)
+                    m_Canvas.enabled = false;
+                if (m_GraphicRaycaster)
+                    m_GraphicRaycaster.enabled = false;
             }
         }
 
         public virtual void Show()
         {
-            m_Canvas.enabled = true;
-            m_GraphicRaycaster.enabled = true;
+            if (m_Canvas)
+                m_Canvas.enabled = true;
+            if (m_GraphicRaycaster)
+                m_GraphicRaycaster.enabled = true;
 
         }
     }

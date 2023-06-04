@@ -23,6 +23,9 @@ namespace SV.ECS
             if (camera == null)
                 camera = Camera.main;
 
+            if (camera == null)
+                return;
+
             float3 camPos = camera.transform.position;
             foreach (var lt in SystemAPI.Query<RefRW<LocalTransform>>().WithAll<LookAtCameraComponent>())
             {

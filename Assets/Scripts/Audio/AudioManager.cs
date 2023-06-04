@@ -70,6 +70,8 @@ namespace SV
     public class AudioManager : MonoBehaviour
     {
         public static AudioManager Instance { get; private set; }
+
+        private EntityManager em;
         public AudioSFXDatabase database;
         public AudioSFX initMusic;
         private AudioSource musicSource;
@@ -77,13 +79,21 @@ namespace SV
         {
             Instance = this;
 
-            World.DefaultGameObjectInjectionWorld.EntityManager.CreateSingleton<SFXDatabaseComponent>(new SFXDatabaseComponent
+            em = World.DefaultGameObjectInjectionWorld.EntityManager;
+
+         
+            entity = em.CreateSingleton<SFXDatabaseComponent>(new SFXDatabaseComponent
             {
                 value = database
 
             }, new Unity.Collections.FixedString64Bytes("SFXDatabase"));
 
             PlayMusic(initMusic);
+        }
+
+        private void OnDestroy()
+        {
+            em.DestroyEntity(entity);
         }
 
         [HideInEditorMode]
@@ -135,6 +145,7 @@ namespace SV
         public int maxPoolSize = 10;
 
         IObjectPool<AudioSource> m_Pool;
+        private Entity entity;
 
         public IObjectPool<AudioSource> Pool
         {

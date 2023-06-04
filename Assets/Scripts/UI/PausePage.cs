@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 namespace SV.UI
@@ -8,27 +9,23 @@ namespace SV.UI
     public class PausePage : BasePage
     {
 
-        [SerializeField]
-        private Button resume;
-
-        [SerializeField]
-        private Button mainmenu;
-
-        
 
         protected override void Awake()
         {
             base.Awake();
-            resume.onClick.AddListener(() =>
-            {
-                UINavigationManager.Instance.Pop();
-                PauseManager.Instance.Resume();
-            });
 
-            mainmenu.onClick.AddListener(() =>
-            {
-              
-            });
+        }
+
+        public override void Show()
+        {
+            base.Show();
+            PauseManager.Instance.Pause();
+        }
+
+        public override void Hide(bool onlyDosableInput = false)
+        {
+            base.Hide(onlyDosableInput);
+            PauseManager.Instance.Resume();
         }
     }
 

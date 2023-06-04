@@ -32,7 +32,15 @@ public class LoadScene : MonoBehaviour
     private void Load()
     {
         if (unloadScene && loadMode == LoadSceneMode.Additive)
-            SceneManager.UnloadSceneAsync(unloadSceneIndex);
+        {
+            var oper = SceneManager.UnloadSceneAsync(unloadSceneIndex);
+
+            oper.completed += (aop) => {
+                SceneManager.LoadSceneAsync(sceneIndex, loadMode);
+            };
+
+            return;
+        }
 
         SceneManager.LoadSceneAsync(sceneIndex, loadMode);
     }
