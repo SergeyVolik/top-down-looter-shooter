@@ -37,8 +37,8 @@ namespace SV.ECS
             {
                 if (nextTime.value < time)
                 {
-                    nextTime.value = time + preodic.inteval;
-
+                   
+                    bool hasDamagable = false;
                     foreach (var item in triggerEventBuffer)
                     {
 
@@ -49,7 +49,7 @@ namespace SV.ECS
                         if (ownerLookup.TryGetComponent(entity, out var ownerData) && ownerData.value == target)
                             continue;
 
-                        if (!damageableLookup.HasComponent(target))
+                        if (!damageableLookup.IsComponentEnabled(target))
                             continue;
 
                         damageToApply.SetBufferEnabled(target, true);
@@ -58,6 +58,7 @@ namespace SV.ECS
 
                         if (damageToApply.TryGetBuffer(target, out var buffer))
                         {
+                            hasDamagable = true;
                             buffer.Add(new DamageToApplyComponent
                             {
                                 damage = damage.damage,
@@ -66,9 +67,12 @@ namespace SV.ECS
                         }
 
 
-
+                      
 
                     }
+
+                    if (hasDamagable)
+                        nextTime.value = time + preodic.inteval;
                 }
 
             }

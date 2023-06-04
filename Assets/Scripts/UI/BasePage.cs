@@ -30,6 +30,7 @@ namespace SV.UI
                 UINavigationManager.Instance.Navigate(this);
 
         }
+       
         public virtual void Hide(bool onlyDosableInput = false)
         {
 

@@ -24,10 +24,29 @@ namespace SV.UI
             }
         }
 
+        public bool IsCurrentPage(INavigateable navigateable)
+        {
+            if (Navigateables.Count == 0)
+                return false;
+
+            if (navigateable == Navigateables.Peek())
+                return true;
+
+            return false;
+        }
         public void Navigate(INavigateable navigateable, bool additive = false)
         {
+
+          
+
             if (Navigateables.Count > 0)
             {
+                if (Navigateables.Peek() == navigateable)
+                {
+                    Debug.LogError("Page already active");
+                    return;
+                }
+
                 var prev = Navigateables.Pop();
                 prev.Hide(additive);
                 Navigateables.Push(prev);
@@ -47,6 +66,10 @@ namespace SV.UI
 
                 page.Hide(false);
 
+            }
+            else {
+                Debug.LogError("Navigateables are empty");
+                return null;
             }
 
             if (Navigateables.Count > 0)
@@ -68,10 +91,12 @@ namespace SV.UI
         public Stack<INavigateable> Navigateables { get; }
         void Navigate(INavigateable navigateable, bool onlyDisableInput);
         INavigateable Pop();
+        bool IsCurrentPage(INavigateable navigateable);
     }
 
     public interface INavigateable
     {
+
         void Show();
 
         void Hide(bool onlyDisableInput);
@@ -79,6 +104,6 @@ namespace SV.UI
 
 
 
-  
+
 
 }

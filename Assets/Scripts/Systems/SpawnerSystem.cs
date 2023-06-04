@@ -28,14 +28,26 @@ namespace SV.ECS
             
             EntityCommandBuffer ecb = ecbSingleton.CreateCommandBuffer(World.Unmanaged);
 
-            Entities.ForEach((ref Entity e, ref EnemySpawnerComponent vel, ref LocalToWorld ltw, ref IndividualRandomComponent random) =>
+            Entities.ForEach((ref Entity e, ref EnemySpawnerComponent vel, ref LocalToWorld ltw, ref IndividualRandomComponent random, in DynamicBuffer<EnemiesListComponent> enemies) =>
             {
 
                 var nextSpawnTime = vel.nextSpawnTime;
 
                 if (time >= nextSpawnTime)
                 {
-                    var spawnedEntity = ecb.Instantiate(vel.enemyPrefab);
+                    var rnd = random.Value;
+                    var prefabData = enemies[rnd.NextInt(0, enemies.Length)];
+
+                   
+
+                    var visualSpawnpoint = ecb.Instantiate(vel.spawnPointVisual);
+
+                    ecb.SetComponent(visualSpawnpoint, new SpawnPointComponent
+                    {
+                        spawnDelay = 2f,
+                        prefab = prefabData.enemyPrefab
+                    });
+
                     nextSpawnTime = (float)time + vel.spawnDelay;
 
                     vel.nextSpawnTime = nextSpawnTime;
@@ -51,13 +63,13 @@ namespace SV.ECS
 
                     pos += vel.spawnBound.Center;
 
-                    var rnd = random.Value;
+                  
                     pos.x += rnd.NextFloat(min.x, max.x);
                     pos.z += rnd.NextFloat(min.z, max.z);
 
                     random.Value = rnd;
 
-                    ecb.SetComponent(spawnedEntity, new LocalTransform
+                    ecb.SetComponent(visualSpawnpoint, new LocalTransform
                     {
                         Position = pos,
                         Scale = 1f,

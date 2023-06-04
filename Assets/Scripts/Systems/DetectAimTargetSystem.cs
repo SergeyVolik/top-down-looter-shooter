@@ -82,7 +82,10 @@ namespace SV.ECS
                     }
 
                     detectedTargetLookUp.SetComponentEnabled(entity, hasTarget);
-                    gunActivatedLookUp.SetComponentEnabled(entity, hasTarget);
+
+                    if(gunActivatedLookUp.HasComponent(entity))
+                        gunActivatedLookUp.SetComponentEnabled(entity, hasTarget);
+
                     var refObj = detectedTargetLookUp.GetRefRW(entity);
 
                     refObj.ValueRW.target = detectedEntity;

@@ -8,13 +8,23 @@ namespace SV.ECS
 
     public class EnemySpawnerAuthoring : MonoBehaviour
     {
-        public GameObject enemyPrefab;
+        public GameObject spawnerPrefab;
+
+        [System.Serializable]
+        public class EnemyData
+        {
+            public GameObject prefab;
+            public float probability;
+        }
+        public EnemyData[] enemies;
+
+
         public float spawnDelay;
         public AABB spawnBound;
 
         private void OnEnable()
         {
-            
+
         }
 
         private void OnDrawGizmos()
@@ -26,16 +36,24 @@ namespace SV.ECS
             Gizmos.DrawWireSphere(transform.position + (Vector3)spawnBound.Center, 1f);
         }
     }
-    public struct EnemySpawnerComponent : IComponentData
+    public struct EnemiesListComponent : IBufferElementData
     {
         public Entity enemyPrefab;
+        public float probability;
+
+    }
+    public struct EnemySpawnerComponent : IComponentData
+    {
+        
         public float spawnDelay;
         public float nextSpawnTime;
+        public Entity spawnPointVisual;
         public AABB spawnBound;
+        
     }
 
 
-    public class EnemySpawnerBaker : Baker<EnemySpawnerAuthoring>
+        public class EnemySpawnerBaker : Baker<EnemySpawnerAuthoring>
     {
         public override void Bake(EnemySpawnerAuthoring authoring)
         {
@@ -44,13 +62,24 @@ namespace SV.ECS
                 return;
 
             var entity = GetEntity(TransformUsageFlags.Dynamic);
+
+            var buffer = AddBuffer<EnemiesListComponent>(entity);
+
+            foreach (var item in authoring.enemies)
+            {
+                buffer.Add(new EnemiesListComponent
+                {
+                    enemyPrefab = GetEntity(item.prefab, TransformUsageFlags.Dynamic),
+                    probability = item.probability,
+
+                });
+            }
             AddComponent(entity, new EnemySpawnerComponent
             {
-                enemyPrefab = GetEntity(authoring.enemyPrefab, TransformUsageFlags.Dynamic),
                 spawnDelay = authoring.spawnDelay,
                 spawnBound = authoring.spawnBound,
+                 spawnPointVisual = GetEntity(authoring.spawnerPrefab, TransformUsageFlags.Dynamic)
             });
-
 
 
 

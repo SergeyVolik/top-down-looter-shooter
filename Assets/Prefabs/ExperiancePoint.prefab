@@ -16,8 +16,9 @@ GameObject:
   - component: {fileID: 2086631356439128185}
   - component: {fileID: 7657412678608108940}
   - component: {fileID: 9005132830864771827}
+  - component: {fileID: 4122792880426380881}
   m_Layer: 0
-  m_Name: coin
+  m_Name: ExperiancePoint
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -319,3 +320,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ef76fa9332439684184d529569bd3d04, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &4122792880426380881
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9194150915235131657}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 14459b05cc4099e40ab232995338654b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  value: 1
