@@ -17,6 +17,7 @@ namespace SV.ECS
         [Range(1, 10)]
         public int bulletsInShot;
 
+        public bool alwaysShoot;
 
         private void OnDrawGizmos()
         {
@@ -69,7 +70,9 @@ namespace SV.ECS
             });
 
             AddComponent(entity, new GunActivated());
-            SetComponentEnabled<GunActivated>(entity, false);
+
+            if(!authoring.alwaysShoot)
+                SetComponentEnabled<GunActivated>(entity, false);
         }
     }
 
