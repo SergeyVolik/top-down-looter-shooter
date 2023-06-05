@@ -35,6 +35,15 @@ public partial class @PlayerControlls: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": true
+                },
+                {
+                    ""name"": ""Pause"",
+                    ""type"": ""Button"",
+                    ""id"": ""bfe0b7b0-33c1-4066-b728-cccaed204f3e"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -169,6 +178,17 @@ public partial class @PlayerControlls: IInputActionCollection2, IDisposable
                     ""action"": ""Move"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""32e252e7-a7b5-4b15-b04e-2eeb41b9058c"",
+                    ""path"": ""<XInputController>/start"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""Gamepad"",
+                    ""action"": ""Pause"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         }
@@ -201,6 +221,7 @@ public partial class @PlayerControlls: IInputActionCollection2, IDisposable
         // Controlls
         m_Controlls = asset.FindActionMap("Controlls", throwIfNotFound: true);
         m_Controlls_Move = m_Controlls.FindAction("Move", throwIfNotFound: true);
+        m_Controlls_Pause = m_Controlls.FindAction("Pause", throwIfNotFound: true);
     }
 
     public void Dispose()
@@ -263,11 +284,13 @@ public partial class @PlayerControlls: IInputActionCollection2, IDisposable
     private readonly InputActionMap m_Controlls;
     private List<IControllsActions> m_ControllsActionsCallbackInterfaces = new List<IControllsActions>();
     private readonly InputAction m_Controlls_Move;
+    private readonly InputAction m_Controlls_Pause;
     public struct ControllsActions
     {
         private @PlayerControlls m_Wrapper;
         public ControllsActions(@PlayerControlls wrapper) { m_Wrapper = wrapper; }
         public InputAction @Move => m_Wrapper.m_Controlls_Move;
+        public InputAction @Pause => m_Wrapper.m_Controlls_Pause;
         public InputActionMap Get() { return m_Wrapper.m_Controlls; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -280,6 +303,9 @@ public partial class @PlayerControlls: IInputActionCollection2, IDisposable
             @Move.started += instance.OnMove;
             @Move.performed += instance.OnMove;
             @Move.canceled += instance.OnMove;
+            @Pause.started += instance.OnPause;
+            @Pause.performed += instance.OnPause;
+            @Pause.canceled += instance.OnPause;
         }
 
         private void UnregisterCallbacks(IControllsActions instance)
@@ -287,6 +313,9 @@ public partial class @PlayerControlls: IInputActionCollection2, IDisposable
             @Move.started -= instance.OnMove;
             @Move.performed -= instance.OnMove;
             @Move.canceled -= instance.OnMove;
+            @Pause.started -= instance.OnPause;
+            @Pause.performed -= instance.OnPause;
+            @Pause.canceled -= instance.OnPause;
         }
 
         public void RemoveCallbacks(IControllsActions instance)
@@ -325,5 +354,6 @@ public partial class @PlayerControlls: IInputActionCollection2, IDisposable
     public interface IControllsActions
     {
         void OnMove(InputAction.CallbackContext context);
+        void OnPause(InputAction.CallbackContext context);
     }
 }

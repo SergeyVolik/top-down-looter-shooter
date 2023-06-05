@@ -1,4 +1,6 @@
+using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace SV.UI
@@ -13,6 +15,9 @@ namespace SV.UI
         [SerializeField]
         private bool initPage;
 
+        [SerializeField]
+        private GameObject lastFocusedElement;
+        bool firstHideExecuted = false;
         protected virtual void Awake()
         {
             m_Canvas = GetComponent<Canvas>();
@@ -24,6 +29,7 @@ namespace SV.UI
 
         }
 
+        protected virtual void OnDestroy() { }
         protected virtual void Start()
         {
             if (initPage)
@@ -33,7 +39,11 @@ namespace SV.UI
        
         public virtual void Hide(bool onlyDosableInput = false)
         {
+           
+            if(EventSystem.current && firstHideExecuted && EventSystem.current.currentSelectedGameObject != null)
+                lastFocusedElement = EventSystem.current.currentSelectedGameObject;
 
+            firstHideExecuted = true;
 
             if (onlyDosableInput)
             {
@@ -50,6 +60,9 @@ namespace SV.UI
 
         public virtual void Show()
         {
+            if(EventSystem.current)
+                EventSystem.current.SetSelectedGameObject(lastFocusedElement);
+
             if (m_Canvas)
                 m_Canvas.enabled = true;
             if (m_GraphicRaycaster)

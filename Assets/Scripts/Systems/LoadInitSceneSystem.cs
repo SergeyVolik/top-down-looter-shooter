@@ -9,9 +9,9 @@ namespace SV.ECS
     {
         protected override void OnUpdate()
         {
-            SceneManager.LoadSceneAsync(0);
-            Enabled = false;
-            Debug.Log("Load Init Scene System");
+            //SceneManager.LoadSceneAsync(0);
+            //Enabled = false;
+            //Debug.Log("Load Init Scene System");
         }
     }
 #endif
