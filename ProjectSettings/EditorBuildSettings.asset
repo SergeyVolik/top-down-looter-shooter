@@ -4,5 +4,11 @@
 EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
-  m_Scenes: []
+  m_Scenes:
+  - enabled: 1
+    path: Assets/Scenes/NetworkCube.unity
+    guid: 69694b61f6db3134fac8bd942fe26402
+  - enabled: 1
+    path: Assets/Scenes/NetworkCube/SharedData.unity
+    guid: 4fcabb74171df314eaf96be5ef981421
   m_configObjects: {}
