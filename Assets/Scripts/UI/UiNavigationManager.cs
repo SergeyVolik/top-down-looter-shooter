@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -12,6 +13,11 @@ namespace SV.UI
         private Stack<INavigateable> _navigateables = new Stack<INavigateable>();
 
         private void Awake()
+        {
+            Instance = this;
+        }
+
+        private void OnEnable()
         {
             Instance = this;
         }
@@ -83,6 +89,13 @@ namespace SV.UI
             }
 
             return page;
+        }
+
+        public void PopAll()
+        {
+            while(Navigateables.Count > 0)
+                Pop();
+
         }
     }
 

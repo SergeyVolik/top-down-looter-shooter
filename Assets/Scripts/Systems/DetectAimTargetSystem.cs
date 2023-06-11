@@ -37,6 +37,8 @@ namespace SV.ECS
 
         protected unsafe override void OnUpdate()
         {
+
+          
             var physics = SystemAPI.GetSingleton<PhysicsWorldSingleton>();
             var aimTargetLookup = SystemAPI.GetComponentLookup<AimTargetComponent>();
             var detectedTargetLookUp = SystemAPI.GetComponentLookup<DetectedTargetComponent>();

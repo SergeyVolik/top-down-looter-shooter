@@ -3,6 +3,7 @@ using SV;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using UnityEditor;
 using UnityEngine;
 
 public class AssetDatabase<T> : ScriptableObject where T : AssetWithGuid
@@ -14,6 +15,7 @@ public class AssetDatabase<T> : ScriptableObject where T : AssetWithGuid
     {
 #if UNITY_EDITOR
         items = Resources.FindObjectsOfTypeAll<T>();
+        EditorUtility.SetDirty(this);
 
 #endif
     }
@@ -25,6 +27,11 @@ public class AssetDatabase<T> : ScriptableObject where T : AssetWithGuid
 
         foreach (var item in items)
         {
+            if (item == null)
+            {
+                Debug.LogError($"AssetDatabase {typeof(T)} item is null");
+                continue;
+            }
             var guid = item.GetGuid();
 
             itemsDic.Add(guid, item);

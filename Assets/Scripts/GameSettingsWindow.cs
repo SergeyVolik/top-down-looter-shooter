@@ -23,20 +23,24 @@ namespace Sirenix.OdinInspector.Demos
             window.position = GUIHelper.GetEditorWindowRect().AlignCenter(800, 600);
         }
 
-     
+
+        [Button]
+        public void ClearPlayerPrefs()
+        {
+            PlayerPrefs.DeleteAll();
+        }
 
         protected override OdinMenuTree BuildMenuTree()
         {
             OdinMenuTree tree = new OdinMenuTree(supportsMultiSelect: true)
             {
-                { "Home",                           this,                           EditorIcons.House                       }, // Draws the this.someData field in this case.
-                { "Odin Settings",                  null,                           SdfIconType.GearFill                    },
-                { "Odin Settings/Color Palettes",   ColorPaletteManager.Instance,   SdfIconType.PaletteFill                 },
-                { "Odin Settings/AOT Generation",   AOTGenerationConfig.Instance,   EditorIcons.SmartPhone                  },
-                { "Player Settings",                Resources.FindObjectsOfTypeAll<PlayerSettings>().FirstOrDefault()       },
-         
+                { "Home", this, EditorIcons.House }, // Draws the this.someData field in this case.
+                { "Odin Settings", null, SdfIconType.GearFill },
+                { "Odin Settings/Color Palettes", ColorPaletteManager.Instance, SdfIconType.PaletteFill },
+                { "Odin Settings/AOT Generation", AOTGenerationConfig.Instance, EditorIcons.SmartPhone },
+                { "Player Settings", Resources.FindObjectsOfTypeAll<PlayerSettings>().FirstOrDefault() },
+                { "Utils", Resources.FindObjectsOfTypeAll<GameSettingsSO>().FirstOrDefault() }
             };
-
             tree.AddAllAssetsAtPath("Odin Settings/More Odin Settings", "Plugins/Sirenix", typeof(ScriptableObject), true)
                 .AddThumbnailIcons();
 

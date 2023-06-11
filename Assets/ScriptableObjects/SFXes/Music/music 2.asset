@@ -15,4 +15,4 @@ MonoBehaviour:
   guid: 303752d9863259c4f8da16e95a226afc
   volume: 1
   clip: {fileID: 8300000, guid: cc664655cd2f5c64096cc18842433148, type: 3}
-  mixer: {fileID: 1554150752040198610, guid: e6477f5e444ec3b4fbb47aac8ae9ac84, type: 2}
+  mixer: {fileID: 2547316574274399409, guid: e6477f5e444ec3b4fbb47aac8ae9ac84, type: 2}

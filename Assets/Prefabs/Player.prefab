@@ -5829,10 +5829,10 @@ MonoBehaviour:
   slot4: {fileID: 5166153581912297154}
   slot5: {fileID: 7337740560340938447}
   slot6: {fileID: 8865057254585394595}
-  gun1: {fileID: 0}
-  gun2: {fileID: 0}
-  gun3: {fileID: 0}
-  gun4: {fileID: 0}
+  gun1: {fileID: 7826399767812890284, guid: e88db78cebaf6494998a93ce76d09ed2, type: 3}
+  gun2: {fileID: 7826399767812890284, guid: e88db78cebaf6494998a93ce76d09ed2, type: 3}
+  gun3: {fileID: 7826399767812890284, guid: e88db78cebaf6494998a93ce76d09ed2, type: 3}
+  gun4: {fileID: 7826399767812890284, guid: e88db78cebaf6494998a93ce76d09ed2, type: 3}
   gun5: {fileID: 0}
   gun6: {fileID: 0}
 --- !u!114 &303357090407700040
@@ -5860,7 +5860,7 @@ MonoBehaviour:
     x: 0
     y: 0
     z: 0
-  m_GravityFactor: 4
+  m_GravityFactor: 3
   m_OverrideDefaultMassDistribution: 1
   m_CenterOfMass:
     x: 0
@@ -6373,7 +6373,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8713316883046894682, guid: c42bc0ffea752f545b78613914f66815, type: 3}
       propertyPath: m_IsActive
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8963555460284914216, guid: c42bc0ffea752f545b78613914f66815, type: 3}
       propertyPath: m_RootOrder
@@ -6467,7 +6467,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7826399767812890284, guid: f6c43c952842e8e44aadac2de83afd41, type: 3}
       propertyPath: m_IsActive
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8143516810824834880, guid: f6c43c952842e8e44aadac2de83afd41, type: 3}
       propertyPath: m_RootOrder

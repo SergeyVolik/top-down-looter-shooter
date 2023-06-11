@@ -11,10 +11,17 @@ namespace SV.UI
 
         public BasePage page;
         public bool addtive;
+        public bool clearNavManager;
+
         private void Awake()
         {
             GetComponent<Button>().onClick.AddListener(() =>
             {
+                if (clearNavManager)
+                {
+                    UINavigationManager.Instance.PopAll();
+                }
+
                 UINavigationManager.Instance.Navigate(page, addtive);
             });
         }

@@ -60,44 +60,44 @@ namespace SV.ECS
 
     }
 
-    //public partial class PresentationGoSystem : SystemBase
-    //{
-    //    protected override void OnUpdate()
-    //    {
-    //        var endECB = SystemAPI.GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>().CreateCommandBuffer(World.Unmanaged);
-    //        var beginECB = SystemAPI.GetSingleton<BeginSimulationEntityCommandBufferSystem.Singleton>().CreateCommandBuffer(World.Unmanaged);
+    public partial class PresentationGoSystem : SystemBase
+    {
+        protected override void OnUpdate()
+        {
+            var endECB = SystemAPI.GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>().CreateCommandBuffer(World.Unmanaged);
+            var beginECB = SystemAPI.GetSingleton<BeginSimulationEntityCommandBufferSystem.Singleton>().CreateCommandBuffer(World.Unmanaged);
 
-    //        foreach (var (pGO, e) in SystemAPI.Query<PresentationGOComponent>().WithEntityAccess())
-    //        {
+            foreach (var (pGO, e) in SystemAPI.Query<PresentationGOComponent>().WithEntityAccess())
+            {
 
-    //            var instance = GameObject.Instantiate(pGO.prefab);
-    //            beginECB.AddComponent(e, new TransformGO { value = instance.transform });
-    //            instance.AddComponent<EntityLink>().AssignEntity(e, EntityManager);
+                var instance = GameObject.Instantiate(pGO.prefab);
+                beginECB.AddComponent(e, new TransformGO { value = instance.transform });
+                instance.AddComponent<EntityLink>().AssignEntity(e, EntityManager);
 
-    //            if (instance.TryGetComponent<VisualMessage>(out var vmComp))
-    //            {
-    //                beginECB.AddComponent(e, new VisualMessageGO { value = vmComp });                 
-    //            }
+                if (instance.TryGetComponent<VisualMessage>(out var vmComp))
+                {
+                    beginECB.AddComponent(e, new VisualMessageGO { value = vmComp });
+                }
 
-    //            beginECB.RemoveComponent<PresentationGOComponent>(e);
-    //        }
+                beginECB.RemoveComponent<PresentationGOComponent>(e);
+            }
 
-    //        foreach (var (ltw, trans) in SystemAPI.Query<RefRO<LocalToWorld>, TransformGO>())
-    //        {
-    //            var transData = trans.value;
-    //            transData.position = ltw.ValueRO.Position;
-    //            transData.rotation = ltw.ValueRO.Rotation;
-    //        }
+            foreach (var (ltw, trans) in SystemAPI.Query<RefRO<LocalToWorld>, TransformGO>())
+            {
+                var transData = trans.value;
+                transData.position = ltw.ValueRO.Position;
+                transData.rotation = ltw.ValueRO.Rotation;
+            }
 
 
-    //        foreach (var (trans, e) in SystemAPI.Query<TransformGO>().WithNone<LocalTransform>().WithEntityAccess())
-    //        {
-    //            GameObject.Destroy(trans.value.gameObject);
-    //            endECB.RemoveComponent<TransformGO>(e);
-    //        }
+            foreach (var (trans, e) in SystemAPI.Query<TransformGO>().WithNone<LocalTransform>().WithEntityAccess())
+            {
+                GameObject.Destroy(trans.value.gameObject);
+                endECB.RemoveComponent<TransformGO>(e);
+            }
 
-    //    }
-    //}
+        }
+    }
 
 
 }

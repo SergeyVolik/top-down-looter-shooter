@@ -16,6 +16,7 @@ namespace SV.ECS
         public GameObject shotgun;
         public GameObject minigun;
         public GameObject uzi;
+       
     }
 
     public struct GamePrefabsComponent : IComponentData
