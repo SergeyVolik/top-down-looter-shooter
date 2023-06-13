@@ -1,3 +1,4 @@
+using System;
 using Unity.Entities;
 using UnityEngine;
 
@@ -19,7 +20,7 @@ namespace SV.ECS
 
 
 
-    public struct PlayerStatsComponent : IComponentData
+    public struct PlayerStatsComponent : IComponentData, IEquatable<PlayerStatsComponent>
     {
         public float speed;
         public int maxHealth;
@@ -28,12 +29,34 @@ namespace SV.ECS
         public int attackSpeed;
         public float hpRegenInterval;
         public int crit—hance;
+
+        public bool Equals(PlayerStatsComponent other)
+        {
+            if(other.GetHashCode() == GetHashCode())
+                return true;
+            return false;
+        }
+
+        public override int GetHashCode()
+        {
+            return speed.GetHashCode() 
+                ^ maxHealth.GetHashCode() 
+                ^ luck.GetHashCode() 
+                ^ damage.GetHashCode() 
+                ^ attackSpeed.GetHashCode() 
+                ^ hpRegenInterval.GetHashCode() 
+                ^ critChance.GetHashCode();
+        }
+    }
+
+    public struct PrevStatsComponent : IComponentData
+    {
+        public PlayerStatsComponent value;
     }
     public struct UpdatePlayerStatsComponent : IComponentData
     {
 
     }
-
 
     public static class PlayerStatsUtils
     {
@@ -108,9 +131,46 @@ namespace SV.ECS
             {
                 regen.ValueRW.regenInterval = stats.ValueRO.hpRegenInterval;
             }
+            foreach (var controller in SystemAPI.Query<RefRW<CharacterControllerComponent>>().WithAll<PlayerComponent>())
+            {
+                controller.ValueRW.speed = stats.ValueRO.speed;
+            }
+
             ecb.DestroyEntity(query);
         }
     }
+    public partial struct AutoUpdatePlayerStatsSystem : ISystem
+    {
+       
 
+        public void OnCreate(ref SystemState state)
+        {
+            state.RequireForUpdate<PlayerStatsComponent>();
+        }
+
+        public void OnUpdate(ref SystemState state)
+        {
+            var ecb = SystemAPI.GetSingleton<BeginSimulationEntityCommandBufferSystem.Singleton>().CreateCommandBuffer(state.WorldUnmanaged);
+
+            foreach (var (ps, e) in SystemAPI.Query<RefRO<PlayerStatsComponent>>().WithNone<PrevStatsComponent>().WithEntityAccess())
+            {
+                ecb.AddComponent<PrevStatsComponent>(e);
+                var value = ps.ValueRO;
+                ecb.SetComponent(e, value);
+            }
+
+            foreach (var (ps, prev) in SystemAPI.Query<RefRO<PlayerStatsComponent>, RefRW<PrevStatsComponent>>())
+            {
+                if (!ps.ValueRO.Equals(prev.ValueRO.value))
+                {
+                    prev.ValueRW.value = ps.ValueRO;
+
+                    var e = ecb.CreateEntity();
+                    ecb.AddComponent<UpdatePlayerStatsComponent>(e);
+                }
+            }
+
+        }
+    }
 
 }

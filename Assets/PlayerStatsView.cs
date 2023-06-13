@@ -31,27 +31,21 @@ public class PlayerStatsView : MonoBehaviour, IPageShowedListener, IPageHidedLis
         });
         em.SetName(entity, "PlayerStatsView");
 
-        em.SetComponentEnabled<UpdateStatsViewComponent>(entity, false);
+   
         awaked = true;
     }
     public void OnHided()
     {
-        if (awaked)
-        {
-            em.SetComponentEnabled<UpdateStatsViewComponent>(entity, false);
-        }
+        
     }
 
     public void OnShowed()
     {
-        if (awaked)
-        {
-            em.SetComponentEnabled<UpdateStatsViewComponent>(entity, true);
-        }
+        
     }
 }
 
-public class UpdateStatsViewComponent : IComponentData, IEnableableComponent
+public class UpdateStatsViewComponent : IComponentData
 {
     public PlayerStatsView value;
 }
@@ -63,6 +57,7 @@ public partial class UpdateStatsViewSystem : SystemBase
         base.OnCreate();
 
         RequireForUpdate<PlayerStatsComponent>();
+        RequireForUpdate<UpdatePlayerStatsComponent>();
     }
     protected override void OnUpdate()
     {

@@ -2202,13 +2202,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8b45d073f1346c945b8c0478e4a33c74, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  speed: 5
+  speed: 20
   maxHealth: 15
-  luck: 0
-  damage: 0
+  luck: 10
+  damage: 10
   attackSpeed: 0
-  hpRegen: 2
-  "crit\u0421hance": 0
+  hpRegen: 10
+  "crit\u0421hance": 10
 --- !u!1 &1020584752
 GameObject:
   m_ObjectHideFlags: 0
