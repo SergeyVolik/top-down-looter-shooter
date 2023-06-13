@@ -107,6 +107,8 @@ namespace SV.UI
         bool IsCurrentPage(INavigateable navigateable);
     }
 
+    
+
     public interface INavigateable
     {
 
@@ -115,7 +117,15 @@ namespace SV.UI
         void Hide(bool onlyDisableInput);
     }
 
+    public interface IPageHidedListener
+    {
+        void OnHided();
+    }
 
+    public interface IPageShowedListener
+    {
+        void OnShowed();
+    }
 
 
 

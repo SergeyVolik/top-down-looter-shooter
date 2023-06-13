@@ -2207,7 +2207,8 @@ MonoBehaviour:
   luck: 0
   damage: 0
   attackSpeed: 0
-  hpRegen: 0
+  hpRegen: 2
+  "crit\u0421hance": 0
 --- !u!1 &1020584752
 GameObject:
   m_ObjectHideFlags: 0

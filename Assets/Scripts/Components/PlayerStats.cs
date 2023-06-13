@@ -10,7 +10,9 @@ namespace SV.ECS
         public int luck;
         public int damage;
         public int attackSpeed;
-        public int hpRegen;
+        public float hpRegen;
+
+        public int crit—hance;
 
     }
 
@@ -24,7 +26,8 @@ namespace SV.ECS
         public int luck;
         public int damage;
         public int attackSpeed;
-        public int hpRegen;
+        public float hpRegenInterval;
+        public int crit—hance;
     }
     public struct UpdatePlayerStatsComponent : IComponentData
     {
@@ -59,14 +62,14 @@ namespace SV.ECS
                 attackSpeed = authoring.attackSpeed,
                 damage = authoring.damage,
                 maxHealth = authoring.maxHealth,
-                hpRegen = authoring.hpRegen,
+                hpRegenInterval = authoring.hpRegen,
                 luck = authoring.luck,
                 speed = authoring.speed,
-
+                crit—hance = authoring.crit—hance
 
             });
 
-           
+
         }
     }
 
@@ -101,7 +104,10 @@ namespace SV.ECS
                 current.ValueRW.value += diff;
             }
 
-
+            foreach (var regen in SystemAPI.Query<RefRW<HPRegenComponent>>().WithAll<PlayerComponent>())
+            {
+                regen.ValueRW.regenInterval = stats.ValueRO.hpRegenInterval;
+            }
             ecb.DestroyEntity(query);
         }
     }

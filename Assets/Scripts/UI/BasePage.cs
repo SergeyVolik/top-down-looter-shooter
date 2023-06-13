@@ -11,18 +11,24 @@ namespace SV.UI
     {
         private Canvas m_Canvas;
         private GraphicRaycaster m_GraphicRaycaster;
-
+        private IPageHidedListener[] m_Hideale;
+        private IPageShowedListener[] m_Showed;
         [SerializeField]
         private bool initPage;
 
         [SerializeField]
         private GameObject lastFocusedElement;
         bool firstHideExecuted = false;
+
+
+
         protected virtual void Awake()
         {
             m_Canvas = GetComponent<Canvas>();
             m_GraphicRaycaster = GetComponent<GraphicRaycaster>();
 
+            m_Hideale = GetComponentsInChildren<IPageHidedListener>();
+            m_Showed =  GetComponentsInChildren<IPageShowedListener>();
 
             Hide();
 
@@ -43,6 +49,13 @@ namespace SV.UI
             if(EventSystem.current && firstHideExecuted && EventSystem.current.currentSelectedGameObject != null)
                 lastFocusedElement = EventSystem.current.currentSelectedGameObject;
 
+            if (m_Hideale != null)
+            {
+                foreach (var item in m_Hideale)
+                {
+                    item.OnHided();
+                }
+            }
             firstHideExecuted = true;
 
             if (onlyDosableInput)
@@ -62,6 +75,14 @@ namespace SV.UI
         {
             if(EventSystem.current)
                 EventSystem.current.SetSelectedGameObject(lastFocusedElement);
+
+            if (m_Showed != null)
+            {
+                foreach (var item in m_Showed)
+                {
+                    item.OnShowed();
+                }
+            }
 
             if (m_Canvas)
                 m_Canvas.enabled = true;

@@ -40,7 +40,7 @@ public class ConsoleCommands : MonoBehaviour
     {
 
         var _entityManager = World.DefaultGameObjectInjectionWorld.EntityManager;
-        var colorTablesQ = _entityManager.CreateEntityQuery(new ComponentType[] { typeof(PlayerComponent), typeof(HealthComponent), typeof(HPRegenComponent) });
+        var colorTablesQ = _entityManager.CreateEntityQuery(new ComponentType[] { typeof(PlayerStatsComponent) });
 
         if (colorTablesQ.CalculateEntityCount() == 0)
             return;
@@ -49,14 +49,16 @@ public class ConsoleCommands : MonoBehaviour
 
         var entities = colorTablesQ.ToEntityArray(Allocator.Temp);
 
-        _entityManager.SetComponentData(entities[0], new HPRegenComponent
-        {
-            regenInterval = interval
-        });
+        var stats = _entityManager.GetComponentData<PlayerStatsComponent>(entities[0]);
+
+        stats.hpRegenInterval = interval;
+
+        _entityManager.SetComponentData(entities[0], stats);
 
 
         entities.Dispose();
 
+        UpdateStats();
     }
 
     [Command("stats-update")]
