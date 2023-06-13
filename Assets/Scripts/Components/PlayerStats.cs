@@ -28,7 +28,7 @@ namespace SV.ECS
         public int damage;
         public int attackSpeed;
         public float hpRegenInterval;
-        public int crit—hance;
+        public int critChance;
 
         public bool Equals(PlayerStatsComponent other)
         {
@@ -88,7 +88,7 @@ namespace SV.ECS
                 hpRegenInterval = authoring.hpRegen,
                 luck = authoring.luck,
                 speed = authoring.speed,
-                crit—hance = authoring.crit—hance
+                critChance = authoring.crit—hance
 
             });
 

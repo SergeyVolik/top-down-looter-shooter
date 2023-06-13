@@ -74,7 +74,7 @@ public partial class UpdateStatsViewSystem : SystemBase
 
             var regen = stats.hpRegenInterval != 0 ? (1 / stats.hpRegenInterval).ToString() : "0";
             viewData.hpRegenStat.text = $"{regen} per/sec";
-            viewData.critStat.text = stats.crit—hance.ToString();
+            viewData.critStat.text = stats.critChance.ToString();
 
         }
     }
