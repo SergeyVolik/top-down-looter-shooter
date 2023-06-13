@@ -62,7 +62,7 @@ namespace SV.ECS
         {
           
             var gamePrefabs = SystemAPI.GetSingleton<GamePrefabsComponent>();
-          
+           
 
             var ecb = SystemAPI.GetSingleton<BeginSimulationEntityCommandBufferSystem.Singleton>().CreateCommandBuffer(World.Unmanaged);
 
@@ -82,8 +82,8 @@ namespace SV.ECS
                 ecb.RemoveComponent<SpawnPlayerComponent>(e);
             }
 
-      
 
+            PlayerStatsUtils.UpdateStats(ref ecb);
 
 
 

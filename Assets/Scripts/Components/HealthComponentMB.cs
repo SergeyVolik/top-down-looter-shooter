@@ -22,6 +22,11 @@ namespace SV.ECS
         public int value;
     }
 
+    public struct IsMaxHpComponent : IComponentData
+    {
+       
+    }
+
     public struct DeadComponent : IComponentData, IEnableableComponent
     {
         public DamageToApplyComponent killDamageIfno;
@@ -69,6 +74,8 @@ namespace SV.ECS
             {
                 destroyAfterDeath = authoring.destroyAfterDeath
             });
+
+            
             SetComponentEnabled<DeadComponent>(entity, false);
             AddBuffer<DamageToApplyComponent>(entity);
         }
