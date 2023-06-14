@@ -40,4 +40,10 @@ public class SpawnedObjects : MonoBehaviour
      
         killed.Dispose();
     }
+
+    private void OnDestroy()
+    {
+        KilledEnemiesStat.Dispose();
+        _collectedStat.Dispose();
+    }
 }

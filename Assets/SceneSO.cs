@@ -12,11 +12,16 @@ public class SceneSO : ScriptableObject
 #if UNITY_EDITOR
     public SceneAsset sceneAsset;
 #endif
-    public string sceneGuid;
+    [ReadOnly]
+    public SerializableGuid sceneGuid;
+  
     private void OnValidate()
     {
 #if UNITY_EDITOR
-        sceneGuid = AssetDatabase.GUIDFromAssetPath(AssetDatabase.GetAssetPath(sceneAsset)).ToString();
+        var guid = AssetDatabase.GUIDFromAssetPath(AssetDatabase.GetAssetPath(sceneAsset));
+    
+        Debug.Log($"scene guid {guid.ToString()}");
+        sceneGuid = guid.ToString();
 #endif
     }
 

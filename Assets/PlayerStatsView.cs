@@ -34,6 +34,12 @@ public class PlayerStatsView : MonoBehaviour, IPageShowedListener, IPageHidedLis
    
         awaked = true;
     }
+
+    private void OnDestroy()
+    {
+        em.DestroyEntity(entity);
+    }
+
     public void OnHided()
     {
         

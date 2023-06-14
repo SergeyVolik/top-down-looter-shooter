@@ -9,9 +9,72 @@ using Unity.Jobs;
 using Unity.Mathematics;
 using UnityEngine;
 
-
+[Serializable]
+public class WeaponsDictionary : UnitySerializedDictionary<string, WeaponSO> { }
 public class ConsoleCommands : MonoBehaviour
 {
+    public WeaponsDictionary weapons = new WeaponsDictionary();
+
+    private static ConsoleCommands Instance;
+    private void Awake()
+    {
+        Instance = this;
+    }
+
+
+    [Command("change-gun")]
+    public static void ChangeGun(string gunName)
+    {
+        if (Instance.weapons.TryGetValue(gunName, out var gunData))
+        {
+            var _entityManager = World.DefaultGameObjectInjectionWorld.EntityManager;
+            var gunDatabaseQuery = _entityManager.CreateEntityQuery(new ComponentType[] { typeof(GunsDatabase) });
+
+            if (gunDatabaseQuery.CalculateEntityCount() == 0)
+            {
+
+                Debug.LogError("GunsDatabase not exist");
+                return;
+            }
+
+            var damageEntities = gunDatabaseQuery.ToEntityArray(Allocator.Temp);
+            var gunsDatabase = _entityManager.GetComponentData<GunsDatabase>(damageEntities[0]);
+
+            if (gunsDatabase.guns.TryGetValue(gunData.guid, out var gunPrefabEntity))
+            {
+                var playerQuery = _entityManager.CreateEntityQuery(new ComponentType[] { typeof(GunSlotsComponent)  });
+
+                if (playerQuery.CalculateEntityCount() == 0)
+                {
+                    Debug.LogError("player not exist");
+                    return;
+                }
+
+                var playerEntities = playerQuery.ToEntityArray(Allocator.Temp);
+
+                _entityManager.SetComponentData(playerEntities[0], new SpawnGunMainComponent
+                {
+                    gunPrefab = gunPrefabEntity
+                });
+                _entityManager.SetComponentEnabled<SpawnGunMainComponent>(playerEntities[0], true);
+
+                playerEntities.Dispose();
+                playerQuery.Dispose();
+            }
+            else
+            {
+                Debug.LogError("gun not exist");
+            }
+
+            damageEntities.Dispose();
+            gunDatabaseQuery.Dispose();
+
+            return;
+        }
+
+        Debug.LogError($"gunName: {gunName} not exist");
+
+    }
     [Command("set-current-health")]
     public static void SetPlayerCurrentHealth(int health)
     {
@@ -31,6 +94,7 @@ public class ConsoleCommands : MonoBehaviour
 
         _entityManager.SetComponentData(entities[0], healthComp);
 
+        colorTablesQ.Dispose();
         entities.Dispose();
 
     }
@@ -58,6 +122,7 @@ public class ConsoleCommands : MonoBehaviour
 
         entities.Dispose();
 
+        colorTablesQ.Dispose();
         UpdateStats();
     }
 
@@ -89,7 +154,7 @@ public class ConsoleCommands : MonoBehaviour
         _entityManager.SetComponentData(entities[0], stast);
 
         entities.Dispose();
-
+        colorTablesQ.Dispose();
         UpdateStats();
     }
 
@@ -111,7 +176,7 @@ public class ConsoleCommands : MonoBehaviour
         var maxhealth = maxHealth[0];
         _entityManager.SetComponentData(entities[0], new HealthComponent { value = maxhealth.value });
 
-
+        colorTablesQ.Dispose();
         maxHealth.Dispose();
         entities.Dispose();
 

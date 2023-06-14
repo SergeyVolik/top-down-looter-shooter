@@ -565,6 +565,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 06b56786d877b704da04d67bcdc2ef05, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  weapons:
+    keyData:
+    - gun1
+    - gun2
+    - gun3
+    - gun4
+    valueData:
+    - {fileID: 11400000, guid: 52dc048d504752142a0cbb455705bb17, type: 2}
+    - {fileID: 11400000, guid: b2b9f1856c42c93489d932ddcde7c668, type: 2}
+    - {fileID: 11400000, guid: f8c7057dd5d6877469190a60669021a6, type: 2}
+    - {fileID: 11400000, guid: a5245cc6745b71b4eba2e32e792594af, type: 2}
 --- !u!4 &196422760
 Transform:
   m_ObjectHideFlags: 0
@@ -2242,7 +2253,7 @@ GameObject:
   - component: {fileID: 784089382}
   - component: {fileID: 784089381}
   m_Layer: 5
-  m_Name: RooPage
+  m_Name: StartScreenPage
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -4093,7 +4104,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4845276930943762971, guid: 2da3dcc22749e7f4280737786d898334, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 0.000030517578
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4845637959249703711, guid: 2da3dcc22749e7f4280737786d898334, type: 3}
       propertyPath: m_AnchorMax.y
@@ -4693,6 +4704,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 74346fd114f9b9d48994bf164f05d121, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  slider: {fileID: 0}
   healthText: {fileID: 881481890}
 --- !u!114 &1273382711
 MonoBehaviour:

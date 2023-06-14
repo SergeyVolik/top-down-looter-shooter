@@ -17,12 +17,13 @@ public class LoadSubSceneOnClick : MonoBehaviour
         GetComponent<Button>().onClick.AddListener(() => {
             var em = World.DefaultGameObjectInjectionWorld.EntityManager;
 
-            
 
+        
             var e = em.CreateEntity();
             em.AddComponentData(e, new LoadSubScene
             {
-                value = new Unity.Entities.Hash128(scene.sceneGuid)
+                
+                value = new Unity.Entities.Hash128(scene.sceneGuid.ToString())
             });
         });
     }

@@ -25,6 +25,11 @@ public class LevelTimerUI : MonoBehaviour
         text = GetComponent<TMPro.TMP_Text>();
         text.text = "";
     }
+
+    private void OnDestroy()
+    {
+        timerQ.Dispose();
+    }
     private void Update()
     {
        

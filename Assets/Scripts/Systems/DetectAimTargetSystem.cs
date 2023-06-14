@@ -43,7 +43,8 @@ namespace SV.ECS
             var aimTargetLookup = SystemAPI.GetComponentLookup<AimTargetComponent>();
             var detectedTargetLookUp = SystemAPI.GetComponentLookup<DetectedTargetComponent>();
             var gunActivatedLookUp = SystemAPI.GetComponentLookup<GunActivated>();
-            Entities.ForEach((Entity entity, ref PlayerAimClosestTargetComponent aimTarg, ref LocalTransform lTrans, in LocalToWorld localToWorld) =>
+
+            Entities.WithNone<Disabled>().ForEach((Entity entity, ref PlayerAimClosestTargetComponent aimTarg, ref LocalTransform lTrans, in LocalToWorld localToWorld) =>
             {
                 var targets = new NativeList<DistanceHit>(Allocator.Temp);
                 var selfPos = localToWorld.Position;

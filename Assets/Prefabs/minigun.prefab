@@ -125,6 +125,7 @@ GameObject:
   - component: {fileID: 8143516810824834880}
   - component: {fileID: 364994231762457833}
   - component: {fileID: 5177227354163818619}
+  - component: {fileID: 833682888181778891}
   m_Layer: 0
   m_Name: minigun
   m_TagString: Untagged
@@ -161,10 +162,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 59337fcc556572a409f657b4ff6d0638, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  Angle: 20
   Prefab: {fileID: 9194150915235131657, guid: 6e2ae364338c423478cff3ad5cb40b56, type: 3}
   bulletSpawnPos: {fileID: 3051478558162382078}
+  sfx: {fileID: 0}
   shotDelay: 0.5
   speed: 20
+  bulletsInShot: 1
+  alwaysShoot: 0
 --- !u!114 &5177227354163818619
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -178,3 +183,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   owner: {fileID: 0}
+--- !u!114 &833682888181778891
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7826399767812890284}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d9edc7ea590890a4ab7fbe603040d999, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 

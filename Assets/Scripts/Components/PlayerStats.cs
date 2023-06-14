@@ -11,7 +11,7 @@ namespace SV.ECS
         public int luck;
         public int damage;
         public int attackSpeed;
-        public float hpRegen;
+        public float hpRegenInterval;
 
         public int crit—hance;
 
@@ -85,7 +85,7 @@ namespace SV.ECS
                 attackSpeed = authoring.attackSpeed,
                 damage = authoring.damage,
                 maxHealth = authoring.maxHealth,
-                hpRegenInterval = authoring.hpRegen,
+                hpRegenInterval = authoring.hpRegenInterval,
                 luck = authoring.luck,
                 speed = authoring.speed,
                 critChance = authoring.crit—hance

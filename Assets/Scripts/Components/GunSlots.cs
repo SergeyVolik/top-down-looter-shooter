@@ -12,16 +12,15 @@ namespace SV.ECS
         public Transform slot1;
         public Transform slot2;
         public Transform slot3;
-        public Transform slot4;
-        public Transform slot5;
-        public Transform slot6;
 
-        public GameObject gun1;
-        public GameObject gun2;
-        public GameObject gun3;
-        public GameObject gun4;
-        public GameObject gun5;
-        public GameObject gun6;
+        public Transform mainGunSlot;
+
+        public WeaponSO mainGun;
+
+        public WeaponSO gun1;
+        public WeaponSO gun2;
+        public WeaponSO gun3;
+
     }
 
 
@@ -30,20 +29,28 @@ namespace SV.ECS
         public Entity slot1;
         public Entity slot2;
         public Entity slot3;
-        public Entity slot4;
-        public Entity slot5;
-        public Entity slot6;
+
+        public Entity mainSlot;
+    }
+    public struct SpawnGunSlot1Component : IComponentData, IEnableableComponent
+    {
+        public Entity gunPrefab;
+    }
+    public struct SpawnGunSlot2Component : IComponentData, IEnableableComponent
+    {
+        public Entity gunPrefab;
+    }
+    public struct SpawnGunSlot3Component : IComponentData, IEnableableComponent
+    {
+        public Entity gunPrefab;
+    }
+    public struct SpawnGunMainComponent : IComponentData, IEnableableComponent
+    {
+        public Entity gunPrefab;
     }
 
-    public struct SpawnGunSlotsComponent : IComponentData, IEnableableComponent
-    {
-        public Entity slot1Gun;
-        public Entity slot2Gun;
-        public Entity slot3Gun;
-        public Entity slot4Gun;
-        public Entity slot5Gun;
-        public Entity slot6Gun;
-    }
+
+
 
 
     public class GunSlotsBaker : Baker<GunSlots>
@@ -57,66 +64,175 @@ namespace SV.ECS
                 slot1 = GetEntity(authoring.slot1, TransformUsageFlags.Dynamic),
                 slot2 = GetEntity(authoring.slot2, TransformUsageFlags.Dynamic),
                 slot3 = GetEntity(authoring.slot3, TransformUsageFlags.Dynamic),
-                slot4 = GetEntity(authoring.slot4, TransformUsageFlags.Dynamic),
-                slot5 = GetEntity(authoring.slot5, TransformUsageFlags.Dynamic),
-                slot6 = GetEntity(authoring.slot6, TransformUsageFlags.Dynamic),
+               
+                mainSlot = GetEntity(authoring.mainGunSlot, TransformUsageFlags.Dynamic),
 
             });
-            AddComponent(entity, new SpawnGunSlotsComponent
+
+            var gun1 = default(GameObject);
+            var gun2 = default(GameObject);
+            var gun3 = default(GameObject);
+
+            var mainGun = default(GameObject);
+
+            if (authoring.gun1 != null)
+                gun1 = authoring.gun1.prefab;
+
+            if (authoring.gun2 != null)
+                gun2 = authoring.gun2.prefab;
+
+            if (authoring.gun3 != null)
+                gun3 = authoring.gun3.prefab;
+         
+
+            if (authoring.mainGun != null)
+                mainGun = authoring.mainGun.prefab;
+
+
+            AddComponent(entity, new SpawnGunMainComponent
             {
-                slot1Gun = GetEntity(authoring.gun1, TransformUsageFlags.Dynamic),
-                slot2Gun = GetEntity(authoring.gun2, TransformUsageFlags.Dynamic),
-                slot3Gun = GetEntity(authoring.gun3, TransformUsageFlags.Dynamic),
-                slot4Gun = GetEntity(authoring.gun4, TransformUsageFlags.Dynamic),
-                slot5Gun = GetEntity(authoring.gun5, TransformUsageFlags.Dynamic),
-                slot6Gun = GetEntity(authoring.gun6, TransformUsageFlags.Dynamic),
+                 gunPrefab = GetEntity(mainGun, TransformUsageFlags.Dynamic)
             });
 
-            SetComponentEnabled<SpawnGunSlotsComponent>(entity, true);
+            AddComponent(entity, new SpawnGunSlot1Component
+            {
+                gunPrefab = GetEntity(gun1, TransformUsageFlags.Dynamic)
+            });
+
+            AddComponent(entity, new SpawnGunSlot2Component
+            {
+                gunPrefab = GetEntity(gun2, TransformUsageFlags.Dynamic)
+            });
+
+            AddComponent(entity, new SpawnGunSlot3Component
+            {
+                gunPrefab = GetEntity(gun3, TransformUsageFlags.Dynamic)
+            });
+
+           
+
+
         }
     }
 
 
     public partial struct SpawnGunsSystem : ISystem
     {
-        public void SpawnGun(ref EntityCommandBuffer ecb, Entity Slot, Entity gunPrefab, Entity owner)
+        public Entity SpawnGun(ref EntityCommandBuffer ecb, Entity Slot, Entity gunPrefab, Entity owner)
         {
+            Entity instance = Entity.Null;
             if (gunPrefab != Entity.Null)
             {
-                var gunEntity = ecb.Instantiate(gunPrefab);
+                instance = ecb.Instantiate(gunPrefab);
 
-                ecb.AddComponent(gunEntity, new Parent
+                ecb.AddComponent(instance, new Parent
                 {
                     Value = Slot
                 });
 
-                ecb.SetComponent(gunEntity, new LocalTransform
+                ecb.SetComponent(instance, new LocalTransform
                 {
                     Scale = 1f
                 });
 
-                ecb.SetComponent(gunEntity, new OwnerComponent
+                ecb.SetComponent(instance, new OwnerComponent
                 {
                     value = owner
                 });
+
+                ecb.RemoveComponent<Disabled>(Slot);
             }
+            else {
+                ecb.AddComponent<Disabled>(Slot);
+            }
+
+            return instance;
         }
         public void OnUpdate(ref SystemState state)
         {
             var ecb = SystemAPI.GetSingleton<BeginSimulationEntityCommandBufferSystem.Singleton>().CreateCommandBuffer(state.WorldUnmanaged);
-           
-            foreach (var (spawnReq, slots, spawnReqE, e) in SystemAPI.Query<RefRO<SpawnGunSlotsComponent>, RefRO<GunSlotsComponent>, EnabledRefRW<SpawnGunSlotsComponent>>().WithEntityAccess())
+            var ecbEnd = SystemAPI.GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>().CreateCommandBuffer(state.WorldUnmanaged);
+            var childLookUp = SystemAPI.GetBufferLookup<Child>();
+            foreach (var (spawnReq, slots, spawnReqE, e) in SystemAPI.Query<
+                RefRO<SpawnGunMainComponent>,
+                RefRO<GunSlotsComponent>,
+                EnabledRefRW<SpawnGunMainComponent>
+                >().WithEntityAccess())
             {
+                Debug.Log("SpawnMainGun");
                 var spawnData = spawnReq.ValueRO;
 
-                SpawnGun(ref ecb, slots.ValueRO.slot1, spawnData.slot1Gun, e);
-                SpawnGun(ref ecb, slots.ValueRO.slot2, spawnData.slot2Gun, e);
-                SpawnGun(ref ecb, slots.ValueRO.slot3, spawnData.slot3Gun, e);
-                SpawnGun(ref ecb, slots.ValueRO.slot4, spawnData.slot4Gun, e);
-                SpawnGun(ref ecb, slots.ValueRO.slot5, spawnData.slot5Gun, e);
-                SpawnGun(ref ecb, slots.ValueRO.slot6, spawnData.slot6Gun, e);
+                if (childLookUp.HasBuffer(slots.ValueRO.mainSlot))
+                {
+                    if (childLookUp.TryGetBuffer(slots.ValueRO.mainSlot, out var buffer))
+                    {
+                        foreach (var item in buffer)
+                        {
+                            ecb.DestroyEntity(item.Value);
+                        }
+                    }
+                   
+                }
+
+
+                if (spawnData.gunPrefab != Entity.Null)
+                {
+                    var instance = SpawnGun(ref ecb, slots.ValueRO.mainSlot, spawnData.gunPrefab, e);
+                   
+                }
                 spawnReqE.ValueRW = false;
+
+
             }
+
+            //foreach (var (spawnReq, slots, spawnReqE, currentGun, e) in SystemAPI.Query<
+            //    RefRO<SpawnGunSlot1Component>,
+            //    RefRO<GunSlotsComponent>,
+            //    EnabledRefRW<SpawnGunSlot1Component>,
+            //    RefRW<CurrentGunSlot1Component>>().WithEntityAccess())
+            //{
+
+            //    var spawnData = spawnReq.ValueRO;
+            //    var instance = SpawnGun(ref ecb, slots.ValueRO.slot1, spawnData.gunPrefab, e);
+            //    spawnReqE.ValueRW = false;
+            //    var currentGunE = currentGun.ValueRO.gun;
+            //    if (currentGunE != Entity.Null)
+            //        ecb.DestroyEntity(currentGun.ValueRO.gun);
+            //    currentGun.ValueRW.gun = instance;
+
+            //}
+
+            //foreach (var (spawnReq, slots, spawnReqE, currentGun, e) in SystemAPI.Query<
+            //   RefRO<SpawnGunSlot2Component>,
+            //   RefRO<GunSlotsComponent>,
+            //   EnabledRefRW<SpawnGunSlot2Component>,
+            //   RefRW<CurrentGunSlot2Component>>().WithEntityAccess())
+            //{
+
+            //    var spawnData = spawnReq.ValueRO;
+            //    var instance = SpawnGun(ref ecb, slots.ValueRO.slot2, spawnData.gunPrefab, e);
+            //    spawnReqE.ValueRW = false;
+            //    var currentGunE = currentGun.ValueRO.gun;
+            //    if (currentGunE != Entity.Null)
+            //        ecb.DestroyEntity(currentGun.ValueRO.gun);
+            //    currentGun.ValueRW.gun = instance;
+            //}
+
+            //foreach (var (spawnReq, slots, spawnReqE, currentGun, e) in SystemAPI.Query<
+            //  RefRO<SpawnGunSlot3Component>,
+            //  RefRO<GunSlotsComponent>,
+            //  EnabledRefRW<SpawnGunSlot3Component>,
+            //  RefRW<CurrentGunSlot3Component>>().WithEntityAccess())
+            //{
+
+            //    var spawnData = spawnReq.ValueRO;
+            //    var instance = SpawnGun(ref ecb, slots.ValueRO.slot3, spawnData.gunPrefab, e);
+            //    spawnReqE.ValueRW = false;
+            //    var currentGunE = currentGun.ValueRO.gun;
+            //    if (currentGunE != Entity.Null)
+            //        ecb.DestroyEntity(currentGun.ValueRO.gun);
+            //    currentGun.ValueRW.gun = instance;
+            //}
         }
     }
 
