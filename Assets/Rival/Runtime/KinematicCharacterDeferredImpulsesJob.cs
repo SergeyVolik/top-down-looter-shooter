@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Unity.Burst;
+using Unity.Burst.Intrinsics;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
@@ -19,11 +20,16 @@ namespace Rival
         public int InitialHashMapCapacity;
         public BufferTypeHandle<KinematicCharacterDeferredImpulse> CharacterDeferredImpulsesBufferType;
 
-        public ComponentDataFromEntity<KinematicCharacterBody> CharacterBodyFromEntity;
-        public ComponentDataFromEntity<PhysicsVelocity> PhysicsVelocityFromEntity;
-        public ComponentDataFromEntity<Translation> TranslationFromEntity;
+        public ComponentLookup<KinematicCharacterBody> CharacterBodyFromEntity;
+        public ComponentLookup<PhysicsVelocity> PhysicsVelocityFromEntity;
+        public ComponentLookup<LocalTransform> TranslationFromEntity;
 
         public void Execute(ArchetypeChunk chunk, int chunkIndex, int firstEntityIndex)
+        {
+            
+        }
+
+        public void Execute(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask, in v128 chunkEnabledMask)
         {
             BufferAccessor<KinematicCharacterDeferredImpulse> chunkCharacterrDeferredImpulsesBuffers = chunk.GetBufferAccessor(CharacterDeferredImpulsesBufferType);
 

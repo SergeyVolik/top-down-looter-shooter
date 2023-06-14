@@ -1,3 +1,4 @@
+using log4net.Util;
 using Unity.Entities;
 using Unity.Mathematics;
 using UnityEngine;
@@ -5,18 +6,23 @@ using UnityEngine;
 namespace Rival
 {
     [DisallowMultipleComponent]
-    public class TrackedTransformAuthoring : MonoBehaviour, IConvertGameObjectToEntity
+    public class TrackedTransformAuthoring : MonoBehaviour
     {
-        public void Convert(Entity entity, EntityManager dstManager, GameObjectConversionSystem conversionSystem)
+       
+    }
+
+    public class TrackedTransformAuthoringBaker : Baker<TrackedTransformAuthoring>
+    {
+        public override void Bake(TrackedTransformAuthoring authoring)
         {
-            RigidTransform currentTransform = new RigidTransform(transform.rotation, transform.position);
+            var e = GetEntity(TransformUsageFlags.Dynamic);
+            RigidTransform currentTransform = new RigidTransform(authoring.transform.rotation, authoring.transform.position);
             TrackedTransform trackedTransform = new TrackedTransform
             {
                 CurrentFixedRateTransform = currentTransform,
                 PreviousFixedRateTransform = currentTransform,
             };
-
-            dstManager.AddComponentData(entity, trackedTransform);
+            AddComponent(e, trackedTransform);
         }
     }
 }

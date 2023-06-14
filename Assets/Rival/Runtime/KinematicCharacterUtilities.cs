@@ -35,19 +35,19 @@ namespace Rival
 
     [UpdateInGroup(typeof(FixedStepSimulationSystemGroup))]
     [UpdateAfter(typeof(ExportPhysicsWorld))]
-    [UpdateBefore(typeof(EndFramePhysicsSystem))]
+    [UpdateAfter(typeof(PhysicsSystemGroup))]
     [UpdateAfter(typeof(TrackedTransformFixedSimulationSystem))]
-    public class KinematicCharacterUpdateGroup : ComponentSystemGroup
+    public partial class KinematicCharacterUpdateGroup : ComponentSystemGroup
     {
     }
 
     public interface IKinematicCharacterProcessor
     {
         CollisionWorld GetCollisionWorld { get; }
-        ComponentDataFromEntity<StoredKinematicCharacterBodyProperties> GetStoredCharacterBodyPropertiesFromEntity { get; }
-        ComponentDataFromEntity<PhysicsMass> GetPhysicsMassFromEntity { get; }
-        ComponentDataFromEntity<PhysicsVelocity> GetPhysicsVelocityFromEntity { get; }
-        ComponentDataFromEntity<TrackedTransform> GetTrackedTransformFromEntity { get; }
+        ComponentLookup<StoredKinematicCharacterBodyProperties> GetStoredCharacterBodyPropertiesFromEntity { get; }
+        ComponentLookup<PhysicsMass> GetPhysicsMassFromEntity { get; }
+        ComponentLookup<PhysicsVelocity> GetPhysicsVelocityFromEntity { get; }
+        ComponentLookup<TrackedTransform> GetTrackedTransformFromEntity { get; }
         NativeList<int> GetTmpRigidbodyIndexesProcessed { get; }
         NativeList<RaycastHit> GetTmpRaycastHits { get; }
         NativeList<ColliderCastHit> GetTmpColliderCastHits { get; }
@@ -186,8 +186,8 @@ namespace Rival
         {
             return new ComponentType[]
             {
-                typeof(Translation),
-                typeof(Rotation),
+                typeof(LocalTransform),
+               
                 typeof(PhysicsCollider),
                 typeof(PhysicsVelocity),
                 typeof(PhysicsMass),
@@ -347,7 +347,7 @@ namespace Rival
             bool constrainRotationToGroundingUp) where T : struct, IKinematicCharacterProcessor
         {
             CollisionWorld collisionWorld = processor.GetCollisionWorld;
-            ComponentDataFromEntity<TrackedTransform> trackedTransformFromEntity = processor.GetTrackedTransformFromEntity;
+            ComponentLookup<TrackedTransform> trackedTransformFromEntity = processor.GetTrackedTransformFromEntity;
             NativeList<ColliderCastHit> tmpColliderCastHits = processor.GetTmpColliderCastHits;
 
             // Reset parent if parent entity doesn't exist anymore
@@ -624,7 +624,7 @@ namespace Rival
         /// <param name="characterTranslation"></param>
         /// <param name="deltaTime"></param>
         public static void ParentMomentumUpdate(
-            ref ComponentDataFromEntity<TrackedTransform> trackedTransformFromEntity,
+            ref ComponentLookup<TrackedTransform> trackedTransformFromEntity,
             ref KinematicCharacterBody characterBody, 
             in float3 characterTranslation, 
             float deltaTime,
@@ -863,9 +863,9 @@ namespace Rival
         {
             CollisionWorld collisionWorld = processor.GetCollisionWorld;
             NativeList<int> tmpRigidbodyIndexesProcessed = processor.GetTmpRigidbodyIndexesProcessed;
-            ComponentDataFromEntity<StoredKinematicCharacterBodyProperties> characterBodyPropertiesFromEntity = processor.GetStoredCharacterBodyPropertiesFromEntity;
-            ComponentDataFromEntity<PhysicsMass> physicsMassFromEntity = processor.GetPhysicsMassFromEntity;
-            ComponentDataFromEntity<PhysicsVelocity> physicsVelocityFromEntity = processor.GetPhysicsVelocityFromEntity;
+            ComponentLookup<StoredKinematicCharacterBodyProperties> characterBodyPropertiesFromEntity = processor.GetStoredCharacterBodyPropertiesFromEntity;
+            ComponentLookup<PhysicsMass> physicsMassFromEntity = processor.GetPhysicsMassFromEntity;
+            ComponentLookup<PhysicsVelocity> physicsVelocityFromEntity = processor.GetPhysicsVelocityFromEntity;
 
             tmpRigidbodyIndexesProcessed.Clear();
 
@@ -991,8 +991,8 @@ namespace Rival
                                     float3 previousAngularVel = otherPhysicsVelocity.Angular;
 
                                     otherPhysicsVelocity.ApplyImpulse(otherPhysicsMass,
-                                        new Translation { Value = otherTransform.pos },
-                                        new Rotation { Value = otherTransform.rot },
+                                        otherTransform.pos ,
+                                       otherTransform.rot,
                                         impulseOnOther,
                                         characterHit.Position);
 
@@ -1359,7 +1359,7 @@ namespace Rival
             {
                 decollisionIterationsMade++;
 
-                ColliderDistanceInput distanceInput = new ColliderDistanceInput(characterPhysicsCollider.Value, math.RigidTransform(characterRotation, characterTranslation), 0f);
+                ColliderDistanceInput distanceInput = new ColliderDistanceInput(characterPhysicsCollider.Value, 0f, math.RigidTransform(characterRotation, characterTranslation));
                 tmpDistanceHits.Clear();
                 AllHitsCollector<DistanceHit> collector = new AllHitsCollector<DistanceHit>(distanceInput.MaxDistance, ref tmpDistanceHits);
                 collisionWorld.CalculateDistance(distanceInput, ref collector);
@@ -1650,7 +1650,7 @@ namespace Rival
             CollisionWorld collisionWorld = processor.GetCollisionWorld;
             NativeList<DistanceHit> tmpDistanceHits = processor.GetTmpDistanceHits;
 
-            ColliderDistanceInput distanceInput = new ColliderDistanceInput(characterPhysicsCollider.Value, math.RigidTransform(characterRotation, characterTranslation), maxDistance);
+            ColliderDistanceInput distanceInput = new ColliderDistanceInput(characterPhysicsCollider.Value, maxDistance, math.RigidTransform(characterRotation, characterTranslation));
             tmpDistanceHits.Clear();
             AllHitsCollector<DistanceHit> collector = new AllHitsCollector<DistanceHit>(distanceInput.MaxDistance, ref tmpDistanceHits);
             collisionWorld.CalculateDistance(distanceInput, ref collector);
@@ -1679,7 +1679,7 @@ namespace Rival
 
             hits = tmpDistanceHits;
 
-            ColliderDistanceInput distanceInput = new ColliderDistanceInput(characterPhysicsCollider.Value, math.RigidTransform(characterRotation, characterTranslation), maxDistance);
+            ColliderDistanceInput distanceInput = new ColliderDistanceInput(characterPhysicsCollider.Value, maxDistance, math.RigidTransform(characterRotation, characterTranslation));
             tmpDistanceHits.Clear();
             AllHitsCollector<DistanceHit> collector = new AllHitsCollector<DistanceHit>(distanceInput.MaxDistance, ref tmpDistanceHits);
             collisionWorld.CalculateDistance(distanceInput, ref collector);
@@ -1765,7 +1765,7 @@ namespace Rival
             closestHit = default;
             closestHit.Fraction = float.MaxValue;
 
-            ComponentDataFromEntity<PhysicsMass> physicsMassFromEntity = processor.GetPhysicsMassFromEntity;
+            ComponentLookup<PhysicsMass> physicsMassFromEntity = processor.GetPhysicsMassFromEntity;
 
             for (int i = hits.Length - 1; i >= 0; i--)
             {
@@ -1815,7 +1815,7 @@ namespace Rival
             closestHit = default;
             closestHit.Fraction = float.MaxValue;
 
-            ComponentDataFromEntity<PhysicsMass> physicsMassFromEntity = processor.GetPhysicsMassFromEntity;
+            ComponentLookup<PhysicsMass> physicsMassFromEntity = processor.GetPhysicsMassFromEntity;
 
             for (int i = hits.Length - 1; i >= 0; i--)
             {
@@ -1862,7 +1862,7 @@ namespace Rival
             closestHit.Fraction = float.MaxValue;
             float dotRatioOfSelectedHit = float.MaxValue;
 
-            ComponentDataFromEntity<PhysicsMass> physicsMassFromEntity = processor.GetPhysicsMassFromEntity;
+            ComponentLookup<PhysicsMass> physicsMassFromEntity = processor.GetPhysicsMassFromEntity;
 
             for (int i = hits.Length - 1; i >= 0; i--)
             {
@@ -1920,7 +1920,7 @@ namespace Rival
             closestHit = default;
             closestHit.Fraction = float.MaxValue;
 
-            ComponentDataFromEntity<PhysicsMass> physicsMassFromEntity = processor.GetPhysicsMassFromEntity;
+            ComponentLookup<PhysicsMass> physicsMassFromEntity = processor.GetPhysicsMassFromEntity;
 
             for (int i = 0; i < hits.Length; i++)
             {
@@ -1955,7 +1955,7 @@ namespace Rival
             bool onlyObstructingHits,
             float3 castDirection) where T : struct, IKinematicCharacterProcessor
         {
-            ComponentDataFromEntity<PhysicsMass> physicsMassFromEntity = processor.GetPhysicsMassFromEntity;
+            ComponentLookup<PhysicsMass> physicsMassFromEntity = processor.GetPhysicsMassFromEntity;
 
             for (int i = hits.Length - 1; i >= 0; i--)
             {
@@ -2000,7 +2000,7 @@ namespace Rival
             closestNonDynamicHit = default;
             closestNonDynamicHit.Fraction = float.MaxValue;
 
-            ComponentDataFromEntity<PhysicsMass> physicsMassFromEntity = processor.GetPhysicsMassFromEntity;
+            ComponentLookup<PhysicsMass> physicsMassFromEntity = processor.GetPhysicsMassFromEntity;
 
             for (int i = hits.Length - 1; i >= 0; i--)
             {
@@ -2050,7 +2050,7 @@ namespace Rival
             closestHit = default;
             closestHit.Fraction = float.MaxValue;
 
-            ComponentDataFromEntity<PhysicsMass> physicsMassFromEntity = processor.GetPhysicsMassFromEntity;
+            ComponentLookup<PhysicsMass> physicsMassFromEntity = processor.GetPhysicsMassFromEntity;
 
             for (int i = 0; i < hits.Length; i++)
             {
@@ -2079,7 +2079,7 @@ namespace Rival
             bool ignoreDynamicBodies,
             Entity characterEntity) where T : struct, IKinematicCharacterProcessor
         {
-            ComponentDataFromEntity<PhysicsMass> physicsMassFromEntity = processor.GetPhysicsMassFromEntity;
+            ComponentLookup<PhysicsMass> physicsMassFromEntity = processor.GetPhysicsMassFromEntity;
 
             for (int i = hits.Length - 1; i >= 0; i--)
             {
@@ -2115,7 +2115,7 @@ namespace Rival
             closestHit = default;
             closestHit.Fraction = float.MaxValue;
 
-            ComponentDataFromEntity<PhysicsMass> physicsMassFromEntity = processor.GetPhysicsMassFromEntity;
+            ComponentLookup<PhysicsMass> physicsMassFromEntity = processor.GetPhysicsMassFromEntity;
 
             for (int i = 0; i < hits.Length; i++)
             {
@@ -2144,7 +2144,7 @@ namespace Rival
             bool ignoreDynamicBodies,
             Entity characterEntity) where T : struct, IKinematicCharacterProcessor
         {
-            ComponentDataFromEntity<PhysicsMass> physicsMassFromEntity = processor.GetPhysicsMassFromEntity;
+            ComponentLookup<PhysicsMass> physicsMassFromEntity = processor.GetPhysicsMassFromEntity;
 
             for (int i = hits.Length - 1; i >= 0; i--)
             {
@@ -2175,9 +2175,9 @@ namespace Rival
             KinematicCharacterDeferredImpulsesJob deferredImpulsesJob = new KinematicCharacterDeferredImpulsesJob
             {
                 CharacterDeferredImpulsesBufferType = forSystem.GetBufferTypeHandle<KinematicCharacterDeferredImpulse>(false),
-                CharacterBodyFromEntity = forSystem.GetComponentDataFromEntity<KinematicCharacterBody>(false),
-                PhysicsVelocityFromEntity = forSystem.GetComponentDataFromEntity<PhysicsVelocity>(false),
-                TranslationFromEntity = forSystem.GetComponentDataFromEntity<Translation>(false),
+                CharacterBodyFromEntity = forSystem.GetComponentLookup<KinematicCharacterBody>(false),
+                PhysicsVelocityFromEntity = forSystem.GetComponentLookup<PhysicsVelocity>(false),
+                TranslationFromEntity = forSystem.GetComponentLookup<LocalTransform>(false),
             };
 
             if (run)
@@ -2186,16 +2186,17 @@ namespace Rival
             }
             else
             {
-                dependency = deferredImpulsesJob.ScheduleSingle(characterQuery, dependency); // Must not be parallel due to possibility of writing to the same entity from multiple different places
+               
+                dependency = deferredImpulsesJob.Schedule(characterQuery, dependency); // Must not be parallel due to possibility of writing to the same entity from multiple different places
             }
 
             return dependency;
         }
 
         public static void ProcessDeferredImpulses(
-            ref ComponentDataFromEntity<Translation> translationFromEntity,
-            ref ComponentDataFromEntity<PhysicsVelocity> physicsVelocityFromEntity,
-            ref ComponentDataFromEntity<KinematicCharacterBody> characterBodyFromEntity,
+            ref ComponentLookup<LocalTransform> translationFromEntity,
+            ref ComponentLookup<PhysicsVelocity> physicsVelocityFromEntity,
+            ref ComponentLookup<KinematicCharacterBody> characterBodyFromEntity,
             in DynamicBuffer<KinematicCharacterDeferredImpulse> characterDeferredImpulsesBuffer)
         {
             for (int deferredImpulseIndex = 0; deferredImpulseIndex < characterDeferredImpulsesBuffer.Length; deferredImpulseIndex++)
@@ -2226,8 +2227,8 @@ namespace Rival
                 // Displacement
                 if (math.lengthsq(deferredImpulse.Displacement) > 0f)
                 {
-                    Translation bodyTranslation = translationFromEntity[deferredImpulse.OnEntity];
-                    bodyTranslation.Value += deferredImpulse.Displacement;
+                    LocalTransform bodyTranslation = translationFromEntity[deferredImpulse.OnEntity];
+                    bodyTranslation.Position += deferredImpulse.Displacement;
                     translationFromEntity[deferredImpulse.OnEntity] = bodyTranslation;
                 }
             }
@@ -2235,7 +2236,7 @@ namespace Rival
 
         public static void SetOrUpdateParentBody(
             ref KinematicCharacterBody characterBody,
-            in ComponentDataFromEntity<TrackedTransform> trackedTransformFromEntity,
+            in ComponentLookup<TrackedTransform> trackedTransformFromEntity,
             Entity parentEntity,
             float3 anchorPointWorldSpace)
         {
@@ -2320,16 +2321,16 @@ namespace Rival
                     math.dot(characterBody.RelativeVelocity, hit.Normal) > Constants.DotProductSimilarityEpsilon &&
                     math.lengthsq(characterBody.RelativeVelocity) > Constants.MinVelocityLengthSqForGroundingIgnoreCheck)
                 {
-                    ComponentDataFromEntity<PhysicsVelocity> physicsVelocityFromEntity = processor.GetPhysicsVelocityFromEntity;
-                    ComponentDataFromEntity<PhysicsMass> physicsMassFromEntity = processor.GetPhysicsMassFromEntity;
+                    ComponentLookup<PhysicsVelocity> physicsVelocityFromEntity = processor.GetPhysicsVelocityFromEntity;
+                    ComponentLookup<PhysicsMass> physicsMassFromEntity = processor.GetPhysicsMassFromEntity;
                     if (physicsVelocityFromEntity.HasComponent(hit.Entity) && physicsMassFromEntity.HasComponent(hit.Entity))
                     {
                         RigidBody hitBody = processor.GetCollisionWorld.Bodies[hit.RigidBodyIndex];
                         PhysicsVelocity hitPhysicsVelocity = physicsVelocityFromEntity[hit.Entity];
                         PhysicsMass hitPhysicsMass = physicsMassFromEntity[hit.Entity];
-                        Translation hitTranslation = new Translation { Value = hitBody.WorldFromBody.pos };
-                        Rotation hitRotation = new Rotation { Value = hitBody.WorldFromBody.rot };
-                        float3 groundVelocityAtPoint = hitPhysicsVelocity.GetLinearVelocity(hitPhysicsMass, hitTranslation, hitRotation, hit.Position);
+                       
+                      
+                        float3 groundVelocityAtPoint = hitPhysicsVelocity.GetLinearVelocity(hitPhysicsMass, hitBody.WorldFromBody.pos, hitBody.WorldFromBody.rot, hit.Position);
 
                         float characterVelocityOnNormal = math.dot(characterBody.RelativeVelocity, hit.Normal);
                         float groundVelocityOnNormal = math.dot(groundVelocityAtPoint, hit.Normal);
@@ -2447,7 +2448,7 @@ namespace Rival
                 return false;
             }
 
-            public static bool CanCollideWithHit(in BasicHit hit, in ComponentDataFromEntity<StoredKinematicCharacterBodyProperties> storedCharacterBodyFromEntity)
+            public static bool CanCollideWithHit(in BasicHit hit, in ComponentLookup<StoredKinematicCharacterBodyProperties> storedCharacterBodyFromEntity)
             {
                 // Only collide with collidable colliders
                 if (hit.Material.CollisionResponse == CollisionResponsePolicy.Collide ||
@@ -2630,8 +2631,8 @@ namespace Rival
             }
 
             public static void MovingPlatformDetection(
-                ref ComponentDataFromEntity<TrackedTransform> trackedTransformFromEntity,
-                ref ComponentDataFromEntity<StoredKinematicCharacterBodyProperties> storedCharacterBodyFromEntity,
+                ref ComponentLookup<TrackedTransform> trackedTransformFromEntity,
+                ref ComponentLookup<StoredKinematicCharacterBodyProperties> storedCharacterBodyFromEntity,
                 ref KinematicCharacterBody characterBody)
             {
                 if (characterBody.IsGrounded && !storedCharacterBodyFromEntity.HasComponent(characterBody.GroundHit.Entity))
@@ -2677,8 +2678,8 @@ namespace Rival
 
                                 float3 groundPointVelocity = groundPhysicsVelocity.GetLinearVelocity(
                                     groundPhysicsMass,
-                                    new Translation { Value = groundTransform.pos },
-                                    new Rotation { Value = groundTransform.rot },
+                                    groundTransform.pos,
+                                    groundTransform.rot,
                                     characterBody.GroundHit.Position);
 
                                 // Solve impulses
@@ -2698,8 +2699,8 @@ namespace Rival
                                 float3 previousAngularVel = groundPhysicsVelocity.Angular;
 
                                 groundPhysicsVelocity.ApplyImpulse(groundPhysicsMass,
-                                    new Translation { Value = groundTransform.pos },
-                                    new Rotation { Value = groundTransform.rot },
+                                     groundTransform.pos,
+                                     groundTransform.rot,
                                     impulseOnOther * forceMultiplier,
                                     characterBody.GroundHit.Position);
 

@@ -47,7 +47,7 @@ namespace Rival
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public unsafe static bool IsBodyKinematic(in ComponentDataFromEntity<PhysicsMass> physicsMassFromEntity, Entity entity)
+        public unsafe static bool IsBodyKinematic(in ComponentLookup<PhysicsMass> physicsMassFromEntity, Entity entity)
         {
             if (physicsMassFromEntity.HasComponent(entity) && physicsMassFromEntity[entity].InverseMass <= 0f)
             {
@@ -72,7 +72,7 @@ namespace Rival
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public unsafe static bool IsBodyDynamic(in ComponentDataFromEntity<PhysicsMass> physicsMassFromEntity, Entity entity)
+        public unsafe static bool IsBodyDynamic(in ComponentLookup<PhysicsMass> physicsMassFromEntity, Entity entity)
         {
             if (physicsMassFromEntity.HasComponent(entity) && physicsMassFromEntity[entity].InverseMass > 0f)
             {
@@ -141,16 +141,16 @@ namespace Rival
             impulseOnA = default;
             impulseOnB = default;
 
-            Translation translationA = new Translation { Value = transformA.pos };
-            Translation translationB = new Translation { Value = transformB.pos };
-            Rotation rotationA = new Rotation { Value = transformA.rot };
-            Rotation rotationB = new Rotation { Value = transformB.rot };
+          
+           
+        
+          
 
-            float3 pointVelocityA = physicsVelA.GetLinearVelocity(physicsMassA, translationA, rotationA, collisionPoint);
-            float3 pointVelocityB = physicsVelB.GetLinearVelocity(physicsMassB, translationB, rotationB, collisionPoint);
+            float3 pointVelocityA = physicsVelA.GetLinearVelocity(physicsMassA, transformA.pos, transformA.rot, collisionPoint);
+            float3 pointVelocityB = physicsVelB.GetLinearVelocity(physicsMassB, transformB.pos, transformB.rot, collisionPoint);
 
-            float3 centerOfMassA = physicsMassA.GetCenterOfMassWorldSpace(translationA, rotationA);
-            float3 centerOfMassB = physicsMassA.GetCenterOfMassWorldSpace(translationB, rotationB);
+            float3 centerOfMassA = physicsMassA.GetCenterOfMassWorldSpace(transformA.pos, transformA.rot);
+            float3 centerOfMassB = physicsMassA.GetCenterOfMassWorldSpace(transformB.pos, transformB.rot);
             float3 centerOfMassAToPoint = collisionPoint - centerOfMassA;
             float3 centerOfMassBToPoint = collisionPoint - centerOfMassB;
 

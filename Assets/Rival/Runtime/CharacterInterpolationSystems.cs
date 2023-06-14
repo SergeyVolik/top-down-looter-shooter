@@ -1,4 +1,5 @@
 using Unity.Burst;
+using Unity.Burst.Intrinsics;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
@@ -22,38 +23,31 @@ namespace Rival
         public unsafe struct CharacterInterpolationFixedUpdateJob : IJobChunk
         {
             [ReadOnly]
-            public ComponentTypeHandle<Translation> TranslationType;
-            [ReadOnly]
-            public ComponentTypeHandle<Rotation> RotationType;
+            public ComponentTypeHandle<LocalTransform> TranslationType;
+          
             public ComponentTypeHandle<CharacterInterpolation> CharacterInterpolationType;
 
-            public void Execute(ArchetypeChunk chunk, int chunkIndex, int firstEntityIndex)
+
+            public void Execute(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask, in v128 chunkEnabledMask)
             {
-                NativeArray<Translation> chunkTranslations = chunk.GetNativeArray(TranslationType);
-                NativeArray<Rotation> chunkRotations = chunk.GetNativeArray(RotationType);
+                NativeArray<LocalTransform> chunkTranslations = chunk.GetNativeArray(TranslationType);
+
                 NativeArray<CharacterInterpolation> chunkCharacterInterpolations = chunk.GetNativeArray(CharacterInterpolationType);
 
                 void* chunkInterpolationsPtr = chunkCharacterInterpolations.GetUnsafePtr();
                 int chunkCount = chunk.Count;
                 int sizeCharacterInterpolation = UnsafeUtility.SizeOf<CharacterInterpolation>();
-                int sizeRotation = UnsafeUtility.SizeOf<Rotation>();
-                int sizeTranslation = UnsafeUtility.SizeOf<Translation>();
+
+                int sizeTranslation = UnsafeUtility.SizeOf<LocalTransform>();
 
                 // Copy all Translation & Rotation to the character interpolation component
                 {
+
+
                     UnsafeUtility.MemCpyStride(
-                        chunkInterpolationsPtr, 
+                        (void*)((long)chunkInterpolationsPtr),
                         sizeCharacterInterpolation,
-                        chunkRotations.GetUnsafeReadOnlyPtr(), 
-                        sizeRotation,
-                        sizeRotation,
-                        chunkCount
-                    );
-                    
-                    UnsafeUtility.MemCpyStride(
-                        (void*)((long)chunkInterpolationsPtr + sizeRotation), 
-                        sizeCharacterInterpolation,
-                        chunkTranslations.GetUnsafeReadOnlyPtr(), 
+                        chunkTranslations.GetUnsafeReadOnlyPtr(),
                         sizeTranslation,
                         sizeTranslation,
                         chunkCount
@@ -66,25 +60,25 @@ namespace Rival
         {
             base.OnCreate();
 
-            _interpolatedEntitiesQuery = GetEntityQuery(typeof(Translation), typeof(Rotation), typeof(CharacterInterpolation));
+            _interpolatedEntitiesQuery = GetEntityQuery(typeof(LocalTransform), typeof(CharacterInterpolation));
         }
 
         protected override void OnUpdate()
         {
-            LastFixedUpdateElapsedTime = Time.ElapsedTime;
-            LastFixedUpdateTimeStep = Time.DeltaTime;
+            LastFixedUpdateElapsedTime = SystemAPI.Time.ElapsedTime;
+            LastFixedUpdateTimeStep = SystemAPI.Time.DeltaTime;
 
             Dependency = new CharacterInterpolationFixedUpdateJob
             {
-                TranslationType = GetComponentTypeHandle<Translation>(true),
-                RotationType = GetComponentTypeHandle<Rotation>(true),
+                TranslationType = GetComponentTypeHandle<LocalTransform>(true),
+              
                 CharacterInterpolationType = GetComponentTypeHandle<CharacterInterpolation>(false),
             }.ScheduleParallel(_interpolatedEntitiesQuery, Dependency);
         }
     }
 
     [UpdateInGroup(typeof(TransformSystemGroup))]
-    [UpdateBefore(typeof(TRSToLocalToWorldSystem))]
+    [UpdateBefore(typeof(LocalToWorldSystem))]
     public partial class CharacterInterpolationVariableUpdateSystem : SystemBase
     {
         private EntityQuery _interpolatedEntitiesQuery;
@@ -96,27 +90,27 @@ namespace Rival
             public float NormalizedTimeAhead;
 
             [ReadOnly]
-            public ComponentTypeHandle<Translation> TranslationType;
-            [ReadOnly]
-            public ComponentTypeHandle<Rotation> RotationType;
+            public ComponentTypeHandle<LocalTransform> TranslationType;
+           
             public ComponentTypeHandle<LocalToWorld> LocalToWorldType;
             public ComponentTypeHandle<CharacterInterpolation> CharacterInterpolationType;
 
-            public void Execute(ArchetypeChunk chunk, int chunkIndex, int firstEntityIndex)
+
+            public void Execute(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask, in v128 chunkEnabledMask)
             {
-                NativeArray<Translation> chunkTranslations = chunk.GetNativeArray(TranslationType); 
-                NativeArray<Rotation> chunkRotations = chunk.GetNativeArray(RotationType);
+                NativeArray<LocalTransform> chunkTranslations = chunk.GetNativeArray(TranslationType);
+
                 NativeArray<LocalToWorld> chunkLocalToWorlds = chunk.GetNativeArray(LocalToWorldType);
                 NativeArray<CharacterInterpolation> chunkCharacterInterpolations = chunk.GetNativeArray(CharacterInterpolationType);
 
                 for (int i = 0; i < chunk.Count; i++)
                 {
-                    Translation translation = chunkTranslations[i];
-                    Rotation rotation = chunkRotations[i];
+                    LocalTransform translation = chunkTranslations[i];
+
                     LocalToWorld localToWorld = chunkLocalToWorlds[i];
                     CharacterInterpolation characterInterpolation = chunkCharacterInterpolations[i];
 
-                    RigidTransform targetTransform = new RigidTransform(rotation.Value, translation.Value);
+                    RigidTransform targetTransform = new RigidTransform(translation.Rotation, translation.Position);
 
                     // Interpolation skipping
                     if (characterInterpolation.InterpolationSkipping > 0)
@@ -155,8 +149,8 @@ namespace Rival
         {
             base.OnCreate();
 
-            _interpolatedEntitiesQuery = GetEntityQuery(typeof(Translation), typeof(Rotation), typeof(CharacterInterpolation));
-            _characterInterpolationFixedUpdateSystem = World.GetOrCreateSystem<CharacterInterpolationFixedUpdateSystem>();
+            _interpolatedEntitiesQuery = GetEntityQuery(typeof(LocalTransform), typeof(CharacterInterpolation));
+            _characterInterpolationFixedUpdateSystem = World.GetOrCreateSystemManaged<CharacterInterpolationFixedUpdateSystem>();
 
             RequireForUpdate(_interpolatedEntitiesQuery);
         }
@@ -174,15 +168,15 @@ namespace Rival
                 return;
             }
 
-            float timeAheadOfLastFixedUpdate = (float)(Time.ElapsedTime - _characterInterpolationFixedUpdateSystem.LastFixedUpdateElapsedTime);
+            float timeAheadOfLastFixedUpdate = (float)(SystemAPI.Time.ElapsedTime - _characterInterpolationFixedUpdateSystem.LastFixedUpdateElapsedTime);
             float normalizedTimeAhead = math.clamp(timeAheadOfLastFixedUpdate / fixedTimeStep, 0f, 1f);
 
             Dependency = new CharacterInterpolationUpdateJob
             {
                 NormalizedTimeAhead = normalizedTimeAhead,
 
-                TranslationType = GetComponentTypeHandle<Translation>(true),
-                RotationType = GetComponentTypeHandle<Rotation>(true),
+                TranslationType = GetComponentTypeHandle<LocalTransform>(true),
+               
                 LocalToWorldType = GetComponentTypeHandle<LocalToWorld>(false),
                 CharacterInterpolationType = GetComponentTypeHandle<CharacterInterpolation>(false),
             }.ScheduleParallel(_interpolatedEntitiesQuery, Dependency);
