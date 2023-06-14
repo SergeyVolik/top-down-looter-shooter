@@ -1583,12 +1583,13 @@ namespace Rival
         {
             CollisionWorld collisionWorld = processor.GetCollisionWorld;
             NativeList<RaycastHit> tmpRaycastHits = processor.GetTmpRaycastHits;
-
+            
             RaycastInput castInput = new RaycastInput
             {
+                
                 Start = startPoint,
                 End = startPoint + (direction * length),
-                Filter = characterPhysicsCollider.Value.Value.Filter,
+                Filter = characterPhysicsCollider.Value.Value.GetCollisionFilter(),
             };
             tmpRaycastHits.Clear();
             AllHitsCollector<RaycastHit> collector = new AllHitsCollector<RaycastHit>(1f, ref tmpRaycastHits);
@@ -1624,7 +1625,7 @@ namespace Rival
             {
                 Start = startPoint,
                 End = startPoint + (direction * length),
-                Filter = characterPhysicsCollider.Value.Value.Filter,
+                Filter = characterPhysicsCollider.Value.Value.GetCollisionFilter(),
             };
             tmpRaycastHits.Clear();
             AllHitsCollector<RaycastHit> collector = new AllHitsCollector<RaycastHit>(1f, ref tmpRaycastHits);
