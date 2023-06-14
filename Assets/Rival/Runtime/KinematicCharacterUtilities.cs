@@ -186,8 +186,7 @@ namespace Rival
         {
             return new ComponentType[]
             {
-                typeof(LocalTransform),
-               
+                typeof(LocalTransform),               
                 typeof(PhysicsCollider),
                 typeof(PhysicsVelocity),
                 typeof(PhysicsMass),
@@ -206,14 +205,16 @@ namespace Rival
         /// <param name="dstManager"></param>
         /// <param name="entity"></param>
         /// <param name="authoringProperties"></param> 
-        public static void CreateCharacter(
-            EntityManager dstManager,
+        public static void CreateCharacter<T>(
+            Baker<T> dstManager,
             Entity entity,
-            AuthoringKinematicCharacterBody authoringProperties)
+            AuthoringKinematicCharacterBody authoringProperties) where T: UnityEngine.MonoBehaviour
         {
+            var KinematicCharacterBody = new KinematicCharacterBody(authoringProperties);
+           
             // Base character components
-            dstManager.AddComponentData(entity, new KinematicCharacterBody(authoringProperties));
-            dstManager.AddComponentData(entity, new StoredKinematicCharacterBodyProperties());
+            dstManager.AddComponent(entity, KinematicCharacterBody);
+            dstManager.AddComponent(entity, new StoredKinematicCharacterBodyProperties());
 
             var characterHitsBuffer = dstManager.AddBuffer<KinematicCharacterHit>(entity);
             var velocityProjectionHitsBuffer = dstManager.AddBuffer<KinematicVelocityProjectionHit>(entity);
@@ -221,15 +222,15 @@ namespace Rival
             var statefulHitsBuffer = dstManager.AddBuffer<StatefulKinematicCharacterHit>(entity);
 
             // Kinematic physics body components
-            dstManager.AddComponentData(entity, new PhysicsVelocity());
-            dstManager.AddComponentData(entity, PhysicsMass.CreateKinematic(MassProperties.UnitSphere));
-            dstManager.AddComponentData(entity, new PhysicsGravityFactor { Value = 0f });
-            dstManager.AddComponentData(entity, new PhysicsCustomTags { Value = authoringProperties.CustomPhysicsBodyTags.Value });
+            dstManager.AddComponent(entity, new PhysicsVelocity());
+            dstManager.AddComponent(entity, PhysicsMass.CreateKinematic(MassProperties.UnitSphere));
+            dstManager.AddComponent(entity, new PhysicsGravityFactor { Value = 0f });
+            dstManager.AddComponent(entity, new PhysicsCustomTags { Value = authoringProperties.CustomPhysicsBodyTags.Value });
 
             // Interpolation
             if (authoringProperties.InterpolateTranslation || authoringProperties.InterpolateRotation)
             {
-                dstManager.AddComponentData(entity, new CharacterInterpolation
+                dstManager.AddComponent(entity, new CharacterInterpolation
                 {
                     InterpolateRotation = authoringProperties.InterpolateRotation ? (byte)1 : (byte)0,
                     InterpolateTranslation = authoringProperties.InterpolateTranslation ? (byte)1 : (byte)0,
@@ -277,11 +278,11 @@ namespace Rival
         /// <param name="entity"></param>
         /// <param name="authoringGameObject"></param>
         /// <param name="authoringProperties"></param>
-        public static void HandleConversionForCharacter(
-            EntityManager dstManager,
+        public static void HandleConversionForCharacter<T>(
+            Baker<T> dstManager,
             Entity entity,
             UnityEngine.GameObject authoringGameObject,
-            AuthoringKinematicCharacterBody authoringProperties)
+            AuthoringKinematicCharacterBody authoringProperties) where T : UnityEngine.MonoBehaviour
         {
             if (authoringGameObject.transform.lossyScale != UnityEngine.Vector3.one)
             {
@@ -295,7 +296,7 @@ namespace Rival
             }
 
             CreateCharacter(dstManager, entity, authoringProperties);
-        }
+        } 
 
         /// <summary>
         ///  clears some core character variables and buffers at the start of the update.
@@ -1726,11 +1727,11 @@ namespace Rival
             return false;
         }
 
-        public static void ApplyParentRotationToTargetRotation(ref quaternion targetRotation, in KinematicCharacterBody characterBody, float fixedDeltaTime, float deltaTime)
+        public static void ApplyParentRotationToTargetRotation(ref LocalTransform targetRotation, in KinematicCharacterBody characterBody, float fixedDeltaTime, float deltaTime)
         {
             float rotationRatio = math.clamp(deltaTime / fixedDeltaTime, 0f, 1f);
             quaternion rotationFromCharacterParent = math.slerp(quaternion.identity, characterBody.RotationFromParent, rotationRatio);
-            targetRotation = math.mul(targetRotation, rotationFromCharacterParent);
+            targetRotation.Rotation = math.mul(targetRotation.Rotation, rotationFromCharacterParent);
         }
 
         public static KinematicCharacterHit CreateCharacterHit(

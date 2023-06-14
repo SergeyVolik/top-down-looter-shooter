@@ -126,8 +126,8 @@ namespace Rival
         public Entity PreviousParentEntity;
         [HideInInspector]
         public bool WasGroundedBeforeCharacterUpdate;
-
-        public KinematicCharacterBody(AuthoringKinematicCharacterBody forAuthoring)
+        
+            public KinematicCharacterBody(AuthoringKinematicCharacterBody forAuthoring)
         {
             EvaluateGrounding = forAuthoring.EvaluateGrounding;
             SnapToGround = forAuthoring.SnapToGround;
