@@ -35,19 +35,16 @@ public partial class ThirdPersonCharacterRotationSystem : SystemBase
         RequireForUpdate(CharacterQuery);
     }
 
-    protected unsafe override void OnUpdate()
+    public partial struct ThirdPersonCharacterRotationJob : IJobEntity
     {
-        float deltaTime = SystemAPI.Time.DeltaTime;
-        float fixedDeltaTime = FixedStepSimulationSystemGroup.RateManager.Timestep;
-
-        Dependency = Entities.ForEach((
-            Entity entity,
+        public float deltaTime;
+        public float fixedDeltaTime;
+        public void Execute(Entity entity,
             ref LocalTransform characterRotation,
             ref ThirdPersonCharacterComponent character,
             in ThirdPersonCharacterInputs characterInputs,
-            in KinematicCharacterBody characterBody) =>
+            in KinematicCharacterBody characterBody)
         {
-         
             // Rotate towards move direction
             if (math.lengthsq(characterInputs.MoveVector) > 0f)
             {
@@ -59,6 +56,22 @@ public partial class ThirdPersonCharacterRotationSystem : SystemBase
             // Add rotation from parent body to the character rotation
             // (this is for allowing a rotating moving platform to rotate your character as well, and handle interpolation properly)
             KinematicCharacterUtilities.ApplyParentRotationToTargetRotation(ref characterRotation, in characterBody, fixedDeltaTime, deltaTime);
-        }).Schedule(Dependency);
+        }
+    }
+
+    protected unsafe override void OnUpdate()
+    {
+        float deltaTime = SystemAPI.Time.DeltaTime;
+        float fixedDeltaTime = FixedStepSimulationSystemGroup.RateManager.Timestep;
+
+        var job = new ThirdPersonCharacterRotationJob
+        {
+            deltaTime = deltaTime,
+            fixedDeltaTime = fixedDeltaTime,
+        };
+
+        Dependency = job.Schedule(Dependency);
+
+
     }
 }

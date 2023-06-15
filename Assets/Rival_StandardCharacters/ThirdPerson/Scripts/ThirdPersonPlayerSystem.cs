@@ -33,6 +33,7 @@ public partial class ThirdPersonPlayerSystem : SystemBase
         [ReadOnly]
         public ComponentLookup<LocalTransform> localTransformLookup;
         public ComponentLookup<OrbitCameraInputs> orbitalCameraInputLookup;
+
         public void Execute(ref ThirdPersonPlayer player)
         {
             if (thirdPersonCharacterInputsLookup.HasComponent(player.ControlledCharacter))
