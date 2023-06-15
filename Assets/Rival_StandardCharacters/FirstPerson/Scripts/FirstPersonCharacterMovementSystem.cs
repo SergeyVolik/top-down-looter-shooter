@@ -171,40 +171,40 @@ public partial class FirstPersonCharacterMovementSystem : SystemBase
 
         var CollisionWorld = SystemAPI.GetSingleton<BuildPhysicsWorldData>().PhysicsData.PhysicsWorld.CollisionWorld;
 
-        ComponentLookup<PhysicsVelocity> componentLookup = SystemAPI.GetComponentLookup<PhysicsVelocity>(true);
-        ComponentLookup<PhysicsMass> componentLookup1 = SystemAPI.GetComponentLookup<PhysicsMass>(true);
-        ComponentLookup<StoredKinematicCharacterBodyProperties> componentLookup2 = SystemAPI.GetComponentLookup<StoredKinematicCharacterBodyProperties>(true);
-        ComponentLookup<TrackedTransform> componentLookup3 = SystemAPI.GetComponentLookup<TrackedTransform>(true);
-        EntityTypeHandle entityTypeHandle = GetEntityTypeHandle();
-        ComponentTypeHandle<LocalTransform> componentTypeHandle = SystemAPI.GetComponentTypeHandle<LocalTransform>(false);
-        ComponentTypeHandle<KinematicCharacterBody> componentTypeHandle1 = GetComponentTypeHandle<KinematicCharacterBody>(false);
-        ComponentTypeHandle<PhysicsCollider> componentTypeHandle2 = GetComponentTypeHandle<PhysicsCollider>(false);
-        BufferTypeHandle<KinematicCharacterHit> bufferTypeHandle = GetBufferTypeHandle<KinematicCharacterHit>(false);
-        BufferTypeHandle<KinematicVelocityProjectionHit> bufferTypeHandle1 = GetBufferTypeHandle<KinematicVelocityProjectionHit>(false);
-        BufferTypeHandle<StatefulKinematicCharacterHit> bufferTypeHandle2 = GetBufferTypeHandle<StatefulKinematicCharacterHit>(false);
-        BufferTypeHandle<KinematicCharacterDeferredImpulse> bufferTypeHandle3 = GetBufferTypeHandle<KinematicCharacterDeferredImpulse>(false);
-        ComponentTypeHandle<FirstPersonCharacterComponent> componentTypeHandle3 = GetComponentTypeHandle<FirstPersonCharacterComponent>(false);
-        ComponentTypeHandle<FirstPersonCharacterInputs> componentTypeHandle4 = GetComponentTypeHandle<FirstPersonCharacterInputs>(true);
+        var PhysicsVelocityFromEntity = SystemAPI.GetComponentLookup<PhysicsVelocity>(true);
+        var PhysicsMassFromEntity = SystemAPI.GetComponentLookup<PhysicsMass>(true);
+        var StoredKinematicCharacterBodyPropertiesFromEntity = SystemAPI.GetComponentLookup<StoredKinematicCharacterBodyProperties>(true);
+        var TrackedTransformFromEntity = SystemAPI.GetComponentLookup<TrackedTransform>(true);
+        var entityTypeHandle = GetEntityTypeHandle();
+        var TranslationType = SystemAPI.GetComponentTypeHandle<LocalTransform>(false);
+        var KinematicCharacterBodyType = GetComponentTypeHandle<KinematicCharacterBody>(false);
+        var PhysicsColliderType = GetComponentTypeHandle<PhysicsCollider>(false);
+        var CharacterHitsBufferType = GetBufferTypeHandle<KinematicCharacterHit>(false);
+        var VelocityProjectionHitsBufferType = GetBufferTypeHandle<KinematicVelocityProjectionHit>(false);
+        var StatefulCharacterHitsBufferType = GetBufferTypeHandle<StatefulKinematicCharacterHit>(false);
+        var CharacterDeferredImpulsesBufferType = GetBufferTypeHandle<KinematicCharacterDeferredImpulse>(false);
+        var componentTypeHandle3 = GetComponentTypeHandle<FirstPersonCharacterComponent>(false);
+        var componentTypeHandle4 = GetComponentTypeHandle<FirstPersonCharacterInputs>(true);
       
         var job = new FirstPersonCharacterMovementJob
         {
             DeltaTime = SystemAPI.Time.DeltaTime,
             CollisionWorld = CollisionWorld,
 
-            PhysicsVelocityFromEntity = componentLookup,
-            PhysicsMassFromEntity = componentLookup1,
-            StoredKinematicCharacterBodyPropertiesFromEntity = componentLookup2,
-            TrackedTransformFromEntity = componentLookup3,
+            PhysicsVelocityFromEntity = PhysicsVelocityFromEntity,
+            PhysicsMassFromEntity = PhysicsMassFromEntity,
+            StoredKinematicCharacterBodyPropertiesFromEntity = StoredKinematicCharacterBodyPropertiesFromEntity,
+            TrackedTransformFromEntity = TrackedTransformFromEntity,
 
             EntityType = entityTypeHandle,
-            TranslationType = componentTypeHandle,
+            TranslationType = TranslationType,
 
-            KinematicCharacterBodyType = componentTypeHandle1,
-            PhysicsColliderType = componentTypeHandle2,
-            CharacterHitsBufferType = bufferTypeHandle,
-            VelocityProjectionHitsBufferType = bufferTypeHandle1,
-            CharacterDeferredImpulsesBufferType = bufferTypeHandle3,
-            StatefulCharacterHitsBufferType = bufferTypeHandle2,
+            KinematicCharacterBodyType = KinematicCharacterBodyType,
+            PhysicsColliderType = PhysicsColliderType,
+            CharacterHitsBufferType = CharacterHitsBufferType,
+            VelocityProjectionHitsBufferType = VelocityProjectionHitsBufferType,
+            CharacterDeferredImpulsesBufferType = CharacterDeferredImpulsesBufferType,
+            StatefulCharacterHitsBufferType = StatefulCharacterHitsBufferType,
 
             FirstPersonCharacterType = componentTypeHandle3,
             FirstPersonCharacterInputsType = componentTypeHandle4,
