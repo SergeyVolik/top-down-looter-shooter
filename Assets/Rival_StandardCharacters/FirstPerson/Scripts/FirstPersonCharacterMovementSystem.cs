@@ -212,6 +212,6 @@ public partial class FirstPersonCharacterMovementSystem : SystemBase
 
         Dependency = job.ScheduleParallel(CharacterQuery, Dependency);
 
-        Dependency = KinematicCharacterUtilities.ScheduleDeferredImpulsesJob(this, CharacterQuery, Dependency, false);
+        Dependency = KinematicCharacterUtilities.ScheduleDeferredImpulsesJob(ref this.CheckedStateRef, CharacterQuery, Dependency, false);
     }
 }

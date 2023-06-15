@@ -13,14 +13,14 @@ using Unity.Collections.LowLevel.Unsafe;
 using Unity.Burst.Intrinsics;
 
 [UpdateInGroup(typeof(KinematicCharacterUpdateGroup))]
-public partial class ThirdPersonCharacterMovementSystem : SystemBase
+public partial struct ThirdPersonCharacterMovementSystem : ISystem, ISystemStartStop
 {
     public BuildPhysicsWorld BuildPhysicsWorldSystem;
-  
+
     public EntityQuery CharacterQuery;
 
     [BurstCompile]
-    public struct ThirdPersonCharacterJob : IJobChunk
+    public struct ThirdPersonCharacterMovementJob : IJobChunk
     {
         public float DeltaTime;
         [ReadOnly]
@@ -30,7 +30,7 @@ public partial class ThirdPersonCharacterMovementSystem : SystemBase
         public ComponentLookup<PhysicsVelocity> PhysicsVelocityFromEntity;
         [ReadOnly]
         public ComponentLookup<PhysicsMass> PhysicsMassFromEntity;
-        [ReadOnly] 
+        [ReadOnly]
         public ComponentLookup<StoredKinematicCharacterBodyProperties> StoredKinematicCharacterBodyPropertiesFromEntity;
         [ReadOnly]
         public ComponentLookup<TrackedTransform> TrackedTransformFromEntity;
@@ -65,7 +65,7 @@ public partial class ThirdPersonCharacterMovementSystem : SystemBase
         {
             NativeArray<Entity> chunkEntities = chunk.GetNativeArray(EntityType);
             NativeArray<LocalTransform> chunkTranslations = chunk.GetNativeArray(ref TranslationType);
-          
+
             NativeArray<KinematicCharacterBody> chunkCharacterBodies = chunk.GetNativeArray(ref KinematicCharacterBodyType);
             NativeArray<PhysicsCollider> chunkPhysicsColliders = chunk.GetNativeArray(ref PhysicsColliderType);
             BufferAccessor<KinematicCharacterHit> chunkCharacterHitBuffers = chunk.GetBufferAccessor(ref CharacterHitsBufferType);
@@ -142,56 +142,89 @@ public partial class ThirdPersonCharacterMovementSystem : SystemBase
         }
     }
 
-    protected override void OnCreate()
+    //public static ComponentType[] GetCoreCharacterComponentTypes()
+    //{
+    //    return new ComponentType[]
+    //    {
+    //            typeof(LocalTransform),
+    //            typeof(PhysicsCollider),
+    //            typeof(PhysicsVelocity),
+    //            typeof(PhysicsMass),
+    //            typeof(KinematicCharacterBody),
+    //            typeof(StoredKinematicCharacterBodyProperties),
+    //            typeof(KinematicCharacterHit),
+    //            typeof(KinematicVelocityProjectionHit),
+    //            typeof(KinematicCharacterDeferredImpulse),
+    //            typeof(StatefulKinematicCharacterHit),
+    //    };
+    //}
+    public void OnCreate(ref SystemState state)
     {
-       
 
-        CharacterQuery = GetEntityQuery(new EntityQueryDesc
-        {
-            All = MiscUtilities.CombineArrays(
-                KinematicCharacterUtilities.GetCoreCharacterComponentTypes(),
-                new ComponentType[]
-                {
-                    typeof(ThirdPersonCharacterComponent),
-                    typeof(ThirdPersonCharacterInputs),
-                }),
-        });
+        CharacterQuery = SystemAPI.QueryBuilder().WithAll<
+            LocalTransform,
+            PhysicsCollider,
+            PhysicsVelocity,
+            PhysicsMass,
+            KinematicCharacterBody,
+            StoredKinematicCharacterBodyProperties,
+            KinematicCharacterHit>()
+            .WithAll<KinematicCharacterDeferredImpulse,
+            ThirdPersonCharacterInputs>().Build();
 
-        RequireForUpdate(CharacterQuery);
+
+        //CharacterQuery = SystemAPI.QueryBuilder().WithAll(GetEntityQuery(new EntityQueryDesc
+        //{
+        //    All = MiscUtilities.CombineArrays(
+        //        KinematicCharacterUtilities.GetCoreCharacterComponentTypes(),
+        //        new ComponentType[]
+        //        {
+        //            typeof(ThirdPersonCharacterComponent),
+        //            typeof(ThirdPersonCharacterInputs),
+        //        }),
+        //});
+
+        state.RequireForUpdate(CharacterQuery);
     }
 
-    protected override void OnStartRunning()
-    {
-        base.OnStartRunning();
 
-  
-    }
-
-    protected unsafe override void OnUpdate()
+    [BurstCompile]
+    public unsafe void OnUpdate(ref SystemState state)
     {
-        Dependency = new ThirdPersonCharacterJob
+        state.Dependency = new ThirdPersonCharacterMovementJob
         {
             DeltaTime = SystemAPI.Time.DeltaTime,
             CollisionWorld = SystemAPI.GetSingleton<BuildPhysicsWorldData>().PhysicsData.PhysicsWorld.CollisionWorld,
 
-            PhysicsVelocityFromEntity = GetComponentLookup<PhysicsVelocity>(true),
-            PhysicsMassFromEntity = GetComponentLookup<PhysicsMass>(true),
-            StoredKinematicCharacterBodyPropertiesFromEntity = GetComponentLookup<StoredKinematicCharacterBodyProperties>(true),
-            TrackedTransformFromEntity = GetComponentLookup<TrackedTransform>(true),
+            PhysicsVelocityFromEntity = SystemAPI.GetComponentLookup<PhysicsVelocity>(true),
+            PhysicsMassFromEntity = SystemAPI.GetComponentLookup<PhysicsMass>(true),
+            StoredKinematicCharacterBodyPropertiesFromEntity = SystemAPI.GetComponentLookup<StoredKinematicCharacterBodyProperties>(true),
+            TrackedTransformFromEntity = SystemAPI.GetComponentLookup<TrackedTransform>(true),
 
-            EntityType = GetEntityTypeHandle(),
-            TranslationType = GetComponentTypeHandle<LocalTransform>(false),           
-            KinematicCharacterBodyType = GetComponentTypeHandle<KinematicCharacterBody>(false),
-            PhysicsColliderType = GetComponentTypeHandle<PhysicsCollider>(false),
-            CharacterHitsBufferType = GetBufferTypeHandle<KinematicCharacterHit>(false),
-            VelocityProjectionHitsBufferType = GetBufferTypeHandle<KinematicVelocityProjectionHit>(false),
-            CharacterDeferredImpulsesBufferType = GetBufferTypeHandle<KinematicCharacterDeferredImpulse>(false),
-            StatefulCharacterHitsBufferType = GetBufferTypeHandle<StatefulKinematicCharacterHit>(false),
+            EntityType = SystemAPI.GetEntityTypeHandle(),
+            TranslationType = SystemAPI.GetComponentTypeHandle<LocalTransform>(false),
+            KinematicCharacterBodyType = SystemAPI.GetComponentTypeHandle<KinematicCharacterBody>(false),
+            PhysicsColliderType = SystemAPI.GetComponentTypeHandle<PhysicsCollider>(false),
+            CharacterHitsBufferType = SystemAPI.GetBufferTypeHandle<KinematicCharacterHit>(false),
+            VelocityProjectionHitsBufferType = SystemAPI.GetBufferTypeHandle<KinematicVelocityProjectionHit>(false),
+            CharacterDeferredImpulsesBufferType = SystemAPI.GetBufferTypeHandle<KinematicCharacterDeferredImpulse>(false),
+            StatefulCharacterHitsBufferType = SystemAPI.GetBufferTypeHandle<StatefulKinematicCharacterHit>(false),
 
-            ThirdPersonCharacterType = GetComponentTypeHandle<ThirdPersonCharacterComponent>(false),
-            ThirdPersonCharacterInputsType = GetComponentTypeHandle<ThirdPersonCharacterInputs>(true),
-        }.ScheduleParallel(CharacterQuery, Dependency);
+            ThirdPersonCharacterType = SystemAPI.GetComponentTypeHandle<ThirdPersonCharacterComponent>(false),
+            ThirdPersonCharacterInputsType = SystemAPI.GetComponentTypeHandle<ThirdPersonCharacterInputs>(true),
+        }.ScheduleParallel(CharacterQuery, state.Dependency);
 
-        Dependency = KinematicCharacterUtilities.ScheduleDeferredImpulsesJob(this, CharacterQuery, Dependency);
+       
+        state.Dependency = KinematicCharacterUtilities.ScheduleDeferredImpulsesJob(ref state, CharacterQuery, state.Dependency);
+    }
+
+    public void OnStartRunning(ref SystemState state)
+    {
+
+    }
+
+    public void OnStopRunning(ref SystemState state)
+    {
+
     }
 }

@@ -2172,7 +2172,8 @@ namespace Rival
             return hits.Length > 0;
         }
 
-        public static JobHandle ScheduleDeferredImpulsesJob(SystemBase forSystem, EntityQuery characterQuery, JobHandle dependency, bool run = false)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static JobHandle ScheduleDeferredImpulsesJob(ref SystemState forSystem, EntityQuery characterQuery, JobHandle dependency, bool run = false)
         {
             KinematicCharacterDeferredImpulsesJob deferredImpulsesJob = new KinematicCharacterDeferredImpulsesJob
             {
