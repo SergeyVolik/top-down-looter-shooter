@@ -19,6 +19,63 @@ public partial class ThirdPersonPlayerSystem : SystemBase
         FixedUpdateTickSystem = World.GetOrCreateSystemManaged<FixedUpdateTickSystem>();
     }
 
+
+    public partial struct ThirdPersonPlayerSystemJob : IJobEntity
+    {
+        public float2 moveInput;
+        public bool jumpInput;
+        public float cameraZoomInput;
+        public float2 cameraLookInput;
+        public uint fixedTick;
+
+        public ComponentLookup<ThirdPersonCharacterInputs> thirdPersonCharacterInputsLookup;
+
+        [ReadOnly]
+        public ComponentLookup<LocalTransform> localTransformLookup;
+        public ComponentLookup<OrbitCameraInputs> orbitalCameraInputLookup;
+        public void Execute(ref ThirdPersonPlayer player)
+        {
+            if (thirdPersonCharacterInputsLookup.HasComponent(player.ControlledCharacter))
+            {
+                var characterInputs = thirdPersonCharacterInputsLookup.GetRefRW(player.ControlledCharacter);
+
+                quaternion cameraRotation = localTransformLookup.GetRefRO(player.ControlledCamera).ValueRO.Rotation;
+                float3 cameraForwardOnUpPlane = math.normalizesafe(Rival.MathUtilities.ProjectOnPlane(Rival.MathUtilities.GetForwardFromRotation(cameraRotation), math.up()));
+                float3 cameraRight = Rival.MathUtilities.GetRightFromRotation(cameraRotation);
+
+                // Move
+                characterInputs.ValueRW.MoveVector = (moveInput.y * cameraForwardOnUpPlane) + (moveInput.x * cameraRight);
+                characterInputs.ValueRW.MoveVector = Rival.MathUtilities.ClampToMaxLength(characterInputs.ValueRO.MoveVector, 1f);
+
+                // Jump
+                // Punctual input presses need special handling when they will be used in a fixed step system.
+                // We essentially need to remember if the button was pressed at any point over the last fixed update
+                if (player.LastInputsProcessingTick == fixedTick)
+                {
+                    characterInputs.ValueRW.JumpRequested = jumpInput || characterInputs.ValueRO.JumpRequested;
+                }
+                else
+                {
+                    characterInputs.ValueRW.JumpRequested = jumpInput;
+                }
+
+
+            }
+
+            // Camera control
+            if (orbitalCameraInputLookup.HasComponent(player.ControlledCamera))
+            {
+                var cameraInputs = orbitalCameraInputLookup.GetRefRW(player.ControlledCamera);
+                cameraInputs.ValueRW.Look = cameraLookInput;
+                cameraInputs.ValueRW.Zoom = cameraZoomInput;
+
+
+            }
+
+            player.LastInputsProcessingTick = fixedTick;
+        }
+    }
+
     protected override void OnUpdate()
     {
         uint fixedTick = FixedUpdateTickSystem.FixedTick;
@@ -29,51 +86,25 @@ public partial class ThirdPersonPlayerSystem : SystemBase
         moveInput.y += Input.GetKey(KeyCode.S) ? -1f : 0f;
         moveInput.x += Input.GetKey(KeyCode.D) ? 1f : 0f;
         moveInput.x += Input.GetKey(KeyCode.A) ? -1f : 0f;
+       
+
         bool jumpInput = Input.GetKeyDown(KeyCode.Space);
         float2 cameraLookInput = new float2(Input.GetAxis("Mouse X"), Input.GetAxis("Mouse Y"));
         float cameraZoomInput = -Input.mouseScrollDelta.y;
 
-        Dependency = Entities
-            .ForEach((ref ThirdPersonPlayer player) =>
-            {
-                if (HasComponent<ThirdPersonCharacterInputs>(player.ControlledCharacter))
-                {
-                    ThirdPersonCharacterInputs characterInputs = GetComponent<ThirdPersonCharacterInputs>(player.ControlledCharacter);
+        var job = new ThirdPersonPlayerSystemJob
+        {
+            cameraLookInput = cameraLookInput,
+            cameraZoomInput = cameraZoomInput,
+            fixedTick = fixedTick,
+            jumpInput = jumpInput,
+            moveInput = moveInput,
+            localTransformLookup = SystemAPI.GetComponentLookup<LocalTransform>(isReadOnly: true),
+            orbitalCameraInputLookup = SystemAPI.GetComponentLookup<OrbitCameraInputs>(isReadOnly: false),
+            thirdPersonCharacterInputsLookup = SystemAPI.GetComponentLookup<ThirdPersonCharacterInputs>(isReadOnly: false),
+        };
 
-                    quaternion cameraRotation = GetComponent<LocalTransform>(player.ControlledCamera).Rotation;
-                    float3 cameraForwardOnUpPlane = math.normalizesafe(Rival.MathUtilities.ProjectOnPlane(Rival.MathUtilities.GetForwardFromRotation(cameraRotation), math.up()));
-                    float3 cameraRight = Rival.MathUtilities.GetRightFromRotation(cameraRotation);
+        Dependency = job.Schedule(Dependency);
 
-                    // Move
-                    characterInputs.MoveVector = (moveInput.y * cameraForwardOnUpPlane) + (moveInput.x * cameraRight);
-                    characterInputs.MoveVector = Rival.MathUtilities.ClampToMaxLength(characterInputs.MoveVector, 1f);
-
-                    // Jump
-                    // Punctual input presses need special handling when they will be used in a fixed step system.
-                    // We essentially need to remember if the button was pressed at any point over the last fixed update
-                    if (player.LastInputsProcessingTick == fixedTick)
-                    {
-                        characterInputs.JumpRequested = jumpInput || characterInputs.JumpRequested; 
-                    }
-                    else
-                    {
-                        characterInputs.JumpRequested = jumpInput;
-                    }
-
-                    SetComponent(player.ControlledCharacter, characterInputs);
-                }
-
-                // Camera control
-                if (HasComponent<OrbitCameraInputs>(player.ControlledCamera))
-                {
-                    OrbitCameraInputs cameraInputs = GetComponent<OrbitCameraInputs>(player.ControlledCamera);
-                    cameraInputs.Look = cameraLookInput; 
-                    cameraInputs.Zoom = cameraZoomInput; 
-
-                    SetComponent(player.ControlledCamera, cameraInputs);
-                }
-
-                player.LastInputsProcessingTick = fixedTick;
-            }).Schedule(Dependency);
     }
 }
