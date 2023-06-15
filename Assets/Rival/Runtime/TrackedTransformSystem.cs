@@ -15,12 +15,12 @@ namespace Rival
     {
         protected override void OnUpdate()
         {
-            Entities
+            Dependency = Entities
                 .ForEach((ref TrackedTransform trackedTransform, in LocalTransform translation) =>
                 {
                     trackedTransform.PreviousFixedRateTransform = trackedTransform.CurrentFixedRateTransform;
                     trackedTransform.CurrentFixedRateTransform = new RigidTransform(translation.Rotation, translation.Position);
-                }).Schedule();
+                }).Schedule(Dependency);
         }
     }
 }

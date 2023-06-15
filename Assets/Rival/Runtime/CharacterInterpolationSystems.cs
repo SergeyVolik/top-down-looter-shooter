@@ -30,9 +30,9 @@ namespace Rival
 
             public void Execute(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask, in v128 chunkEnabledMask)
             {
-                NativeArray<LocalTransform> chunkTranslations = chunk.GetNativeArray(TranslationType);
+                NativeArray<LocalTransform> chunkTranslations = chunk.GetNativeArray(ref TranslationType);
 
-                NativeArray<CharacterInterpolation> chunkCharacterInterpolations = chunk.GetNativeArray(CharacterInterpolationType);
+                NativeArray<CharacterInterpolation> chunkCharacterInterpolations = chunk.GetNativeArray(ref CharacterInterpolationType);
 
                 void* chunkInterpolationsPtr = chunkCharacterInterpolations.GetUnsafePtr();
                 int chunkCount = chunk.Count;
@@ -98,10 +98,10 @@ namespace Rival
 
             public void Execute(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask, in v128 chunkEnabledMask)
             {
-                NativeArray<LocalTransform> chunkTranslations = chunk.GetNativeArray(TranslationType);
+                NativeArray<LocalTransform> chunkTranslations = chunk.GetNativeArray(ref TranslationType);
 
-                NativeArray<LocalToWorld> chunkLocalToWorlds = chunk.GetNativeArray(LocalToWorldType);
-                NativeArray<CharacterInterpolation> chunkCharacterInterpolations = chunk.GetNativeArray(CharacterInterpolationType);
+                NativeArray<LocalToWorld> chunkLocalToWorlds = chunk.GetNativeArray(ref LocalToWorldType);
+                NativeArray<CharacterInterpolation> chunkCharacterInterpolations = chunk.GetNativeArray(ref CharacterInterpolationType);
 
                 for (int i = 0; i < chunk.Count; i++)
                 {

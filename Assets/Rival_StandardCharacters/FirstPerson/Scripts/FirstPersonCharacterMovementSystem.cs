@@ -15,8 +15,8 @@ using Unity.Burst.Intrinsics;
 [UpdateInGroup(typeof(KinematicCharacterUpdateGroup))]
 public partial class FirstPersonCharacterMovementSystem : SystemBase
 {
-    public BuildPhysicsWorld BuildPhysicsWorldSystem;
-   
+
+
     public EntityQuery CharacterQuery;
 
     [BurstCompile]
@@ -37,8 +37,9 @@ public partial class FirstPersonCharacterMovementSystem : SystemBase
 
         [ReadOnly]
         public EntityTypeHandle EntityType;
+
         public ComponentTypeHandle<LocalTransform> TranslationType;
-       
+
         public ComponentTypeHandle<KinematicCharacterBody> KinematicCharacterBodyType;
         public ComponentTypeHandle<PhysicsCollider> PhysicsColliderType;
         public BufferTypeHandle<KinematicCharacterHit> CharacterHitsBufferType;
@@ -59,26 +60,26 @@ public partial class FirstPersonCharacterMovementSystem : SystemBase
         [NativeDisableContainerSafetyRestriction]
         public NativeList<DistanceHit> TmpDistanceHits;
 
-       
+
 
         public void Execute(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask, in v128 chunkEnabledMask)
         {
             NativeArray<Entity> chunkEntities = chunk.GetNativeArray(EntityType);
-            NativeArray<LocalTransform> chunkTranslations = chunk.GetNativeArray(TranslationType);
-           
-            NativeArray<KinematicCharacterBody> chunkCharacterBodies = chunk.GetNativeArray(KinematicCharacterBodyType);
-            NativeArray<PhysicsCollider> chunkPhysicsColliders = chunk.GetNativeArray(PhysicsColliderType);
-            BufferAccessor<KinematicCharacterHit> chunkCharacterHitBuffers = chunk.GetBufferAccessor(CharacterHitsBufferType);
-            BufferAccessor<KinematicVelocityProjectionHit> chunkVelocityProjectionHitBuffers = chunk.GetBufferAccessor(VelocityProjectionHitsBufferType);
-            BufferAccessor<KinematicCharacterDeferredImpulse> chunkCharacterDeferredImpulsesBuffers = chunk.GetBufferAccessor(CharacterDeferredImpulsesBufferType);
-            BufferAccessor<StatefulKinematicCharacterHit> chunkStatefulCharacterHitsBuffers = chunk.GetBufferAccessor(StatefulCharacterHitsBufferType);
-            NativeArray<FirstPersonCharacterComponent> chunkFirstPersonCharacters = chunk.GetNativeArray(FirstPersonCharacterType);
-            NativeArray<FirstPersonCharacterInputs> chunkFirstPersonCharacterInputs = chunk.GetNativeArray(FirstPersonCharacterInputsType);
+            NativeArray<LocalTransform> chunkTranslations = chunk.GetNativeArray(ref TranslationType);
+
+            NativeArray<KinematicCharacterBody> chunkCharacterBodies = chunk.GetNativeArray(ref KinematicCharacterBodyType);
+            NativeArray<PhysicsCollider> chunkPhysicsColliders = chunk.GetNativeArray(ref PhysicsColliderType);
+            BufferAccessor<KinematicCharacterHit> chunkCharacterHitBuffers = chunk.GetBufferAccessor(ref CharacterHitsBufferType);
+            BufferAccessor<KinematicVelocityProjectionHit> chunkVelocityProjectionHitBuffers = chunk.GetBufferAccessor(ref VelocityProjectionHitsBufferType);
+            BufferAccessor<KinematicCharacterDeferredImpulse> chunkCharacterDeferredImpulsesBuffers = chunk.GetBufferAccessor(ref CharacterDeferredImpulsesBufferType);
+            BufferAccessor<StatefulKinematicCharacterHit> chunkStatefulCharacterHitsBuffers = chunk.GetBufferAccessor(ref StatefulCharacterHitsBufferType);
+            NativeArray<FirstPersonCharacterComponent> chunkFirstPersonCharacters = chunk.GetNativeArray(ref FirstPersonCharacterType);
+            NativeArray<FirstPersonCharacterInputs> chunkFirstPersonCharacterInputs = chunk.GetNativeArray(ref FirstPersonCharacterInputsType);
 
             // Initialize the Temp collections
             if (!TmpRigidbodyIndexesProcessed.IsCreated)
             {
-               TmpRigidbodyIndexesProcessed = new NativeList<int>(24, Allocator.Temp);
+                TmpRigidbodyIndexesProcessed = new NativeList<int>(24, Allocator.Temp);
             }
             if (!TmpRaycastHits.IsCreated)
             {
@@ -161,37 +162,57 @@ public partial class FirstPersonCharacterMovementSystem : SystemBase
     {
         base.OnStartRunning();
 
-       
+
     }
 
     protected unsafe override void OnUpdate()
     {
 
 
-        Dependency = new FirstPersonCharacterMovementJob
+        var CollisionWorld = SystemAPI.GetSingleton<BuildPhysicsWorldData>().PhysicsData.PhysicsWorld.CollisionWorld;
+
+        ComponentLookup<PhysicsVelocity> componentLookup = SystemAPI.GetComponentLookup<PhysicsVelocity>(true);
+        ComponentLookup<PhysicsMass> componentLookup1 = SystemAPI.GetComponentLookup<PhysicsMass>(true);
+        ComponentLookup<StoredKinematicCharacterBodyProperties> componentLookup2 = SystemAPI.GetComponentLookup<StoredKinematicCharacterBodyProperties>(true);
+        ComponentLookup<TrackedTransform> componentLookup3 = SystemAPI.GetComponentLookup<TrackedTransform>(true);
+        EntityTypeHandle entityTypeHandle = GetEntityTypeHandle();
+        ComponentTypeHandle<LocalTransform> componentTypeHandle = SystemAPI.GetComponentTypeHandle<LocalTransform>(false);
+        ComponentTypeHandle<KinematicCharacterBody> componentTypeHandle1 = GetComponentTypeHandle<KinematicCharacterBody>(false);
+        ComponentTypeHandle<PhysicsCollider> componentTypeHandle2 = GetComponentTypeHandle<PhysicsCollider>(false);
+        BufferTypeHandle<KinematicCharacterHit> bufferTypeHandle = GetBufferTypeHandle<KinematicCharacterHit>(false);
+        BufferTypeHandle<KinematicVelocityProjectionHit> bufferTypeHandle1 = GetBufferTypeHandle<KinematicVelocityProjectionHit>(false);
+        BufferTypeHandle<StatefulKinematicCharacterHit> bufferTypeHandle2 = GetBufferTypeHandle<StatefulKinematicCharacterHit>(false);
+        BufferTypeHandle<KinematicCharacterDeferredImpulse> bufferTypeHandle3 = GetBufferTypeHandle<KinematicCharacterDeferredImpulse>(false);
+        ComponentTypeHandle<FirstPersonCharacterComponent> componentTypeHandle3 = GetComponentTypeHandle<FirstPersonCharacterComponent>(false);
+        ComponentTypeHandle<FirstPersonCharacterInputs> componentTypeHandle4 = GetComponentTypeHandle<FirstPersonCharacterInputs>(true);
+        Dependency.Complete();
+        var job = new FirstPersonCharacterMovementJob
         {
             DeltaTime = SystemAPI.Time.DeltaTime,
-            CollisionWorld = SystemAPI.GetSingleton<BuildPhysicsWorldData>().PhysicsData.PhysicsWorld.CollisionWorld,
+            CollisionWorld = CollisionWorld,
 
-            PhysicsVelocityFromEntity = SystemAPI.GetComponentLookup<PhysicsVelocity>(true),
-            PhysicsMassFromEntity = SystemAPI.GetComponentLookup<PhysicsMass>(true),
-            StoredKinematicCharacterBodyPropertiesFromEntity = SystemAPI.GetComponentLookup<StoredKinematicCharacterBodyProperties>(true),
-            TrackedTransformFromEntity = SystemAPI.GetComponentLookup<TrackedTransform>(true),
+            PhysicsVelocityFromEntity = componentLookup,
+            PhysicsMassFromEntity = componentLookup1,
+            StoredKinematicCharacterBodyPropertiesFromEntity = componentLookup2,
+            TrackedTransformFromEntity = componentLookup3,
 
-            EntityType = GetEntityTypeHandle(),
-            TranslationType = SystemAPI.GetComponentTypeHandle<LocalTransform>(false),
+            EntityType = entityTypeHandle,
+            TranslationType = componentTypeHandle,
 
-            KinematicCharacterBodyType = GetComponentTypeHandle<KinematicCharacterBody>(false),
-            PhysicsColliderType = GetComponentTypeHandle<PhysicsCollider>(false),
-            CharacterHitsBufferType = GetBufferTypeHandle<KinematicCharacterHit>(false),
-            VelocityProjectionHitsBufferType = GetBufferTypeHandle<KinematicVelocityProjectionHit>(false),
-            CharacterDeferredImpulsesBufferType = GetBufferTypeHandle<KinematicCharacterDeferredImpulse>(false),
-            StatefulCharacterHitsBufferType = GetBufferTypeHandle<StatefulKinematicCharacterHit>(false),
+            KinematicCharacterBodyType = componentTypeHandle1,
+            PhysicsColliderType = componentTypeHandle2,
+            CharacterHitsBufferType = bufferTypeHandle,
+            VelocityProjectionHitsBufferType = bufferTypeHandle1,
+            CharacterDeferredImpulsesBufferType = bufferTypeHandle3,
+            StatefulCharacterHitsBufferType = bufferTypeHandle2,
 
-            FirstPersonCharacterType = GetComponentTypeHandle<FirstPersonCharacterComponent>(false),
-            FirstPersonCharacterInputsType = GetComponentTypeHandle<FirstPersonCharacterInputs>(true),
-        }.Schedule(CharacterQuery, Dependency);//.ScheduleParallel(CharacterQuery, Dependency);
+            FirstPersonCharacterType = componentTypeHandle3,
+            FirstPersonCharacterInputsType = componentTypeHandle4,
+        };
 
-        Dependency = KinematicCharacterUtilities.ScheduleDeferredImpulsesJob(this, CharacterQuery, Dependency);
+        job.Run(CharacterQuery);
+
+        /*Dependency =*/
+        KinematicCharacterUtilities.ScheduleDeferredImpulsesJob(this, CharacterQuery, Dependency, true);
     }
 }

@@ -24,14 +24,10 @@ namespace Rival
         public ComponentLookup<PhysicsVelocity> PhysicsVelocityFromEntity;
         public ComponentLookup<LocalTransform> TranslationFromEntity;
 
-        public void Execute(ArchetypeChunk chunk, int chunkIndex, int firstEntityIndex)
-        {
-            
-        }
 
         public void Execute(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask, in v128 chunkEnabledMask)
         {
-            BufferAccessor<KinematicCharacterDeferredImpulse> chunkCharacterrDeferredImpulsesBuffers = chunk.GetBufferAccessor(CharacterDeferredImpulsesBufferType);
+            BufferAccessor<KinematicCharacterDeferredImpulse> chunkCharacterrDeferredImpulsesBuffers = chunk.GetBufferAccessor(ref CharacterDeferredImpulsesBufferType);
 
             for (int i = 0; i < chunk.Count; i++)
             {
