@@ -61,7 +61,7 @@ public partial class FirstPersonCharacterMovementSystem : SystemBase
         public NativeList<DistanceHit> TmpDistanceHits;
 
 
-
+        [BurstCompile]
         public void Execute(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask, in v128 chunkEnabledMask)
         {
             NativeArray<Entity> chunkEntities = chunk.GetNativeArray(EntityType);
