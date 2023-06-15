@@ -18,10 +18,7 @@ public class PlayerTracker : MonoBehaviour
         em.AddComponentObject(entity, this);
     }
 
-    private void OnDestroy()
-    {
-        em.DestroyEntity(entity);
-    }
+
 }
 
 [UpdateInGroup(typeof(PresentationSystemGroup), OrderLast = true)]

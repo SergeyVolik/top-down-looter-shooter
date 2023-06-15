@@ -10,6 +10,7 @@ namespace SV.ECS
     public class PlayerAimClosestTarget : MonoBehaviour
     {
         public float aimDistance;
+
         public PhysicsCategoryTags belongTo;
         public PhysicsCategoryTags collideWith;
 
@@ -34,6 +35,8 @@ namespace SV.ECS
         public uint collideWith;
     }
 
+
+
     public class PlayerAimClosestTargetComponentComponentBaker : Baker<PlayerAimClosestTarget>
     {
         public override void Bake(PlayerAimClosestTarget authoring)
@@ -49,8 +52,7 @@ namespace SV.ECS
 
             AddComponent(entity, new DetectedTargetComponent());
             SetComponentEnabled<DetectedTargetComponent>(entity, false);
-            
-          
+
         }
     }
 

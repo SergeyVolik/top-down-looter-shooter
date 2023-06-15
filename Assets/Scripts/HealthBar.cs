@@ -35,7 +35,7 @@ namespace SV
         }
         private void OnDestroy()
         {
-            colorTablesQ.Dispose();
+          
         }
         private void Update()
         {

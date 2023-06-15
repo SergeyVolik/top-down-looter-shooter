@@ -13,7 +13,7 @@ using Unity.Collections.LowLevel.Unsafe;
 using Unity.Burst.Intrinsics;
 
 [UpdateInGroup(typeof(KinematicCharacterUpdateGroup))]
-public partial struct ThirdPersonCharacterMovementSystem : ISystem, ISystemStartStop
+public partial struct TopDownCharacterMovementSystem : ISystem, ISystemStartStop
 {
     public BuildPhysicsWorld BuildPhysicsWorldSystem;
 
@@ -48,9 +48,9 @@ public partial struct ThirdPersonCharacterMovementSystem : ISystem, ISystemStart
         public BufferTypeHandle<KinematicCharacterDeferredImpulse> CharacterDeferredImpulsesBufferType;
         public BufferTypeHandle<StatefulKinematicCharacterHit> StatefulCharacterHitsBufferType;
 
-        public ComponentTypeHandle<ThirdPersonCharacterComponent> ThirdPersonCharacterType;
+        public ComponentTypeHandle<TopDownCharacterComponent> ThirdPersonCharacterType;
         [ReadOnly]
-        public ComponentTypeHandle<ThirdPersonCharacterInputs> ThirdPersonCharacterInputsType;
+        public ComponentTypeHandle<TopDownCharacterInputs> ThirdPersonCharacterInputsType;
 
         [NativeDisableContainerSafetyRestriction]
         public NativeList<int> TmpRigidbodyIndexesProcessed;
@@ -74,8 +74,8 @@ public partial struct ThirdPersonCharacterMovementSystem : ISystem, ISystemStart
             BufferAccessor<KinematicVelocityProjectionHit> chunkVelocityProjectionHitBuffers = chunk.GetBufferAccessor(ref VelocityProjectionHitsBufferType);
             BufferAccessor<KinematicCharacterDeferredImpulse> chunkCharacterDeferredImpulsesBuffers = chunk.GetBufferAccessor(ref CharacterDeferredImpulsesBufferType);
             BufferAccessor<StatefulKinematicCharacterHit> chunkStatefulCharacterHitsBuffers = chunk.GetBufferAccessor(ref StatefulCharacterHitsBufferType);
-            NativeArray<ThirdPersonCharacterComponent> chunkThirdPersonCharacters = chunk.GetNativeArray(ref ThirdPersonCharacterType);
-            NativeArray<ThirdPersonCharacterInputs> chunkThirdPersonCharacterInputs = chunk.GetNativeArray(ref ThirdPersonCharacterInputsType);
+            NativeArray<TopDownCharacterComponent> chunkThirdPersonCharacters = chunk.GetNativeArray(ref ThirdPersonCharacterType);
+            NativeArray<TopDownCharacterInputs> chunkThirdPersonCharacterInputs = chunk.GetNativeArray(ref ThirdPersonCharacterInputsType);
 
             // Initialize the Temp collections
             if (!TmpRigidbodyIndexesProcessed.IsCreated)
@@ -96,7 +96,7 @@ public partial struct ThirdPersonCharacterMovementSystem : ISystem, ISystemStart
             }
 
             // Assign the global data of the processor
-            ThirdPersonCharacterProcessor processor = default;
+            TopDownCharacterProcessor processor = default;
             processor.DeltaTime = DeltaTime;
             processor.CollisionWorld = CollisionWorld;
             processor.StoredKinematicCharacterBodyPropertiesFromEntity = StoredKinematicCharacterBodyPropertiesFromEntity;
@@ -155,8 +155,8 @@ public partial struct ThirdPersonCharacterMovementSystem : ISystem, ISystemStart
                 KinematicCharacterUtilities.GetCoreCharacterComponentTypes(),
                 new ComponentType[]
                 {
-                    typeof(ThirdPersonCharacterComponent),
-                    typeof(ThirdPersonCharacterInputs),
+                    typeof(TopDownCharacterComponent),
+                    typeof(TopDownCharacterInputs),
                 }),
         });
 
@@ -168,12 +168,12 @@ public partial struct ThirdPersonCharacterMovementSystem : ISystem, ISystemStart
     public unsafe void OnUpdate(ref SystemState state)
     {
         var buildPhysWorld = SystemAPI.GetSingletonRW<BuildPhysicsWorldData>();
-       
+
         state.Dependency = new ThirdPersonCharacterMovementJob
         {
             DeltaTime = SystemAPI.Time.DeltaTime,
 
-           
+
             CollisionWorld = buildPhysWorld.ValueRW.PhysicsData.PhysicsWorld.CollisionWorld,
 
             PhysicsVelocityFromEntity = SystemAPI.GetComponentLookup<PhysicsVelocity>(true),
@@ -190,11 +190,11 @@ public partial struct ThirdPersonCharacterMovementSystem : ISystem, ISystemStart
             CharacterDeferredImpulsesBufferType = SystemAPI.GetBufferTypeHandle<KinematicCharacterDeferredImpulse>(false),
             StatefulCharacterHitsBufferType = SystemAPI.GetBufferTypeHandle<StatefulKinematicCharacterHit>(false),
 
-            ThirdPersonCharacterType = SystemAPI.GetComponentTypeHandle<ThirdPersonCharacterComponent>(false),
-            ThirdPersonCharacterInputsType = SystemAPI.GetComponentTypeHandle<ThirdPersonCharacterInputs>(true),
+            ThirdPersonCharacterType = SystemAPI.GetComponentTypeHandle<TopDownCharacterComponent>(false),
+            ThirdPersonCharacterInputsType = SystemAPI.GetComponentTypeHandle<TopDownCharacterInputs>(true),
         }.ScheduleParallel(CharacterQuery, state.Dependency);
 
-       
+
         state.Dependency = KinematicCharacterUtilities.ScheduleDeferredImpulsesJob(ref state, CharacterQuery, state.Dependency);
     }
 

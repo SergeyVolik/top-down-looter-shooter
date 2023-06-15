@@ -7,7 +7,7 @@ using Unity.Transforms;
 using Rival;
 using Unity.Physics;
 
-public struct ThirdPersonCharacterProcessor : IKinematicCharacterProcessor
+public struct TopDownCharacterProcessor : IKinematicCharacterProcessor
 {
     public float DeltaTime;
     public CollisionWorld CollisionWorld;
@@ -27,8 +27,8 @@ public struct ThirdPersonCharacterProcessor : IKinematicCharacterProcessor
     public quaternion Rotation;
     public PhysicsCollider PhysicsCollider;
     public KinematicCharacterBody CharacterBody;
-    public ThirdPersonCharacterComponent ThirdPersonCharacter;
-    public ThirdPersonCharacterInputs ThirdPersonCharacterInputs;
+    public TopDownCharacterComponent ThirdPersonCharacter;
+    public TopDownCharacterInputs ThirdPersonCharacterInputs;
 
     public float3 GroundingUp;
 

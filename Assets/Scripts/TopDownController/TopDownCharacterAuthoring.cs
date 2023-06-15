@@ -7,23 +7,23 @@ using Unity.Physics;
 
 [DisallowMultipleComponent]
 [RequireComponent(typeof(PhysicsShapeAuthoring))]
-public class ThirdPersonCharacterAuthoring : MonoBehaviour
+public class TopDownCharacterAuthoring : MonoBehaviour
 {
     public AuthoringKinematicCharacterBody CharacterBody = AuthoringKinematicCharacterBody.GetDefault();
-    public ThirdPersonCharacterComponent ThirdPersonCharacter = ThirdPersonCharacterComponent.GetDefault();
+    public TopDownCharacterComponent ThirdPersonCharacter = TopDownCharacterComponent.GetDefault();
 
 }
 
-public class ThirdPersonCharacterAuthoringBaker : Baker<ThirdPersonCharacterAuthoring>
+public class TopDownCharacterAuthoringBaker : Baker<TopDownCharacterAuthoring>
 {
 
-    public override void Bake(ThirdPersonCharacterAuthoring authoring)
+    public override void Bake(TopDownCharacterAuthoring authoring)
     {
         var entity = GetEntity(TransformUsageFlags.Dynamic);
 
         KinematicCharacterUtilities.HandleConversionForCharacter(this, entity, authoring.gameObject, authoring.CharacterBody);
 
         AddComponent(entity, authoring.ThirdPersonCharacter);
-        AddComponent(entity, new ThirdPersonCharacterInputs());
+        AddComponent(entity, new TopDownCharacterInputs());
     }
 }

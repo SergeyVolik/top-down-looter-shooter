@@ -5,12 +5,14 @@ using Unity.Jobs;
 using Unity.Mathematics;
 using Unity.Transforms;
 using Rival;
+using SV.ECS;
 
-[UpdateInGroup(typeof(SimulationSystemGroup), OrderFirst = true)]
-[UpdateAfter(typeof(ThirdPersonPlayerSystem))]
+[UpdateInGroup(typeof(KinematicCharacterUpdateGroup), OrderFirst = true)]
+[UpdateAfter(typeof(TopDownChracterInputSystem))]
+[UpdateBefore(typeof(TopDownCharacterMovementSystem))]
 [UpdateBefore(typeof(FixedStepSimulationSystemGroup))]
 [UpdateBefore(typeof(TransformSystemGroup))]
-public partial class ThirdPersonCharacterRotationSystem : SystemBase
+public partial class TopDownCharacterRotationSystem : SystemBase
 {
     public FixedStepSimulationSystemGroup FixedStepSimulationSystemGroup;
     public EntityQuery CharacterQuery;
@@ -18,7 +20,7 @@ public partial class ThirdPersonCharacterRotationSystem : SystemBase
     protected override void OnCreate()
     {
         base.OnCreate();
-        
+
         FixedStepSimulationSystemGroup = World.GetOrCreateSystemManaged<FixedStepSimulationSystemGroup>();
 
         CharacterQuery = this.CheckedStateRef.GetEntityQuery(new EntityQueryDesc
@@ -27,52 +29,59 @@ public partial class ThirdPersonCharacterRotationSystem : SystemBase
                 KinematicCharacterUtilities.GetCoreCharacterComponentTypes(),
                 new ComponentType[]
                 {
-                    typeof(ThirdPersonCharacterComponent),
-                    typeof(ThirdPersonCharacterInputs),
+                    typeof(TopDownCharacterComponent),
+                    typeof(TopDownCharacterInputs),
                 }),
         });
 
         RequireForUpdate(CharacterQuery);
     }
 
+
+    [WithNone(typeof(DetectedTargetComponent))]
     [BurstCompile]
-    public partial struct ThirdPersonCharacterRotationJob : IJobEntity
+    public partial struct TopDownCharacterRotationJob : IJobEntity
     {
         public float deltaTime;
         public float fixedDeltaTime;
 
         [BurstCompile]
         public void Execute(
-            ref LocalTransform characterRotation,
-            ref ThirdPersonCharacterComponent character,
-            in ThirdPersonCharacterInputs characterInputs,
+            ref LocalTransform localTransfrom,
+            ref TopDownCharacterComponent character,
+            in TopDownCharacterInputs characterInputs,
             in KinematicCharacterBody characterBody)
         {
+
+
+
+
+
             // Rotate towards move direction
             if (math.lengthsq(characterInputs.MoveVector) > 0f)
             {
-                var rot = characterRotation.Rotation;
-                CharacterControlUtilities.SlerpRotationTowardsDirectionAroundUp(ref rot, deltaTime, math.normalizesafe(characterInputs.MoveVector), MathUtilities.GetUpFromRotation(characterRotation.Rotation), character.RotationSharpness);
-                characterRotation.Rotation = rot;
+                var rot = localTransfrom.Rotation;
+                CharacterControlUtilities.SlerpRotationTowardsDirectionAroundUp(ref rot, deltaTime, math.normalizesafe(characterInputs.MoveVector), MathUtilities.GetUpFromRotation(localTransfrom.Rotation), character.RotationSharpness);
+                localTransfrom.Rotation = rot;
             }
 
             // Add rotation from parent body to the character rotation
             // (this is for allowing a rotating moving platform to rotate your character as well, and handle interpolation properly)
-            KinematicCharacterUtilities.ApplyParentRotationToTargetRotation(ref characterRotation, in characterBody, fixedDeltaTime, deltaTime);
+            KinematicCharacterUtilities.ApplyParentRotationToTargetRotation(ref localTransfrom, in characterBody, fixedDeltaTime, deltaTime);
         }
     }
 
-    protected unsafe override void OnUpdate()
+    protected override void OnUpdate()
     {
         float deltaTime = SystemAPI.Time.DeltaTime;
         float fixedDeltaTime = FixedStepSimulationSystemGroup.RateManager.Timestep;
 
-        var job = new ThirdPersonCharacterRotationJob
+        var job = new TopDownCharacterRotationJob
         {
             deltaTime = deltaTime,
             fixedDeltaTime = fixedDeltaTime,
         };
-
+        //job.Run();
         Dependency = job.Schedule(Dependency);
 
 

@@ -5,6 +5,7 @@ using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Physics;
 using Unity.Transforms;
+using UnityEngine;
 
 
 namespace SV.ECS
@@ -139,19 +140,7 @@ namespace SV.ECS
             math.length(matrix.c1.xyz),
             math.length(matrix.c2.xyz));
 
-        void LookAt(Entity e, float3 target, float3 worldUp)
-        {
-            if (SystemAPI.HasComponent<Parent>(e))
-            {
-                Entity parent = SystemAPI.GetComponent<Parent>(e).Value;
-                float4x4 parentL2W = SystemAPI.GetComponent<LocalToWorld>(parent).Value;
-                target = math.inverse(parentL2W).TransformPoint(target);
-            }
 
-            LocalTransform transform = SystemAPI.GetComponent<LocalTransform>(e);
-            quaternion rotation = quaternion.LookRotationSafe(target, worldUp);
-            SystemAPI.SetComponent(e, transform.WithRotation(rotation));
-        }
 
 
         protected unsafe override void OnUpdate()
@@ -163,9 +152,12 @@ namespace SV.ECS
 
             ComponentLookup<LocalToWorld> localTransformLookup = SystemAPI.GetComponentLookup<LocalToWorld>(true);
             ComponentLookup<Parent> parentLookup = SystemAPI.GetComponentLookup<Parent>(true);
+            ComponentLookup<GunComponent> gunLookup = SystemAPI.GetComponentLookup<GunComponent>(true);
+            ComponentLookup<GunActivated> gunActivatedLookup = SystemAPI.GetComponentLookup<GunActivated>(false);
 
+            BufferLookup<Child> chilLookup = SystemAPI.GetBufferLookup<Child>(true);
 
-            Entities.ForEach((Entity e, ref PlayerAimClosestTargetComponent aimTarg, ref LocalTransform transform, ref LocalToWorld localToWorld, in DetectedTargetComponent detected) =>
+            Entities.ForEach((Entity e, ref LocalTransform transform, in LocalToWorld localToWorld, in DetectedTargetComponent detected) =>
             {
 
                 float3 target = default;
@@ -174,13 +166,33 @@ namespace SV.ECS
                     target = ltwTarget.Position;
                 }
 
-                //target.y = localToWorld.Position.y;
+                target.y = localToWorld.Position.y;
 
                
 
                 transform.LookAt(e, target, ref parentLookup, ref localTransformLookup);
 
-            }).Run();
+            }).WithAll<PlayerAimClosestTargetComponent>().Run();
+
+            Entities.ForEach((Entity e, in GunSlotsComponent slot) =>
+            {
+                var detected = detectedTargetLookUp.IsComponentEnabled(e);
+              
+
+                if (chilLookup.TryGetBuffer(slot.mainSlot, out var buffer))
+                {
+                    foreach (var item in buffer)
+                    {
+                        if (gunLookup.HasComponent(item.Value))
+                        {
+                            gunActivatedLookup.SetComponentEnabled(item.Value, detected);
+                        }
+
+                    }
+                }
+              
+
+            }).WithAll<PlayerAimClosestTargetComponent>().Run();
         }
 
     }

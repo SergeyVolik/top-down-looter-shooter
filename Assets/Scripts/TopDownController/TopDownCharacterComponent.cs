@@ -5,7 +5,7 @@ using Unity.Mathematics;
 using UnityEngine;
 
 [Serializable]
-public struct ThirdPersonCharacterComponent : IComponentData
+public struct TopDownCharacterComponent : IComponentData
 {
     [Header("Movement")]
     public float RotationSharpness;
@@ -34,9 +34,9 @@ public struct ThirdPersonCharacterComponent : IComponentData
     [HideInInspector]
     public float3 GroundingUp;
 
-    public static ThirdPersonCharacterComponent GetDefault()
+    public static TopDownCharacterComponent GetDefault()
     {
-        return new ThirdPersonCharacterComponent
+        return new TopDownCharacterComponent
         {
             RotationSharpness = 25f,
             GroundMaxSpeed = 10f,
@@ -63,7 +63,7 @@ public struct ThirdPersonCharacterComponent : IComponentData
 }
 
 [Serializable]
-public struct ThirdPersonCharacterInputs : IComponentData
+public struct TopDownCharacterInputs : IComponentData
 {
     public float3 MoveVector;
     public bool JumpRequested;

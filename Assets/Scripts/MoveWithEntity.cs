@@ -29,11 +29,12 @@ namespace SV.ECS
         }
     }
 
+   
     public partial struct MoveWithEntitySystem : ISystem
     {
         public void OnUpdate(ref SystemState state)
         {
-            var localToWorldLookup = SystemAPI.GetComponentLookup<LocalToWorld>();
+            var localToWorldLookup = SystemAPI.GetComponentLookup<LocalToWorld>(isReadOnly: true);
 
             
             var ecb = SystemAPI.GetSingleton<BeginSimulationEntityCommandBufferSystem.Singleton>().CreateCommandBuffer(state.WorldUnmanaged);
