@@ -483,6 +483,14 @@ PrefabInstance:
       propertyPath: FirstPersonCharacter.Gravity.y
       value: -30
       objectReference: {fileID: 0}
+    - target: {fileID: 3573635878978948923, guid: e95be3f6ef9cc8243994bdcda968a0e5, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 0.48192254
+      objectReference: {fileID: 0}
+    - target: {fileID: 3573635878978948923, guid: e95be3f6ef9cc8243994bdcda968a0e5, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0.468
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

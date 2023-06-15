@@ -33,39 +33,57 @@ public partial class FirstPersonCharacterRotationSystem : SystemBase
         RequireForUpdate(CharacterQuery);
     }
 
-    protected unsafe override void OnUpdate()
-    {
-        float deltaTime = SystemAPI.Time.DeltaTime;
-        float fixedDeltaTime = FixedStepSimulationSystemGroup.RateManager.Timestep;
 
-        Entities.ForEach((
-            Entity entity,
+    [BurstCompile]
+    public partial struct FirstPersonCharacterRotationJob : IJobEntity
+    {
+        public float deltaTime;
+        public float fixedDeltaTime;
+
+        public ComponentLookup<LocalTransform> localTransform;
+
+        [BurstCompile]
+        public void Execute(Entity entity,
             ref CharacterInterpolation characterInterpolation,
             ref FirstPersonCharacterComponent character,
             in FirstPersonCharacterInputs characterInputs,
-            in KinematicCharacterBody characterBody) =>
+            in KinematicCharacterBody characterBody)
         {
-            LocalTransform characterRotation = GetComponent<LocalTransform>(entity);
-            LocalTransform localViewRotation = GetComponent<LocalTransform>(character.CharacterViewEntity);
+            var characterRotation = localTransform.GetRefRW(entity);
+            var localViewRotation = localTransform.GetRefRW(character.CharacterViewEntity);
 
             // Compute character & view rotations from rotation input
             FirstPersonCharacterUtilities.ComputeFinalRotationsFromRotationDelta(
-                ref characterRotation,
+                ref characterRotation.ValueRW,
                 ref character.ViewPitchDegrees,
                 characterInputs.LookYawPitchDegrees,
                 0f,
                 character.MinVAngle,
                 character.MaxVAngle,
                 out float canceledPitchDegrees,
-                ref localViewRotation);
+                ref localViewRotation.ValueRW);
 
             // Add rotation from parent body to the character rotation
             // (this is for allowing a rotating moving platform to rotate your character as well, and handle interpolation properly)
-            KinematicCharacterUtilities.ApplyParentRotationToTargetRotation(ref characterRotation, in characterBody, fixedDeltaTime, deltaTime);
+            KinematicCharacterUtilities.ApplyParentRotationToTargetRotation(ref characterRotation.ValueRW, in characterBody, fixedDeltaTime, deltaTime);
 
-            // Apply character & view rotations
-            SetComponent(entity, characterRotation);
-            SetComponent(character.CharacterViewEntity, localViewRotation);
-        }).Schedule();
+
+        }
+    }
+
+    protected unsafe override void OnUpdate()
+    {
+        float deltaTime = SystemAPI.Time.DeltaTime;
+        float fixedDeltaTime = FixedStepSimulationSystemGroup.RateManager.Timestep;
+
+
+        new FirstPersonCharacterRotationJob
+        {
+            deltaTime = deltaTime,
+            fixedDeltaTime = fixedDeltaTime,
+            localTransform = SystemAPI.GetComponentLookup<LocalTransform>()
+        }.Schedule();
+
+
     }
 }
