@@ -19,6 +19,7 @@ public partial struct ThirdPersonCharacterMovementSystem : ISystem, ISystemStart
 
     public EntityQuery CharacterQuery;
 
+
     [BurstCompile]
     public struct ThirdPersonCharacterMovementJob : IJobChunk
     {
@@ -37,10 +38,11 @@ public partial struct ThirdPersonCharacterMovementSystem : ISystem, ISystemStart
 
         [ReadOnly]
         public EntityTypeHandle EntityType;
-        public ComponentTypeHandle<LocalTransform> TranslationType;
 
+        public ComponentTypeHandle<LocalTransform> TranslationType;
         public ComponentTypeHandle<KinematicCharacterBody> KinematicCharacterBodyType;
         public ComponentTypeHandle<PhysicsCollider> PhysicsColliderType;
+
         public BufferTypeHandle<KinematicCharacterHit> CharacterHitsBufferType;
         public BufferTypeHandle<KinematicVelocityProjectionHit> VelocityProjectionHitsBufferType;
         public BufferTypeHandle<KinematicCharacterDeferredImpulse> CharacterDeferredImpulsesBufferType;
@@ -60,7 +62,7 @@ public partial struct ThirdPersonCharacterMovementSystem : ISystem, ISystemStart
         public NativeList<DistanceHit> TmpDistanceHits;
 
 
-
+        [BurstCompile]
         public void Execute(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask, in v128 chunkEnabledMask)
         {
             NativeArray<Entity> chunkEntities = chunk.GetNativeArray(EntityType);
@@ -142,47 +144,21 @@ public partial struct ThirdPersonCharacterMovementSystem : ISystem, ISystemStart
         }
     }
 
-    //public static ComponentType[] GetCoreCharacterComponentTypes()
-    //{
-    //    return new ComponentType[]
-    //    {
-    //            typeof(LocalTransform),
-    //            typeof(PhysicsCollider),
-    //            typeof(PhysicsVelocity),
-    //            typeof(PhysicsMass),
-    //            typeof(KinematicCharacterBody),
-    //            typeof(StoredKinematicCharacterBodyProperties),
-    //            typeof(KinematicCharacterHit),
-    //            typeof(KinematicVelocityProjectionHit),
-    //            typeof(KinematicCharacterDeferredImpulse),
-    //            typeof(StatefulKinematicCharacterHit),
-    //    };
-    //}
+
     public void OnCreate(ref SystemState state)
     {
 
-        CharacterQuery = SystemAPI.QueryBuilder().WithAll<
-            LocalTransform,
-            PhysicsCollider,
-            PhysicsVelocity,
-            PhysicsMass,
-            KinematicCharacterBody,
-            StoredKinematicCharacterBodyProperties,
-            KinematicCharacterHit>()
-            .WithAll<KinematicCharacterDeferredImpulse,
-            ThirdPersonCharacterInputs>().Build();
-
-
-        //CharacterQuery = SystemAPI.QueryBuilder().WithAll(GetEntityQuery(new EntityQueryDesc
-        //{
-        //    All = MiscUtilities.CombineArrays(
-        //        KinematicCharacterUtilities.GetCoreCharacterComponentTypes(),
-        //        new ComponentType[]
-        //        {
-        //            typeof(ThirdPersonCharacterComponent),
-        //            typeof(ThirdPersonCharacterInputs),
-        //        }),
-        //});
+       
+        CharacterQuery = state.GetEntityQuery(new EntityQueryDesc
+        {
+            All = MiscUtilities.CombineArrays(
+                KinematicCharacterUtilities.GetCoreCharacterComponentTypes(),
+                new ComponentType[]
+                {
+                    typeof(ThirdPersonCharacterComponent),
+                    typeof(ThirdPersonCharacterInputs),
+                }),
+        });
 
         state.RequireForUpdate(CharacterQuery);
     }

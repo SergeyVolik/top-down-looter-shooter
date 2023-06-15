@@ -20,6 +20,7 @@ public partial class ThirdPersonPlayerSystem : SystemBase
     }
 
 
+    [BurstCompile]
     public partial struct ThirdPersonPlayerSystemJob : IJobEntity
     {
         public float2 moveInput;
@@ -34,6 +35,7 @@ public partial class ThirdPersonPlayerSystem : SystemBase
         public ComponentLookup<LocalTransform> localTransformLookup;
         public ComponentLookup<OrbitCameraInputs> orbitalCameraInputLookup;
 
+        [BurstCompile]
         public void Execute(ref ThirdPersonPlayer player)
         {
             if (thirdPersonCharacterInputsLookup.HasComponent(player.ControlledCharacter))

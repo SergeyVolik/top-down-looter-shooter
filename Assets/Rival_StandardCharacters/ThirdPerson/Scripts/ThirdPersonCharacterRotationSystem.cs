@@ -18,10 +18,10 @@ public partial class ThirdPersonCharacterRotationSystem : SystemBase
     protected override void OnCreate()
     {
         base.OnCreate();
-
+        
         FixedStepSimulationSystemGroup = World.GetOrCreateSystemManaged<FixedStepSimulationSystemGroup>();
 
-        CharacterQuery = GetEntityQuery(new EntityQueryDesc
+        CharacterQuery = this.CheckedStateRef.GetEntityQuery(new EntityQueryDesc
         {
             All = MiscUtilities.CombineArrays(
                 KinematicCharacterUtilities.GetCoreCharacterComponentTypes(),
@@ -35,11 +35,14 @@ public partial class ThirdPersonCharacterRotationSystem : SystemBase
         RequireForUpdate(CharacterQuery);
     }
 
+    [BurstCompile]
     public partial struct ThirdPersonCharacterRotationJob : IJobEntity
     {
         public float deltaTime;
         public float fixedDeltaTime;
-        public void Execute(Entity entity,
+
+        [BurstCompile]
+        public void Execute(
             ref LocalTransform characterRotation,
             ref ThirdPersonCharacterComponent character,
             in ThirdPersonCharacterInputs characterInputs,
