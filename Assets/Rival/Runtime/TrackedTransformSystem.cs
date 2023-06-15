@@ -11,16 +11,31 @@ namespace Rival
     [UpdateInGroup(typeof(FixedStepSimulationSystemGroup))]
     [UpdateAfter(typeof(ExportPhysicsWorld))]
     [UpdateBefore(typeof(PhysicsSystemGroup))]
-    public partial class TrackedTransformFixedSimulationSystem : SystemBase
+    public partial struct TrackedTransformFixedSimulationSystem : ISystem
     {
-        protected override void OnUpdate()
+
+        [BurstCompile]
+        public partial struct TrackedTransformFixedSimulationJob : IJobEntity
         {
-            Entities
-                .ForEach((ref TrackedTransform trackedTransform, in LocalTransform translation) =>
-                {
-                    trackedTransform.PreviousFixedRateTransform = trackedTransform.CurrentFixedRateTransform;
-                    trackedTransform.CurrentFixedRateTransform = new RigidTransform(translation.Rotation, translation.Position);
-                }).Schedule();
+
+            [BurstCompile]
+            public void Execute(ref TrackedTransform trackedTransform, in LocalTransform translation)
+            {
+                trackedTransform.PreviousFixedRateTransform = trackedTransform.CurrentFixedRateTransform;
+                trackedTransform.CurrentFixedRateTransform = new RigidTransform(translation.Rotation, translation.Position);
+            }
+        }
+
+        public void OnUpdate(ref SystemState state)
+        {
+
+            var job = new TrackedTransformFixedSimulationJob { 
+
+            };
+
+            job.ScheduleParallel();
+
+           
         }
     }
 }

@@ -95,7 +95,7 @@ namespace Rival
             public ComponentTypeHandle<LocalToWorld> LocalToWorldType;
             public ComponentTypeHandle<CharacterInterpolation> CharacterInterpolationType;
 
-
+            [BurstCompile]
             public void Execute(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask, in v128 chunkEnabledMask)
             {
                 NativeArray<LocalTransform> chunkTranslations = chunk.GetNativeArray(ref TranslationType);
