@@ -13,11 +13,11 @@ public partial class MainCameraSystem : SystemBase
 
     protected override void OnUpdate()
     {
-        if (CameraGameObjectTransform && SystemAPI.HasSingleton<MainEntityCamera>())
+        if (CameraGameObjectTransform && HasSingleton<MainEntityCamera>())
         {
-            Entity mainEntityCameraEntity = SystemAPI.GetSingletonEntity<MainEntityCamera>();
+            Entity mainEntityCameraEntity = GetSingletonEntity<MainEntityCamera>();
 
-            LocalToWorld targetLocalToWorld = SystemAPI.GetComponent<LocalToWorld>(mainEntityCameraEntity);
+            LocalToWorld targetLocalToWorld = GetComponent<LocalToWorld>(mainEntityCameraEntity);
             CameraGameObjectTransform.position = targetLocalToWorld.Position;
             CameraGameObjectTransform.rotation = targetLocalToWorld.Rotation;
         }
