@@ -169,7 +169,7 @@ public partial class FirstPersonCharacterMovementSystem : SystemBase
     {
 
 
-        var CollisionWorld = SystemAPI.GetSingleton<BuildPhysicsWorldData>().PhysicsData.PhysicsWorld.CollisionWorld;
+        var CollisionWorld = SystemAPI.GetSingletonRW<BuildPhysicsWorldData>().ValueRW.PhysicsData.PhysicsWorld.CollisionWorld;
 
         var PhysicsVelocityFromEntity = SystemAPI.GetComponentLookup<PhysicsVelocity>(true);
         var PhysicsMassFromEntity = SystemAPI.GetComponentLookup<PhysicsMass>(true);

@@ -167,14 +167,14 @@ public partial struct ThirdPersonCharacterMovementSystem : ISystem, ISystemStart
     [BurstCompile]
     public unsafe void OnUpdate(ref SystemState state)
     {
-        var buildPhysWorld = SystemAPI.GetSingleton<BuildPhysicsWorldData>();
+        var buildPhysWorld = SystemAPI.GetSingletonRW<BuildPhysicsWorldData>();
        
         state.Dependency = new ThirdPersonCharacterMovementJob
         {
             DeltaTime = SystemAPI.Time.DeltaTime,
 
            
-            CollisionWorld = buildPhysWorld.PhysicsData.PhysicsWorld.CollisionWorld,
+            CollisionWorld = buildPhysWorld.ValueRW.PhysicsData.PhysicsWorld.CollisionWorld,
 
             PhysicsVelocityFromEntity = SystemAPI.GetComponentLookup<PhysicsVelocity>(true),
             PhysicsMassFromEntity = SystemAPI.GetComponentLookup<PhysicsMass>(true),
