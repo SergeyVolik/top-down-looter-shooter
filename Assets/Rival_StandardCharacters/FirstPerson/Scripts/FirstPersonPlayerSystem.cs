@@ -34,7 +34,7 @@ public partial class FirstPersonPlayerSystem : SystemBase
         float2 lookInput = new float2(Input.GetAxis("Mouse X"), Input.GetAxis("Mouse Y"));
 
         // Iterate on all Player components to apply input to their character
-        Dependency = Entities
+        Entities
             .ForEach((ref FirstPersonPlayer player) =>
             {
                 if (HasComponent<FirstPersonCharacterInputs>(player.ControlledCharacter) && HasComponent<FirstPersonCharacterComponent>(player.ControlledCharacter))
@@ -72,6 +72,6 @@ public partial class FirstPersonPlayerSystem : SystemBase
 
                     SetComponent(player.ControlledCharacter, characterInputs);
                 }
-            }).Schedule(Dependency);
+            }).Schedule();
     }
 }

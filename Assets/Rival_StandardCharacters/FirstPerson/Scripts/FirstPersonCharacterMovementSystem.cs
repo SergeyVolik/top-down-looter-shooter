@@ -185,7 +185,7 @@ public partial class FirstPersonCharacterMovementSystem : SystemBase
         BufferTypeHandle<KinematicCharacterDeferredImpulse> bufferTypeHandle3 = GetBufferTypeHandle<KinematicCharacterDeferredImpulse>(false);
         ComponentTypeHandle<FirstPersonCharacterComponent> componentTypeHandle3 = GetComponentTypeHandle<FirstPersonCharacterComponent>(false);
         ComponentTypeHandle<FirstPersonCharacterInputs> componentTypeHandle4 = GetComponentTypeHandle<FirstPersonCharacterInputs>(true);
-        Dependency.Complete();
+      
         var job = new FirstPersonCharacterMovementJob
         {
             DeltaTime = SystemAPI.Time.DeltaTime,
@@ -210,9 +210,8 @@ public partial class FirstPersonCharacterMovementSystem : SystemBase
             FirstPersonCharacterInputsType = componentTypeHandle4,
         };
 
-        job.Run(CharacterQuery);
+        Dependency = job.ScheduleParallel(CharacterQuery, Dependency);
 
-        /*Dependency =*/
-        KinematicCharacterUtilities.ScheduleDeferredImpulsesJob(this, CharacterQuery, Dependency, true);
+        Dependency = KinematicCharacterUtilities.ScheduleDeferredImpulsesJob(this, CharacterQuery, Dependency, false);
     }
 }

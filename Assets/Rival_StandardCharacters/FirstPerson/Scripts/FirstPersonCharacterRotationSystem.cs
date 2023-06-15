@@ -38,7 +38,7 @@ public partial class FirstPersonCharacterRotationSystem : SystemBase
         float deltaTime = SystemAPI.Time.DeltaTime;
         float fixedDeltaTime = FixedStepSimulationSystemGroup.RateManager.Timestep;
 
-        Dependency = Entities.ForEach((
+        Entities.ForEach((
             Entity entity,
             ref CharacterInterpolation characterInterpolation,
             ref FirstPersonCharacterComponent character,
@@ -66,6 +66,6 @@ public partial class FirstPersonCharacterRotationSystem : SystemBase
             // Apply character & view rotations
             SetComponent(entity, characterRotation);
             SetComponent(character.CharacterViewEntity, localViewRotation);
-        }).Schedule(Dependency);
+        }).Schedule();
     }
 }
