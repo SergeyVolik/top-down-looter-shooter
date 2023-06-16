@@ -11,55 +11,164 @@ Shader "SyntyStudios/Zombies"
 		_Spec("Spec", Color) = (0,0,0,0)
 		_Smoothness("Smoothness", Range( 0 , 1)) = 0
 		_Emissive("Emissive", 2D) = "white" {}
+		
 		[HDR]_EmissiveColor("Emissive Color", Color) = (0,0,0,0)
 		[HideInInspector] _texcoord2( "", 2D ) = "white" {}
 		[HideInInspector] _texcoord( "", 2D ) = "white" {}
 		[HideInInspector] __dirty( "", Int ) = 1
 	}
 
-	SubShader
-	{
-		Tags{ "RenderType" = "Opaque"  "Queue" = "Geometry+0" "IsEmissive" = "true"  }
-		Cull Back
-		CGPROGRAM
-		#pragma target 3.0
-		#pragma surface surf Standard keepalpha addshadow fullforwardshadows 
-		struct Input
-		{
-			float2 uv_texcoord;
-			float2 uv2_texcoord2;
-		};
+	// The SubShader block containing the Shader code. 
+    SubShader
+    {
+        // SubShader Tags define when and under which conditions a SubShader block or
+        // a pass is executed.
+        Tags { "RenderType" = "Opaque" "RenderPipeline" = "UniversalRenderPipeline" }
 
-		uniform sampler2D _Texture;
-		uniform float4 _Texture_ST;
-		uniform float4 _BloodColor;
-		uniform sampler2D _Blood;
-		uniform float4 _Blood_ST;
-		uniform float _BloodAmount;
-		uniform sampler2D _Emissive;
-		uniform float4 _Emissive_ST;
-		uniform float4 _EmissiveColor;
-		uniform float4 _Spec;
-		uniform float _Smoothness;
+        Pass
+        {
+            // The HLSL code block. Unity SRP uses the HLSL language.
+            HLSLPROGRAM
+            // This line defines the name of the vertex shader. 
+            #pragma vertex vert
+            // This line defines the name of the fragment shader. 
+            #pragma fragment frag
 
-		void surf( Input i , inout SurfaceOutputStandard o )
-		{
-			float2 uv_Texture = i.uv_texcoord * _Texture_ST.xy + _Texture_ST.zw;
-			float2 uv2_Blood = i.uv2_texcoord2 * _Blood_ST.xy + _Blood_ST.zw;
-			float4 lerpResult33 = lerp( float4( 0,0,0,0 ) , tex2D( _Blood, uv2_Blood, float2( 0,0 ), float2( 0,0 ) ) , _BloodAmount);
-			float4 lerpResult18 = lerp( tex2D( _Texture, uv_Texture ) , _BloodColor , lerpResult33);
-			o.Albedo = lerpResult18.rgb;
-			float2 uv_Emissive = i.uv_texcoord * _Emissive_ST.xy + _Emissive_ST.zw;
-			o.Emission = ( tex2D( _Emissive, uv_Emissive ) * _EmissiveColor ).rgb;
-			o.Metallic = ( _Spec * float4( 0,0,0,0 ) ).r;
-			o.Smoothness = _Smoothness;
-			o.Alpha = 1;
-		}
+            // The Core.hlsl file contains definitions of frequently used HLSL
+            // macros and functions, and also contains #include references to other
+            // HLSL files (for example, Common.hlsl, SpaceTransforms.hlsl, etc.).
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"            
 
-		ENDCG
-	}
-	Fallback "Diffuse"
-	CustomEditor "ASEMaterialInspector"
+			
+            // The structure definition defines which variables it contains.
+            // This example uses the Attributes structure as an input structure in
+            // the vertex shader.
+            struct Attributes
+            {
+                // The positionOS variable contains the vertex positions in object
+                // space.
+                float4 positionOS   : POSITION;
+				float2 uv_texcoord           : TEXCOORD0; 
+				float2 uv2_texcoord2           : TEXCOORD1; 
+
+            };
+
+            struct Varyings
+            {
+                // The positions in this struct must have the SV_POSITION semantic.
+                float4 positionHCS  : SV_POSITION;
+				float2 uv_texcoord           : TEXCOORD0;
+				float2 uv2_texcoord2           : TEXCOORD1; 
+
+            };            
+
+			TEXTURE2D(_Texture);
+			TEXTURE2D(_Blood);
+			TEXTURE2D(_Emissive);
+			
+			SAMPLER(sampler_Texture);
+			SAMPLER(sampler_Blood);
+			SAMPLER(sampler_Emissive);
+
+			CBUFFER_START(UnityPerMaterial)
+                // The following line declares the _BaseColor variable, so that you
+                // can use it in the fragment shader.
+				uniform float4 _Texture_ST;
+				uniform float4 _BloodColor;
+				uniform float4 _Blood_ST;
+				uniform float _BloodAmount;
+				uniform float4 _Emissive_ST;
+				uniform float4 _EmissiveColor;
+				uniform float4 _Spec;
+				uniform float _Smoothness;
+            CBUFFER_END
+            // The vertex shader definition with properties defined in the Varyings 
+            // structure. The type of the vert function must match the type (struct)
+            // that it returns.
+            Varyings vert(Attributes IN)
+            {
+                // Declaring the output object (OUT) with the Varyings struct.
+                Varyings OUT;
+                // The TransformObjectToHClip function transforms vertex positions
+                // from object space to homogenous space
+                OUT.positionHCS = TransformObjectToHClip(IN.positionOS.xyz);
+                // Returning the output.
+
+				OUT.uv_texcoord = TRANSFORM_TEX(IN.uv_texcoord, _Texture);
+				OUT.uv2_texcoord2 = TRANSFORM_TEX(IN.uv2_texcoord2, _Blood);
+                return OUT;
+            }
+
+            // The fragment shader definition.            
+            half4 frag(Varyings IN) : SV_Target
+            {
+                
+ 				
+
+				//half4 blend = lerp(color, color2, _BloodAmount);
+				float2 uv_Texture = IN.uv_texcoord * _Texture_ST.xy + _Texture_ST.zw;
+				float2 uv2_Blood = IN.uv2_texcoord2 * _Blood_ST.xy + _Blood_ST.zw;
+
+				 half4 textColor = SAMPLE_TEXTURE2D(_Texture, sampler_Texture, uv_Texture);
+				 half4 bloodColor = SAMPLE_TEXTURE2D(_Blood, sampler_Blood, uv2_Blood);
+
+				float4 lerpResult33 = lerp( float4( 0,0,0,0 ) , bloodColor , _BloodAmount);
+				float4 lerpResult18 = lerp( textColor , _BloodColor , lerpResult33);
+				// o.Albedo = lerpResult18.rgb;
+				// float2 uv_Emissive = i.uv_texcoord * _Emissive_ST.xy + _Emissive_ST.zw;
+				// o.Emission = ( tex2D( _Emissive, uv_Emissive ) * _EmissiveColor ).rgb;
+				// o.Metallic = ( _Spec * float4( 0,0,0,0 ) ).r;
+				// o.Smoothness = _Smoothness;
+				// o.Alpha = 1;
+
+                return lerpResult18;
+            }
+            ENDHLSL
+        }
+    }
+	// SubShader
+	// {
+	// 	Tags{ "RenderType" = "Opaque"  "Queue" = "Geometry+0" "IsEmissive" = "true" "RenderPipeline" = "UniversalRenderPipeline"  }
+	// 	Cull Back
+	// 	CGPROGRAM
+	// 	#pragma target 3.0
+	// 	#pragma surface surf Standard keepalpha addshadow fullforwardshadows 
+	// 	struct Input
+	// 	{
+	// 		float2 uv_texcoord;
+	// 		float2 uv2_texcoord2;
+	// 	};
+
+	// 	uniform sampler2D _Texture;
+	// 	uniform float4 _Texture_ST;
+	// 	uniform float4 _BloodColor;
+	// 	uniform sampler2D _Blood;
+	// 	uniform float4 _Blood_ST;
+	// 	uniform float _BloodAmount;
+	// 	uniform sampler2D _Emissive;
+	// 	uniform float4 _Emissive_ST;
+	// 	uniform float4 _EmissiveColor;
+	// 	uniform float4 _Spec;
+	// 	uniform float _Smoothness;
+
+	// 	void surf( Input i , inout SurfaceOutputStandard o )
+	// 	{
+	// 		float2 uv_Texture = i.uv_texcoord * _Texture_ST.xy + _Texture_ST.zw;
+	// 		float2 uv2_Blood = i.uv2_texcoord2 * _Blood_ST.xy + _Blood_ST.zw;
+	// 		float4 lerpResult33 = lerp( float4( 0,0,0,0 ) , tex2D( _Blood, uv2_Blood, float2( 0,0 ), float2( 0,0 ) ) , _BloodAmount);
+	// 		float4 lerpResult18 = lerp( tex2D( _Texture, uv_Texture ) , _BloodColor , lerpResult33);
+	// 		o.Albedo = lerpResult18.rgb;
+	// 		float2 uv_Emissive = i.uv_texcoord * _Emissive_ST.xy + _Emissive_ST.zw;
+	// 		o.Emission = ( tex2D( _Emissive, uv_Emissive ) * _EmissiveColor ).rgb;
+	// 		o.Metallic = ( _Spec * float4( 0,0,0,0 ) ).r;
+	// 		o.Smoothness = _Smoothness;
+	// 		o.Alpha = 1;
+	// 	}
+
+	// 	ENDCG
+	// }
+	// Fallback "Diffuse"
+	// CustomEditor "ASEMaterialInspector"
 }
 /*ASEBEGIN
 Version=15800
