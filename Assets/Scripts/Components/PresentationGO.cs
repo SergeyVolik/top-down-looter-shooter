@@ -1,3 +1,4 @@
+using ProjectDawn.Navigation;
 using System.Collections;
 using System.Collections.Generic;
 using Unity.Entities;
@@ -80,6 +81,38 @@ namespace SV.ECS
             foreach (var (animator, input) in SystemAPI.Query<AnimatorGO, RefRO<TopDownCharacterInputs>>())
             {
                 animator.animator.SetFloat(moveParam, math.length(input.ValueRO.MoveVector));
+            }
+        }
+    }
+
+    public partial class AnimatorAISystem : SystemBase
+    {
+        private int moveParam;
+
+        protected override void OnCreate()
+        {
+            base.OnCreate();
+            moveParam = Animator.StringToHash("Move");
+
+        }
+        protected override void OnUpdate()
+        {
+            var dletaTime = SystemAPI.Time.DeltaTime;
+
+            foreach (var (animator, input) in SystemAPI.Query<AnimatorGO, RefRO<AgentBody>>())
+            {
+
+                var value1 = math.length(input.ValueRO.Velocity);
+
+                var value2 = animator.animator.GetFloat(moveParam);
+
+                if (value1 > value2)
+                {
+                    var temp = value2;
+                    value2 = value1;
+                    value1 = value2;
+                }
+                animator.animator.SetFloat(moveParam, math.lerp(value1, value2, dletaTime));
             }
         }
     }

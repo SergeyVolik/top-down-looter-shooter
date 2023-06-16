@@ -49,6 +49,9 @@ namespace SV.ECS
                         if (ownerLookup.TryGetComponent(entity, out var ownerData) && ownerData.value == target)
                             continue;
 
+                        if (!damageableLookup.HasComponent(target))
+                            continue;
+
                         if (!damageableLookup.IsComponentEnabled(target))
                             continue;
 
