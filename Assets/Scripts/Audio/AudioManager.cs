@@ -93,7 +93,7 @@ namespace SV
         {
             Instance = this;
 
-            em = World.DefaultGameObjectInjectionWorld.EntityManager;
+          
 
             
 
@@ -115,12 +115,7 @@ namespace SV
         {
             SaveSettings();
         }
-        private void OnDestroy()
-        {
-            em.DestroyEntity(entity);
 
-
-        }
 
         public float GetSFXGlobalVolume()
         {

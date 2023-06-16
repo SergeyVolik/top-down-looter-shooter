@@ -206,8 +206,8 @@ namespace SV.ECS
                 ecb = ecb,
                 wtlLookup = wtlLookup,
             };
-            job.Run();
-            //state.Dependency = job.Schedule(state.Dependency);
+            //job.Run();
+            state.Dependency = job.Schedule(state.Dependency);
 
         }
     }
