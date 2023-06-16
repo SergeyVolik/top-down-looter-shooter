@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using Unity.Entities;
+using Unity.Mathematics;
 using Unity.Transforms;
 using UnityEngine;
 
@@ -37,7 +38,10 @@ namespace SV.ECS
         public GameObject prefab;
     }
 
-
+    public class AnimatorGO : IComponentData
+    {
+        public Animator animator;
+    }
 
 
     public class EntityLink : MonoBehaviour
@@ -60,6 +64,27 @@ namespace SV.ECS
 
     }
 
+
+    public partial class AnimatorSystem : SystemBase
+    {
+        private int moveParam;
+
+        protected override void OnCreate()
+        {
+            base.OnCreate();
+            moveParam = Animator.StringToHash("Move");
+
+        }
+        protected override void OnUpdate()
+        {
+            foreach (var (animator, input) in SystemAPI.Query<AnimatorGO, RefRO<TopDownCharacterInputs>>())
+            {
+                animator.animator.SetFloat(moveParam, math.length(input.ValueRO.MoveVector));
+            }
+        }
+    }
+
+    [UpdateInGroup(typeof(FixedStepSimulationSystemGroup))]
     public partial class PresentationGoSystem : SystemBase
     {
         protected override void OnUpdate()
@@ -77,6 +102,11 @@ namespace SV.ECS
                 if (instance.TryGetComponent<VisualMessage>(out var vmComp))
                 {
                     beginECB.AddComponent(e, new VisualMessageGO { value = vmComp });
+                }
+
+                if (instance.TryGetComponent<Animator>(out var aniamtor))
+                {
+                    beginECB.AddComponent(e, new AnimatorGO { animator = aniamtor });
                 }
 
                 beginECB.RemoveComponent<PresentationGOComponent>(e);

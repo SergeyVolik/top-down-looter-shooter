@@ -5552,6 +5552,7 @@ GameObject:
   - component: {fileID: 8628965138818305801}
   - component: {fileID: 708531063942615643}
   - component: {fileID: 7876482521855312765}
+  - component: {fileID: 284756202099901295}
   m_Layer: 3
   m_Name: Player
   m_TagString: Untagged
@@ -5806,7 +5807,7 @@ MonoBehaviour:
   slot2: {fileID: 4663963423215784043}
   slot3: {fileID: 1175663467414430616}
   mainGunSlot: {fileID: 5044547805542533592}
-  mainGun: {fileID: 11400000, guid: a5245cc6745b71b4eba2e32e792594af, type: 2}
+  mainGun: {fileID: 0}
   gun1: {fileID: 0}
   gun2: {fileID: 0}
   gun3: {fileID: 0}
@@ -6012,6 +6013,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8586d18bf7667c040949956b7ff40b6d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &284756202099901295
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5577740025753993694}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ec42bd033664e8047824179575b6c293, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  prefab: {fileID: 4058876522487219934, guid: 76da8b2946f617348bbead111d955642, type: 3}
 --- !u!1 &5578322410157905098
 GameObject:
   m_ObjectHideFlags: 0
