@@ -11,7 +11,7 @@ namespace SV.ECS
     public partial class SpawnerSystem : SystemBase
     {
 
-
+        uint offset;
         protected override void OnCreate()
         {
             base.OnCreate();
@@ -24,18 +24,20 @@ namespace SV.ECS
             var time = SystemAPI.Time.ElapsedTime;
             var ecbSingleton = SystemAPI.GetSingleton<BeginSimulationEntityCommandBufferSystem.Singleton>();
 
-        
-            
+            const int count = 200;
+            offset += count;
+            var  newOffset = offset;
+
             EntityCommandBuffer ecb = ecbSingleton.CreateCommandBuffer(World.Unmanaged);
 
-            Entities.ForEach((ref Entity e, ref EnemySpawnerComponent vel, ref LocalToWorld ltw, ref IndividualRandomComponent random, in DynamicBuffer<EnemiesListComponent> enemies) =>
+            Entities.ForEach((int entityInQueryIndex, ref Entity e, ref EnemySpawnerComponent vel, ref LocalToWorld ltw, in DynamicBuffer<EnemiesListComponent> enemies) =>
             {
 
                 var nextSpawnTime = vel.nextSpawnTime;
 
                 if (time >= nextSpawnTime)
                 {
-                    var rnd = random.Value;
+                    var rnd = Unity.Mathematics.Random.CreateFromIndex((uint)entityInQueryIndex + newOffset);
                     var prefabData = enemies[rnd.NextInt(0, enemies.Length)];
 
                    
@@ -67,7 +69,7 @@ namespace SV.ECS
                     pos.x += rnd.NextFloat(min.x, max.x);
                     pos.z += rnd.NextFloat(min.z, max.z);
 
-                    random.Value = rnd;
+                  
 
                     ecb.SetComponent(visualSpawnpoint, new LocalTransform
                     {

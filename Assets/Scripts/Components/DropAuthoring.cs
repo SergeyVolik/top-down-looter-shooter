@@ -132,19 +132,24 @@ namespace SV.ECS
     [UpdateAfter(typeof(ApplyDamageSystem))]
     public partial struct DropExecuterSystem : ISystem
     {
+        uint seedOffset;
 
         public partial struct ExecuteDropJob : IJobEntity
         {
             public EntityCommandBuffer ecb;
             public ComponentLookup<LocalToWorld> wtlLookup;
+            public uint SeedOffset;
 
-
-            public void Execute(DynamicBuffer<DropDataBuffElement> dropItems, ref ExecuteDropProcessComponent exeteState, ref DropSettingComponents DropSettings, Entity entity, ref IndividualRandomComponent random)
+            public void Execute([EntityIndexInQuery] int index, DynamicBuffer<DropDataBuffElement> dropItems,
+                ref ExecuteDropProcessComponent exeteState,
+                ref DropSettingComponents DropSettings,
+                Entity entity)
             {
+                var rnd = Unity.Mathematics.Random.CreateFromIndex(SeedOffset + (uint)index);
 
                 ecb.SetComponentEnabled<ExecuteDropProcessComponent>(entity, false);
                 ecb.SetComponentEnabled<DropExecutedComponent>(entity, true);
-                var rnd = random.Value;
+              
 
                 var spawnPos = wtlLookup.GetRefRW(DropSettings.dropSpawnEntity).ValueRW.Position;
 
@@ -184,12 +189,14 @@ namespace SV.ECS
                     }
 
                 }
-                random.Value = rnd;
+
                 
             }
         }
         public void OnUpdate(ref SystemState state)
         {
+            const int count = 200;
+
             float elapsedTime = (float)(state.WorldUnmanaged.Time.ElapsedTime);
 
             var ecb = SystemAPI.GetSingleton<BeginSimulationEntityCommandBufferSystem.Singleton>().CreateCommandBuffer(state.WorldUnmanaged);
@@ -200,11 +207,12 @@ namespace SV.ECS
                 ecb.SetComponentEnabled<ExecuteDropProcessComponent>(entity, true);
                
             }
-
+            seedOffset += count;
             var job = new ExecuteDropJob
             {
                 ecb = ecb,
                 wtlLookup = wtlLookup,
+                 SeedOffset = seedOffset
             };
             //job.Run();
             state.Dependency = job.Schedule(state.Dependency);

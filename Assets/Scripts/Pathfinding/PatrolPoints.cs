@@ -51,16 +51,19 @@ public partial struct PartolSystem : ISystem
     {
 
     }
-
+    uint seedOffset;
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
 
-        
+        const int count = 200;
+        seedOffset += count;
+        var newSeedOffset = seedOffset;
         if (SystemAPI.TryGetSingletonBuffer<PatrolPointsComponent>(out var points))
-        {
-            SystemAPI.TryGetSingletonEntity<PatrolPointsComponent>(out var bufEntity);
-            var rndLookUp = SystemAPI.GetComponentLookup<IndividualRandomComponent>();
+        {          
+
+            var rnd = Unity.Mathematics.Random.CreateFromIndex(newSeedOffset);
+
             foreach (var (partolData, agent, e) in SystemAPI.Query<RefRW<PatrolStateComponent>, RefRW<AgentBody>>().WithEntityAccess())
             {
                 if (agent.ValueRO.RemainingDistance < 2f || agent.ValueRO.IsStopped == true)
@@ -69,7 +72,7 @@ public partial struct PartolSystem : ISystem
                     var nextPointIndex = partolData.ValueRO.partolIndex;
                     //nextPointIndex++;
 
-                    var rnd = rndLookUp.GetRefRW(bufEntity).ValueRO.Value;
+                 
                     //if (points.Length <= nextPointIndex)
                     //{
                     //    nextPointIndex = 0;
@@ -80,7 +83,7 @@ public partial struct PartolSystem : ISystem
                         partolData.ValueRW.rndExecuted = true;
                         nextPointIndex = rnd.NextInt(0, points.Length - 1);
                     //}
-                    rndLookUp.GetRefRW(bufEntity).ValueRW.Value = rnd;
+                  
 
                     agent.ValueRW.Destination = points[nextPointIndex].position;
                     agent.ValueRW.IsStopped = false;

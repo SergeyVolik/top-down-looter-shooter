@@ -18,22 +18,25 @@ namespace SV.ECS
             base.OnCreate();
             
         }
-
+        uint SeedOffset;
         protected override void OnUpdate()
         {
             float time = (float)SystemAPI.Time.ElapsedTime;
 
             var ecsSystem = SystemAPI.GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>();
 
+            const int count = 200;
 
             EntityCommandBuffer ecb = ecsSystem.CreateCommandBuffer(World.Unmanaged);
             var ltw = GetComponentLookup<LocalToWorld>();
 
             var transLookUp = GetComponentLookup<LocalTransform>();
             var ownerlookup = GetComponentLookup<OwnerComponent>();
-
-            Entities.WithNone<Disabled>().WithAll<GunActivated>().ForEach((Entity e, ref GunComponent gun, ref IndividualRandomComponent rnd) =>
+            SeedOffset += count;
+            var newSeedOffset = SeedOffset;
+            Entities.WithNone<Disabled>().WithAll<GunActivated>().ForEach((int entityInQueryIndex, Entity e, ref GunComponent gun) =>
             {
+               
 
                 if (gun.nextShotTime <= time)
                 {
@@ -45,6 +48,8 @@ namespace SV.ECS
                     if (ltw.TryGetComponent(gun.bulletSpawnPos, out var wordPos) && transLookUp.TryGetComponent(gun.bulletSpawnPos, out var localTrans))
                     {
 
+                        var rnd = Unity.Mathematics.Random.CreateFromIndex(newSeedOffset + (uint)entityInQueryIndex);
+
                         for (int i = 0; i < gun.bulletsInShot; i++)
                         {
                             var bullet = ecb.Instantiate(gun.bulletPrefab);
@@ -52,7 +57,7 @@ namespace SV.ECS
 
                             var vector = wordPos.Forward;
 
-                            var rndValue = rnd.Value.NextFloat(-gun.Angle, gun.Angle);
+                            var rndValue = rnd.NextFloat(-gun.Angle, gun.Angle);
 
 
                             var rot = quaternion.AxisAngle(wordPos.Up, math.radians(rndValue));
