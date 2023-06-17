@@ -70,19 +70,10 @@ public partial struct PartolSystem : ISystem
                 {
                   
                     var nextPointIndex = partolData.ValueRO.partolIndex;
-                    //nextPointIndex++;
 
-                 
-                    //if (points.Length <= nextPointIndex)
-                    //{
-                    //    nextPointIndex = 0;
-                    //}
-
-                    //if (!partolData.ValueRO.rndExecuted)
-                    //{
-                        partolData.ValueRW.rndExecuted = true;
-                        nextPointIndex = rnd.NextInt(0, points.Length - 1);
-                    //}
+                    partolData.ValueRW.rndExecuted = true;
+                    nextPointIndex = rnd.NextInt(0, points.Length - 1);
+                    
                   
 
                     agent.ValueRW.Destination = points[nextPointIndex].position;

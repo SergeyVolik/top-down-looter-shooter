@@ -8,25 +8,41 @@ using UnityEngine;
 
 namespace SV.ECS
 {
+    [DisallowMultipleComponent]
     public class PresentationGO : MonoBehaviour
     {
+
+
+        public PresentationGOComponent.Type type = PresentationGOComponent.Type.Single;
+
         public GameObject prefab;
-    }
 
-    public class PresentationGOBaker : Baker<PresentationGO>
-    {
-        public override void Bake(PresentationGO authoring)
+        public GameObject[] prefabs;
+
+        public class Baker : Baker<PresentationGO>
         {
-            var entity = GetEntity(TransformUsageFlags.Dynamic);
 
-            AddComponentObject(entity, new PresentationGOComponent
+
+            public override void Bake(PresentationGO authoring)
             {
-                prefab = authoring.prefab
-            });
+
+                var entity = GetEntity(TransformUsageFlags.Dynamic);
+
+                AddComponentObject(entity, new PresentationGOComponent
+                {
+                    type = authoring.type,
+                    prefabs = authoring.prefabs,
+                    prefab = authoring.prefab
+                });
 
 
+
+
+            }
         }
     }
+
+
 
     public class TransformGO : ICleanupComponentData
     {
@@ -36,7 +52,18 @@ namespace SV.ECS
 
     public class PresentationGOComponent : IComponentData
     {
+        public enum Type
+        {
+            Single,
+            RandomPrefab
+        }
+
+
+        public Type type = Type.Single;
+
         public GameObject prefab;
+
+        public GameObject[] prefabs;
     }
 
     public class AnimatorGO : IComponentData
@@ -128,7 +155,8 @@ namespace SV.ECS
             foreach (var (pGO, e) in SystemAPI.Query<PresentationGOComponent>().WithEntityAccess())
             {
 
-                var instance = GameObject.Instantiate(pGO.prefab);
+                var prefab = pGO.type == PresentationGOComponent.Type.Single ? pGO.prefab : pGO.prefabs[UnityEngine.Random.Range(0, pGO.prefabs.Length)];
+                var instance = GameObject.Instantiate(prefab);
                 beginECB.AddComponent(e, new TransformGO { value = instance.transform });
                 instance.AddComponent<EntityLink>().AssignEntity(e, EntityManager);
 
