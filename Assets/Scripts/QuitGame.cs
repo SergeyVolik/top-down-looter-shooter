@@ -9,6 +9,7 @@ public class QuitGame : MonoBehaviour
     {
         GetComponent<Button>().onClick.AddListener(() =>
         {
+            
 #if UNITY_EDITOR
             
             UnityEditor.EditorApplication.isPlaying = false;
