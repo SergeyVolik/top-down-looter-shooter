@@ -1,6 +1,8 @@
 using ProjectDawn.Navigation;
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Transforms;
@@ -28,6 +30,8 @@ namespace SV.ECS
 
                 var entity = GetEntity(TransformUsageFlags.Dynamic);
 
+                var transform = GetComponent<Transform>();
+
                 AddComponentObject(entity, new PresentationGOComponent
                 {
                     type = authoring.type,
@@ -42,12 +46,6 @@ namespace SV.ECS
         }
     }
 
-
-
-    public class TransformGO : ICleanupComponentData
-    {
-        public Transform value;
-    }
 
 
     public class PresentationGOComponent : IComponentData
@@ -65,33 +63,23 @@ namespace SV.ECS
 
         public GameObject[] prefabs;
     }
-
-    public class AnimatorGO : IComponentData
+    public struct CopyEntityTransformToGoTransform : IComponentData
     {
-        public Animator animator;
-    }
-
-
-    public class EntityLink : MonoBehaviour
-    {
-        private Entity entity;
-        private EntityManager manager;
-
-        public void AssignEntity(Entity e, EntityManager m)
-        {
-            entity = e;
-            manager = m;
-        }
-        private void OnDestroy()
-        {
-            if (manager != null)
-            {
-                manager.DestroyEntity(entity);
-            }
-        }
 
     }
+    public class PresentationInstance : IComponentData, IDisposable, ICloneable
+    {
+        public GameObject Instance;
 
+        public void Dispose()
+        {
+            UnityEngine.Object.DestroyImmediate(Instance);
+        }
+        public object Clone()
+        {
+            return new PresentationInstance { Instance = UnityEngine.Object.Instantiate(Instance) };
+        }
+    }
 
     public partial class AnimatorSystem : SystemBase
     {
@@ -105,9 +93,10 @@ namespace SV.ECS
         }
         protected override void OnUpdate()
         {
-            foreach (var (animator, input) in SystemAPI.Query<AnimatorGO, RefRO<TopDownCharacterInputs>>())
+            foreach (var (input, e) in SystemAPI.Query<RefRO<TopDownCharacterInputs>>().WithAll<Animator>().WithEntityAccess())
             {
-                animator.animator.SetFloat(moveParam, math.length(input.ValueRO.MoveVector));
+                var animator = EntityManager.GetComponentObject<Animator>(e);
+                animator.SetFloat(moveParam, math.length(input.ValueRO.MoveVector));
             }
         }
     }
@@ -126,12 +115,12 @@ namespace SV.ECS
         {
             var dletaTime = SystemAPI.Time.DeltaTime;
 
-            foreach (var (animator, input) in SystemAPI.Query<AnimatorGO, RefRO<AgentBody>>())
+            foreach (var (input, e) in SystemAPI.Query<RefRO<AgentBody>>().WithAll<Animator>().WithEntityAccess())
             {
-
+                var animator = EntityManager.GetComponentObject<Animator>(e);
                 var value1 = math.length(input.ValueRO.Velocity);
 
-                var value2 = animator.animator.GetFloat(moveParam);
+                var value2 = animator.GetFloat(moveParam);
 
                 if (value1 > value2)
                 {
@@ -139,53 +128,79 @@ namespace SV.ECS
                     value2 = value1;
                     value1 = value2;
                 }
-                animator.animator.SetFloat(moveParam, math.lerp(value1, value2, dletaTime));
+
+                animator.SetFloat(moveParam, math.lerp(value1, value2, dletaTime));
             }
         }
     }
 
-    [UpdateInGroup(typeof(FixedStepSimulationSystemGroup))]
+    [WorldSystemFilter(WorldSystemFilterFlags.Default | WorldSystemFilterFlags.BakingSystem)]
+
     public partial class PresentationGoSystem : SystemBase
     {
         protected override void OnUpdate()
         {
-            var endECB = SystemAPI.GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>().CreateCommandBuffer(World.Unmanaged);
-            var beginECB = SystemAPI.GetSingleton<BeginSimulationEntityCommandBufferSystem.Singleton>().CreateCommandBuffer(World.Unmanaged);
+            var query = SystemAPI.QueryBuilder().WithAll<PresentationGOComponent, LocalTransform>().Build();
+            var entities = query.ToEntityArray(Allocator.Temp);
 
-            foreach (var (pGO, e) in SystemAPI.Query<PresentationGOComponent>().WithEntityAccess())
+
+
+            foreach (var e in entities)
             {
+                var lt = EntityManager.GetComponentData<LocalTransform>(e);
+                var pGO = EntityManager.GetComponentData<PresentationGOComponent>(e);
 
                 var prefab = pGO.type == PresentationGOComponent.Type.Single ? pGO.prefab : pGO.prefabs[UnityEngine.Random.Range(0, pGO.prefabs.Length)];
                 var instance = GameObject.Instantiate(prefab);
-                beginECB.AddComponent(e, new TransformGO { value = instance.transform });
-                instance.AddComponent<EntityLink>().AssignEntity(e, EntityManager);
 
+                var trans = instance.transform;
+                trans.position = lt.Position;
+                trans.rotation = lt.Rotation;
+
+                EntityManager.AddComponentObject(e, instance.transform);
+                EntityManager.AddComponent<CopyEntityTransformToGoTransform>(e);
+
+                if (EntityManager.HasComponent<PresentationInstance>(e))
+                {
+                    EntityManager.RemoveComponent<PresentationInstance>(e);
+                }
+
+                EntityManager.AddComponentObject(e, new PresentationInstance { Instance = instance });
+
+                instance.hideFlags |= HideFlags.DontSave;
                 if (instance.TryGetComponent<VisualMessage>(out var vmComp))
                 {
-                    beginECB.AddComponent(e, new VisualMessageGO { value = vmComp });
+                    EntityManager.AddComponentObject(e, new VisualMessageGO { value = vmComp });
                 }
 
                 if (instance.TryGetComponent<Animator>(out var aniamtor))
                 {
-                    beginECB.AddComponent(e, new AnimatorGO { animator = aniamtor });
+
+                    EntityManager.AddComponentObject(e, aniamtor);
                 }
 
-                beginECB.RemoveComponent<PresentationGOComponent>(e);
+                EntityManager.RemoveComponent<PresentationGOComponent>(e);
             }
+           
+        }
+    }
 
-            foreach (var (ltw, trans) in SystemAPI.Query<RefRO<LocalToWorld>, TransformGO>())
+    [WorldSystemFilter(WorldSystemFilterFlags.Default)]
+    [UpdateInGroup(typeof(FixedStepSimulationSystemGroup))]
+    public partial class SyncPresentationWithEntity : SystemBase
+    {
+        protected override void OnUpdate()
+        {
+
+
+            foreach (var (ltw, e) in SystemAPI.Query<RefRO<LocalToWorld>>().WithAll<Transform, CopyEntityTransformToGoTransform>().WithEntityAccess())
             {
-                var transData = trans.value;
+                var transData = EntityManager.GetComponentObject<Transform>(e);
+
                 transData.position = ltw.ValueRO.Position;
                 transData.rotation = ltw.ValueRO.Rotation;
             }
 
-
-            foreach (var (trans, e) in SystemAPI.Query<TransformGO>().WithNone<LocalTransform>().WithEntityAccess())
-            {
-                GameObject.Destroy(trans.value.gameObject);
-                endECB.RemoveComponent<TransformGO>(e);
-            }
 
         }
     }

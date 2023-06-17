@@ -53,10 +53,6 @@ public partial class TopDownCharacterRotationSystem : SystemBase
             in KinematicCharacterBody characterBody)
         {
 
-
-
-
-
             // Rotate towards move direction
             if (math.lengthsq(characterInputs.MoveVector) > 0f)
             {
@@ -67,7 +63,7 @@ public partial class TopDownCharacterRotationSystem : SystemBase
 
             // Add rotation from parent body to the character rotation
             // (this is for allowing a rotating moving platform to rotate your character as well, and handle interpolation properly)
-            KinematicCharacterUtilities.ApplyParentRotationToTargetRotation(ref localTransfrom, in characterBody, fixedDeltaTime, deltaTime);
+            KinematicCharacterUtilities.ApplyParentRotationToTargetRotation(ref localTransfrom.Rotation, in characterBody, fixedDeltaTime, deltaTime);
         }
     }
 

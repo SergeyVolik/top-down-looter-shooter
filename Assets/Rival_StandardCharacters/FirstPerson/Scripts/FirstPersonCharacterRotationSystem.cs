@@ -65,7 +65,7 @@ public partial class FirstPersonCharacterRotationSystem : SystemBase
 
             // Add rotation from parent body to the character rotation
             // (this is for allowing a rotating moving platform to rotate your character as well, and handle interpolation properly)
-            KinematicCharacterUtilities.ApplyParentRotationToTargetRotation(ref characterRotation.ValueRW, in characterBody, fixedDeltaTime, deltaTime);
+            KinematicCharacterUtilities.ApplyParentRotationToTargetRotation(ref characterRotation.ValueRW.Rotation, in characterBody, fixedDeltaTime, deltaTime);
 
 
         }

@@ -34,24 +34,33 @@ namespace Rival
 
                 NativeArray<CharacterInterpolation> chunkCharacterInterpolations = chunk.GetNativeArray(ref CharacterInterpolationType);
 
-                void* chunkInterpolationsPtr = chunkCharacterInterpolations.GetUnsafePtr();
-                int chunkCount = chunk.Count;
-                int sizeCharacterInterpolation = UnsafeUtility.SizeOf<CharacterInterpolation>();
+                //void* chunkInterpolationsPtr = chunkCharacterInterpolations.GetUnsafePtr();
+                //int chunkCount = chunk.Count;
+                //int sizeCharacterInterpolation = UnsafeUtility.SizeOf<CharacterInterpolation>();
 
-                int sizeTranslation = UnsafeUtility.SizeOf<LocalTransform>();
+                //int sizeTranslation = UnsafeUtility.SizeOf<LocalTransform>();
 
                 // Copy all Translation & Rotation to the character interpolation component
                 {
 
+                    for (int i = 0; i < chunkTranslations.Length; i++)
+                    {
+                        var CharacterInterpolation = chunkCharacterInterpolations[i];
 
-                    UnsafeUtility.MemCpyStride(
-                        (void*)((long)chunkInterpolationsPtr),
-                        sizeCharacterInterpolation,
-                        chunkTranslations.GetUnsafeReadOnlyPtr(),
-                        sizeTranslation,
-                        sizeTranslation,
-                        chunkCount
-                    );
+                        CharacterInterpolation.PreviousTransform.pos = chunkTranslations[i].Position;
+                        CharacterInterpolation.PreviousTransform.rot = chunkTranslations[i].Rotation;
+
+                        chunkCharacterInterpolations[i] = CharacterInterpolation;
+                    }
+
+                    //UnsafeUtility.MemCpyStride(
+                    //    (void*)((long)chunkInterpolationsPtr),
+                    //    sizeCharacterInterpolation,
+                    //    chunkTranslations.GetUnsafeReadOnlyPtr(),
+                    //    sizeTranslation,
+                    //    sizeTranslation,
+                    //    chunkCount
+                    //);
                 }
             }
         }

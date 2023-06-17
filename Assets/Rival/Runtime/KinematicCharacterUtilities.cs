@@ -1727,11 +1727,11 @@ namespace Rival
             return false;
         }
 
-        public static void ApplyParentRotationToTargetRotation(ref LocalTransform targetRotation, in KinematicCharacterBody characterBody, float fixedDeltaTime, float deltaTime)
+        public static void ApplyParentRotationToTargetRotation(ref quaternion targetRotation, in KinematicCharacterBody characterBody, float fixedDeltaTime, float deltaTime)
         {
             float rotationRatio = math.clamp(deltaTime / fixedDeltaTime, 0f, 1f);
             quaternion rotationFromCharacterParent = math.slerp(quaternion.identity, characterBody.RotationFromParent, rotationRatio);
-            targetRotation.Rotation = math.mul(targetRotation.Rotation, rotationFromCharacterParent);
+            targetRotation = math.mul(targetRotation, rotationFromCharacterParent);
         }
 
         public static KinematicCharacterHit CreateCharacterHit(
