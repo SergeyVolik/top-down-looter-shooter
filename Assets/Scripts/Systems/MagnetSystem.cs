@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Burst;
 using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Physics;
@@ -13,24 +14,25 @@ namespace SV.ECS
     [UpdateAfter(typeof(StatefulTriggerEventBufferSystem))]
     public partial struct MagnetTriggerSystem : ISystem
     {
+        [BurstCompile]
         public void OnUpdate(ref SystemState handle)
         {
-            var magnetableLookup = SystemAPI.GetComponentLookup<MagnetableComponent>();
+            var magnetableLookup = SystemAPI.GetComponentLookup<MagnetableComponent>(isReadOnly: true);
             var magnetableTargLookup = SystemAPI.GetComponentLookup<MagnetTargetComponent>();
+
             foreach (var (triggers, e) in SystemAPI.Query<DynamicBuffer<StatefulTriggerEvent>>().WithAll<MagnetComponent>().WithEntityAccess())
             {
                 foreach (var item in triggers)
                 {
-                    if (item.State == StatefulEventState.Enter)
-                    {
-                        var targetEntity = item.EntityA == e ? item.EntityB : item.EntityA;
+                    
+                    var targetEntity = item.EntityA == e ? item.EntityB : item.EntityA;
 
-                        if (magnetableLookup.HasComponent(targetEntity))
-                        {
-                            magnetableTargLookup.SetComponentEnabled(targetEntity, true);
-                            magnetableTargLookup.GetRefRW(targetEntity).ValueRW.value = e;
-                        }
+                    if (magnetableLookup.HasComponent(targetEntity) && !magnetableTargLookup.IsComponentEnabled(targetEntity))
+                    {
+                        magnetableTargLookup.SetComponentEnabled(targetEntity, true);
+                        magnetableTargLookup.GetRefRW(targetEntity).ValueRW.value = e;
                     }
+                    
                 }
             }
         }
@@ -40,6 +42,7 @@ namespace SV.ECS
 
     public partial struct MagnetMoveSystem : ISystem
     {
+        [BurstCompile]
         public void OnUpdate(ref SystemState handle)
         {
             var magnetableLookup = SystemAPI.GetComponentLookup<LocalToWorld>();

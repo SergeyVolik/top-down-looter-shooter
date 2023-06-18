@@ -1,5 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Burst;
+using Unity.Collections;
 using Unity.Entities;
 using Unity.Physics.Stateful;
 using UnityEngine;
@@ -12,11 +14,35 @@ namespace SV.ECS
     {
         public void OnUpdate(ref SystemState state)
         {
-            var collectableLookup = SystemAPI.GetComponentLookup<CollectableComponent>();
-            var collectedLookup = SystemAPI.GetComponentLookup<CollectedComponent>();
+            var collectableLookup = SystemAPI.GetComponentLookup<CollectableComponent>( isReadOnly: true);
+            var collectedLookup = SystemAPI.GetComponentLookup<CollectedComponent>(isReadOnly: false);
             var ecb = SystemAPI.GetSingleton<BeginSimulationEntityCommandBufferSystem.Singleton>().CreateCommandBuffer(state.WorldUnmanaged);
 
-            foreach (var (triggers, e) in SystemAPI.Query<DynamicBuffer<StatefulTriggerEvent>>().WithAll<CollectorComponent>().WithEntityAccess())
+
+            new CollectorJob
+            {
+                collectableLookup = collectableLookup,
+                collectedLookup = collectedLookup,
+                ecb = ecb.AsParallelWriter()
+            }.Schedule();
+        }
+
+
+      
+        [BurstCompile]
+        [WithAll(typeof(CollectorComponent))]
+        public partial struct CollectorJob : IJobEntity
+        {
+            [ReadOnly]
+            public ComponentLookup<CollectableComponent> collectableLookup;
+          
+            public ComponentLookup<CollectedComponent> collectedLookup;
+
+            public EntityCommandBuffer.ParallelWriter ecb;
+
+
+            [BurstCompile]
+            public void Execute(Entity e, [EntityIndexInQuery] int entityInQueryIndex, DynamicBuffer<StatefulTriggerEvent> triggers)
             {
                 foreach (var item in triggers)
                 {
@@ -27,11 +53,11 @@ namespace SV.ECS
                         if (collectableLookup.HasComponent(targetEntity))
                         {
                             collectedLookup.SetComponentEnabled(targetEntity, true);
-                            ecb.DestroyEntity(targetEntity);
+                            ecb.DestroyEntity(entityInQueryIndex,targetEntity);
 
-                            var sfx = ecb.CreateEntity();
+                            var sfx = ecb.CreateEntity(entityInQueryIndex);
 
-                            ecb.AddComponent(sfx, new PlaySFX { sfxSettingGuid = collectableLookup.GetRefRO(targetEntity).ValueRO.sfxGuid });
+                            ecb.AddComponent(entityInQueryIndex, sfx, new PlaySFX { sfxSettingGuid = collectableLookup.GetRefRO(targetEntity).ValueRO.sfxGuid });
                         }
 
                     }
@@ -40,5 +66,5 @@ namespace SV.ECS
         }
     }
 
-  
+
 }

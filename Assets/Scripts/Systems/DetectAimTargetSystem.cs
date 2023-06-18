@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Numerics;
+using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
@@ -36,16 +37,17 @@ namespace SV.ECS
             }
         }
 
+        [BurstCompile]
         protected unsafe override void OnUpdate()
         {
 
-          
+
             var physics = SystemAPI.GetSingleton<PhysicsWorldSingleton>();
             var aimTargetLookup = SystemAPI.GetComponentLookup<AimTargetComponent>();
             var detectedTargetLookUp = SystemAPI.GetComponentLookup<DetectedTargetComponent>();
             var gunActivatedLookUp = SystemAPI.GetComponentLookup<GunActivated>();
 
-            Entities.WithNone<Disabled>().ForEach((Entity entity, ref PlayerAimClosestTargetComponent aimTarg, ref LocalTransform lTrans, in LocalToWorld localToWorld) =>
+            Dependency = Entities.WithNone<Disabled>().ForEach((Entity entity, ref PlayerAimClosestTargetComponent aimTarg, ref LocalTransform lTrans, in LocalToWorld localToWorld) =>
             {
                 var targets = new NativeList<DistanceHit>(Allocator.Temp);
                 var selfPos = localToWorld.Position;
@@ -53,7 +55,7 @@ namespace SV.ECS
                 {
                     Position = selfPos,
                     MaxDistance = 10,
-                    
+
                     Filter = new CollisionFilter
                     {
                         BelongsTo = aimTarg.belongTo,
@@ -75,9 +77,9 @@ namespace SV.ECS
                         if (aimTargetLookup.TryGetComponent(hitedTarget.Entity, out var aimTarg1))
                         {
                             hasTarget = true;
-                            
+
                             detectedEntity = aimTarg1.AimPointEntity;
-                           
+
 
                             break;
                         }
@@ -87,7 +89,7 @@ namespace SV.ECS
 
                     detectedTargetLookUp.SetComponentEnabled(entity, hasTarget);
 
-                    if(gunActivatedLookUp.HasComponent(entity))
+                    if (gunActivatedLookUp.HasComponent(entity))
                         gunActivatedLookUp.SetComponentEnabled(entity, hasTarget);
 
                     var refObj = detectedTargetLookUp.GetRefRW(entity);
@@ -97,7 +99,7 @@ namespace SV.ECS
                 }
 
                 targets.Dispose();
-            }).Run();
+            }).WithBurst().Schedule(Dependency);
         }
 
     }
@@ -107,9 +109,9 @@ namespace SV.ECS
         public static void LookAt(this ref LocalTransform transform, Entity selfEntity, float3 tragetWorldPosition, ref ComponentLookup<Parent> parentLookup, ref ComponentLookup<LocalToWorld> localTransformLookup)
         {
 
-           
 
-       
+
+
             if (parentLookup.TryGetComponent(selfEntity, out var parent) && localTransformLookup.TryGetComponent(parent.Value, out var parentL2W))
             {
 
@@ -121,7 +123,7 @@ namespace SV.ECS
             transform.Rotation = rotation;
 
         }
-            
+
     }
 
     [UpdateInGroup(typeof(LateSimulationSystemGroup))]
@@ -142,42 +144,25 @@ namespace SV.ECS
 
 
 
+        [WithAll(typeof(PlayerAimClosestTargetComponent))]
 
-        protected unsafe override void OnUpdate()
+        public partial struct ActivateGunJobJob : IJobEntity
         {
+            [ReadOnly]
+            public ComponentLookup<DetectedTargetComponent> detectedTargetLookUp;
 
+            [ReadOnly]
+            public BufferLookup<Child> chilLookup;
 
-            var aimTargetLookup = SystemAPI.GetComponentLookup<AimTargetComponent>();
-            var detectedTargetLookUp = SystemAPI.GetComponentLookup<DetectedTargetComponent>();
+            [ReadOnly]
+            public ComponentLookup<GunComponent> gunLookup;
+            public ComponentLookup<GunActivated> gunActivatedLookup;
 
-            ComponentLookup<LocalToWorld> localTransformLookup = SystemAPI.GetComponentLookup<LocalToWorld>(true);
-            ComponentLookup<Parent> parentLookup = SystemAPI.GetComponentLookup<Parent>(true);
-            ComponentLookup<GunComponent> gunLookup = SystemAPI.GetComponentLookup<GunComponent>(true);
-            ComponentLookup<GunActivated> gunActivatedLookup = SystemAPI.GetComponentLookup<GunActivated>(false);
-
-            BufferLookup<Child> chilLookup = SystemAPI.GetBufferLookup<Child>(true);
-
-            Entities.ForEach((Entity e, ref LocalTransform transform, in LocalToWorld localToWorld, in DetectedTargetComponent detected) =>
-            {
-
-                float3 target = default;
-                if (localTransformLookup.TryGetComponent(detected.target, out var ltwTarget))
-                {
-                    target = ltwTarget.Position;
-                }
-
-                target.y = localToWorld.Position.y;
-
-               
-
-                transform.LookAt(e, target, ref parentLookup, ref localTransformLookup);
-
-            }).WithAll<PlayerAimClosestTargetComponent>().Run();
-
-            Entities.ForEach((Entity e, in GunSlotsComponent slot) =>
+            [BurstCompile]
+            public void Execute(Entity e, in GunSlotsComponent slot)
             {
                 var detected = detectedTargetLookUp.IsComponentEnabled(e);
-              
+
 
                 if (chilLookup.TryGetBuffer(slot.mainSlot, out var buffer))
                 {
@@ -190,9 +175,74 @@ namespace SV.ECS
 
                     }
                 }
-              
+            }
+        }
 
-            }).WithAll<PlayerAimClosestTargetComponent>().Run();
+        [WithAll(typeof(PlayerAimClosestTargetComponent), typeof(LocalToWorld), typeof(LocalTransform))]
+        public partial struct LookAtTargetJob : IJobEntity
+        {
+            [ReadOnly]
+            public ComponentLookup<LocalToWorld> localToWorldLookup;
+            public ComponentLookup<LocalTransform> localTransformLookup1;
+
+            [ReadOnly]
+            public ComponentLookup<Parent> parentLookup;
+            [BurstCompile]
+            public void Execute(Entity e, in DetectedTargetComponent detected)
+            {
+                float3 target = default;
+                if (localToWorldLookup.TryGetComponent(detected.target, out var ltwTarget))
+                {
+                    target = ltwTarget.Position;
+                }
+
+                if (localToWorldLookup.TryGetComponent(e, out ltwTarget))
+                {
+                    target.y = ltwTarget.Position.y;
+                }
+
+
+
+
+                var transRef = localTransformLookup1.GetRefRW(e);
+
+                transRef.ValueRW.LookAt(e, target, ref parentLookup, ref localToWorldLookup);
+            }
+        }
+
+        protected override void OnUpdate()
+        {
+
+
+
+            var detectedTargetLookUp = SystemAPI.GetComponentLookup<DetectedTargetComponent>(isReadOnly: true);
+
+            ComponentLookup<LocalToWorld> localToWorldLookup = SystemAPI.GetComponentLookup<LocalToWorld>(isReadOnly: true);
+            ComponentLookup<LocalTransform> localTransformLookup1 = SystemAPI.GetComponentLookup<LocalTransform>(false);
+
+            ComponentLookup<Parent> parentLookup = SystemAPI.GetComponentLookup<Parent>(isReadOnly: true);
+            ComponentLookup<GunComponent> gunLookup = SystemAPI.GetComponentLookup<GunComponent>(isReadOnly: true);
+            ComponentLookup<GunActivated> gunActivatedLookup = SystemAPI.GetComponentLookup<GunActivated>(false);
+
+            BufferLookup<Child> chilLookup = SystemAPI.GetBufferLookup<Child>(isReadOnly: true);
+
+
+            Dependency = new LookAtTargetJob
+            {
+                localToWorldLookup = localToWorldLookup,
+                localTransformLookup1 = localTransformLookup1,
+                parentLookup = parentLookup,
+            }.Schedule(Dependency);
+
+            Dependency = new ActivateGunJobJob
+            {
+                chilLookup = chilLookup,
+                detectedTargetLookUp = detectedTargetLookUp,
+                gunActivatedLookup = gunActivatedLookup,
+                gunLookup = gunLookup,
+            }.Schedule(Dependency);
+
+
         }
 
     }

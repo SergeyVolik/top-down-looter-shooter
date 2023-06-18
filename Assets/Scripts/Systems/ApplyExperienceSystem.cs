@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using Unity.Burst;
 using Unity.Entities;
 
 namespace SV.ECS
@@ -15,42 +16,44 @@ namespace SV.ECS
 
         }
 
+        [BurstCompile]
         public void OnUpdate(ref SystemState state)
         {
 
 
             var expEntity = SystemAPI.GetSingletonEntity<PlayerLevelComponent>();
-            var currentExp = SystemAPI.GetSingleton<PlayerLevelComponent>();
+            var currentExp = SystemAPI.GetSingletonRW<PlayerLevelComponent>();
             var playerExpUpgradeData = SystemAPI.GetBuffer<PlayerExpUpgradeComponent>(expEntity);
 
             var ecb = SystemAPI.GetSingleton<BeginSimulationEntityCommandBufferSystem.Singleton>().CreateCommandBuffer(state.WorldUnmanaged);
+
             foreach (var (exp, e) in SystemAPI.Query<RefRO<ExperienceComponent>>().WithAll<CollectedComponent>().WithEntityAccess())
             {
-                if (currentExp.level >= playerExpUpgradeData.Length)
+                if (currentExp.ValueRO.level >= playerExpUpgradeData.Length)
                     break;
 
-                var nextLevel = playerExpUpgradeData[currentExp.level - 1];
+                var nextLevel = playerExpUpgradeData[currentExp.ValueRW.level - 1];
 
-                currentExp.currentExp += exp.ValueRO.value;
+                currentExp.ValueRW.currentExp += exp.ValueRO.value;
 
 
-                if (currentExp.currentExp >= nextLevel.expForNextLevel)
+                if (currentExp.ValueRO.currentExp >= nextLevel.expForNextLevel)
                 {
 
                     var entity = ecb.CreateEntity();
 
-                   
-                    currentExp.currentExp = currentExp.currentExp - nextLevel.expForNextLevel;
-                    currentExp.level += 1;
+
+                    currentExp.ValueRW.currentExp = currentExp.ValueRO.currentExp - nextLevel.expForNextLevel;
+                    currentExp.ValueRW.level += 1;
 
                     ecb.AddComponent(entity, new LevelUpComponent
                     {
-                        currentLevel = currentExp.level,
+                        currentLevel = currentExp.ValueRO.level,
                     });
                 }
             }
 
-            SystemAPI.SetComponent(expEntity, currentExp);
+
 
 
         }

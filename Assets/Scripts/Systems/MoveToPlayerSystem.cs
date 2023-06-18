@@ -27,7 +27,7 @@ namespace SV.ECS
                 {
                     playerPos = ltw.Position;
                 }
-                Entities.ForEach((ref Entity e, ref AgentBody agent, ref AgentSteering stearing, in MoveToPlayerComponent moveToTarget) =>
+                Entities.ForEach((Entity e, ref AgentBody agent, ref AgentSteering stearing, in MoveToPlayerComponent moveToTarget) =>
                 {
   
                     

@@ -21,12 +21,18 @@ namespace SV.ECS
 
         public GameObject[] prefabs;
 
+        public void OnEnable()
+        {
+            
+        }
         public class Baker : Baker<PresentationGO>
         {
 
 
             public override void Bake(PresentationGO authoring)
             {
+                if (!authoring.enabled)
+                    return;
 
                 var entity = GetEntity(TransformUsageFlags.Dynamic);
 
@@ -126,7 +132,7 @@ namespace SV.ECS
                 {
                     var temp = value2;
                     value2 = value1;
-                    value1 = value2;
+                    value1 = temp;
                 }
 
                 animator.SetFloat(moveParam, math.lerp(value1, value2, dletaTime));
@@ -167,7 +173,8 @@ namespace SV.ECS
 
                 EntityManager.AddComponentObject(e, new PresentationInstance { Instance = instance });
 
-                instance.hideFlags |= HideFlags.DontSave;
+                instance.hideFlags |= HideFlags.HideAndDontSave;
+
                 if (instance.TryGetComponent<VisualMessage>(out var vmComp))
                 {
                     EntityManager.AddComponentObject(e, new VisualMessageGO { value = vmComp });

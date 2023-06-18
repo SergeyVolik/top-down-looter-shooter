@@ -33,6 +33,7 @@ public partial struct SubSceneLoader : ISystem
         var unloadComponents = unloadSubSceneQuery.ToComponentDataArray<UnloadSubScene>(Allocator.Temp);
         var loadComponents = loadSubSceneQuery.ToComponentDataArray<LoadSubScene>(Allocator.Temp);
 
+        var ecb = SystemAPI.GetSingleton<BeginSimulationEntityCommandBufferSystem.Singleton>().CreateCommandBuffer(state.WorldUnmanaged);
         for (int i = 0; i < loadComponents.Length; i += 1)
         {
             SceneSystem.LoadSceneAsync(state.WorldUnmanaged, loadComponents[i].value);
@@ -46,9 +47,10 @@ public partial struct SubSceneLoader : ISystem
 
         unloadComponents.Dispose();
         loadComponents.Dispose();
+        ecb.DestroyEntity(unloadSubSceneQuery);
+        ecb.DestroyEntity(loadSubSceneQuery);
 
-        state.EntityManager.DestroyEntity(unloadSubSceneQuery);
-        state.EntityManager.DestroyEntity(loadSubSceneQuery);
+      
 
      
     }

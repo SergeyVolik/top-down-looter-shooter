@@ -270,7 +270,6 @@ GameObject:
   m_Component:
   - component: {fileID: 5507862886333369643}
   - component: {fileID: 5165070201144459798}
-  - component: {fileID: 8435687878472378212}
   - component: {fileID: 455250513198264964}
   - component: {fileID: 2845024548130912572}
   - component: {fileID: 7704209706886948315}
@@ -327,18 +326,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   useLocalPatrolData: 1
---- !u!114 &8435687878472378212
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8599641753126581788}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d9edc7ea590890a4ab7fbe603040d999, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!114 &455250513198264964
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -822,7 +809,8 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 1580408296561887584, guid: f6c43c952842e8e44aadac2de83afd41, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
