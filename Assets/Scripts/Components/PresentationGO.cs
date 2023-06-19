@@ -23,7 +23,7 @@ namespace SV.ECS
 
         public void OnEnable()
         {
-            
+
         }
         public class Baker : Baker<PresentationGO>
         {
@@ -99,11 +99,11 @@ namespace SV.ECS
         }
         protected override void OnUpdate()
         {
-            foreach (var (input, e) in SystemAPI.Query<RefRO<TopDownCharacterInputs>>().WithAll<Animator>().WithEntityAccess().WithChangeFilter<TopDownCharacterInputs>())
+            foreach (var (animatorComp, input) in SystemAPI.Query<SystemAPI.ManagedAPI.UnityEngineComponent<Animator>, RefRO<TopDownCharacterInputs>>())
             {
                 //Debug.Log("Update Player Animator");
 
-                var animator = EntityManager.GetComponentObject<Animator>(e);
+                var animator = animatorComp.Value;
                 animator.SetFloat(moveParam, math.length(input.ValueRO.MoveVector));
             }
         }
@@ -123,11 +123,11 @@ namespace SV.ECS
         {
             var dletaTime = SystemAPI.Time.DeltaTime;
 
-            foreach (var (input, e) in SystemAPI.Query<RefRO<AgentBody>>().WithAll<Animator>().WithEntityAccess())
+            foreach (var (animatorComp, input) in SystemAPI.Query<SystemAPI.ManagedAPI.UnityEngineComponent<Animator>, RefRO<AgentBody>>())
             {
-                var animator = EntityManager.GetComponentObject<Animator>(e);
-                var value1 = math.length(input.ValueRO.Velocity);
 
+                var value1 = math.length(input.ValueRO.Velocity);
+                var animator = animatorComp.Value;
                 var value2 = animator.GetFloat(moveParam);
 
                 if (value1 > value2)
@@ -190,7 +190,7 @@ namespace SV.ECS
 
                 EntityManager.RemoveComponent<PresentationGOComponent>(e);
             }
-           
+
         }
     }
 
