@@ -84,6 +84,7 @@ public partial class TopDownChracterInputSystem : SystemBase
            
         };
 
+    
         //job.Run();
         Dependency = job.Schedule(Dependency);
 

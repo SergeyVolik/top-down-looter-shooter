@@ -18,7 +18,8 @@ public class SpawnedObjects : MonoBehaviour
     private void Awake()
     {
         _entityManager = World.DefaultGameObjectInjectionWorld.EntityManager;
-       
+
+        
         KilledEnemiesStat = _entityManager.CreateEntityQuery(new ComponentType[] { typeof(KilledEnemies) });
         _collectedStat = _entityManager.CreateEntityQuery(new ComponentType[] { typeof(CollectedItems) });
         text = GetComponent<TMPro.TMP_Text>();
@@ -43,7 +44,6 @@ public class SpawnedObjects : MonoBehaviour
 
     private void OnDestroy()
     {
-        KilledEnemiesStat.Dispose();
-        _collectedStat.Dispose();
+       
     }
 }

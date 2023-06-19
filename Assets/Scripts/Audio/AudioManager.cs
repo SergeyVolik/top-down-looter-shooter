@@ -93,9 +93,9 @@ namespace SV
         {
             Instance = this;
 
-          
 
-            
+
+            em = World.DefaultGameObjectInjectionWorld.EntityManager;
 
             entity = em.CreateSingleton<SFXDatabaseComponent>(new SFXDatabaseComponent
             {

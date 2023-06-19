@@ -99,8 +99,10 @@ namespace SV.ECS
         }
         protected override void OnUpdate()
         {
-            foreach (var (input, e) in SystemAPI.Query<RefRO<TopDownCharacterInputs>>().WithAll<Animator>().WithEntityAccess())
+            foreach (var (input, e) in SystemAPI.Query<RefRO<TopDownCharacterInputs>>().WithAll<Animator>().WithEntityAccess().WithChangeFilter<TopDownCharacterInputs>())
             {
+                //Debug.Log("Update Player Animator");
+
                 var animator = EntityManager.GetComponentObject<Animator>(e);
                 animator.SetFloat(moveParam, math.length(input.ValueRO.MoveVector));
             }

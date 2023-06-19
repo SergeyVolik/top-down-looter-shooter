@@ -10,6 +10,7 @@ namespace SV.ECS
 {
     [UpdateAfter(typeof(StatefulTriggerEventBufferSystem))]
     [UpdateInGroup(typeof(GameFixedStepSystemGroup))]
+  
     public partial struct CollectorTriggerSystem : ISystem
     {
         public void OnUpdate(ref SystemState state)
@@ -18,7 +19,7 @@ namespace SV.ECS
             var collectedLookup = SystemAPI.GetComponentLookup<CollectedComponent>(isReadOnly: false);
             var ecb = SystemAPI.GetSingleton<BeginSimulationEntityCommandBufferSystem.Singleton>().CreateCommandBuffer(state.WorldUnmanaged);
 
-
+            
             new CollectorJob
             {
                 collectableLookup = collectableLookup,

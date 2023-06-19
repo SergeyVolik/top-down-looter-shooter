@@ -490,7 +490,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &370553385
 Transform:
   m_ObjectHideFlags: 0
@@ -1042,6 +1042,7 @@ GameObject:
   - component: {fileID: 996085296}
   - component: {fileID: 996085297}
   - component: {fileID: 996085298}
+  - component: {fileID: 996085299}
   m_Layer: 0
   m_Name: PlayerExp
   m_TagString: Untagged
@@ -1106,6 +1107,19 @@ MonoBehaviour:
   attackSpeed: 0
   hpRegenInterval: 1
   "crit\u0421hance": 10
+--- !u!114 &996085299
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 996085295}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6c5b58f8d31375342a221ed113e71008, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  SectionIndex: 1
 --- !u!1 &1017114907
 GameObject:
   m_ObjectHideFlags: 0

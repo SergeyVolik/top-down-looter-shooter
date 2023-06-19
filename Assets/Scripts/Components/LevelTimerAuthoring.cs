@@ -18,6 +18,7 @@ namespace SV.ECS
 
     }
 
+    [WorldSystemFilter(WorldSystemFilterFlags.Default)]
     public partial struct LevelTimerSystem : ISystem
     {
         public void OnUpdate(ref SystemState state)
@@ -25,7 +26,7 @@ namespace SV.ECS
             var deltaTIme = state.WorldUnmanaged.Time.DeltaTime;
 
             var ecb = SystemAPI.GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>().CreateCommandBuffer(state.WorldUnmanaged);
-            foreach (var (lt, e) in SystemAPI.Query<RefRW<LevelTimerComponent>>().WithEntityAccess())
+            foreach (var (lt, e) in SystemAPI.Query<RefRW<LevelTimerComponent>>().WithNone<Disabled>().WithEntityAccess())
             {
                 lt.ValueRW.currentTime += deltaTIme;
 
@@ -42,7 +43,7 @@ namespace SV.ECS
         public override void Bake(LevelTimerAuthoring authoring)
         {
 
-            var entity = GetEntity(TransformUsageFlags.Dynamic);
+            var entity = GetEntity(TransformUsageFlags.None);
             AddComponent(entity, new LevelTimerComponent
             {
                 duration = authoring.duration

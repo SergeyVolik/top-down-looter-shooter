@@ -16,4 +16,10 @@ MonoBehaviour:
   defaultEditorBehaviour: 11
   processMouseMoveInInspector: 1
   drawingConfig:
-    configs: []
+    configs:
+    - DrawnTypeName: SceneSO, Assembly-CSharp
+      EditorTypeName: 
+    - DrawnTypeName: SV.ECS.GameSubScenesAuthroing, Assembly-CSharp
+      EditorTypeName: 
+    - DrawnTypeName: SubSceneSO, Assembly-CSharp
+      EditorTypeName: 

@@ -9,12 +9,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ba48f968f7d7a374cb7d74b14ff49aa0, type: 3}
-  m_Name: GameplayScene Scene SO
+  m_Script: {fileID: 11500000, guid: 1143955dd4967f342a3d15425a892d27, type: 3}
+  m_Name: GameplaySubScene
   m_EditorClassIdentifier: 
-  sceneAsset: {fileID: 102900000, guid: 5592c4ed512ca814ebeb0c84b415ae77, type: 3}
-  sceneGuid:
-    serializedGuid: 5592c4ed-512c-a814-ebeb-0c84b415ae77
   scene:
     Id:
       GlobalId:
@@ -22,9 +19,9 @@ MonoBehaviour:
         SceneObjectIdentifier1: 0
         AssetGUID:
           Value:
-            x: 273485049
-            y: 1266875312
-            z: 2116486293
-            w: 3126159538
+            x: 3729533269
+            y: 1099612693
+            z: 1220591294
+            w: 2011844939
         IdentifierType: 1
-      GenerationType: 3
+      GenerationType: 4

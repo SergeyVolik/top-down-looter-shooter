@@ -9,21 +9,16 @@ using UnityEngine.UI;
 
 public class UnloadSubSceneOnClick : MonoBehaviour
 {
-    public SceneSO scene;
+    public SubSceneSO scene;
 
 
     private void Awake()
     {
         GetComponent<Button>().onClick.AddListener(() => {
-          
-            var em = World.DefaultGameObjectInjectionWorld.EntityManager;
 
-            var e = em.CreateEntity();
-            em.AddComponentData(e, new UnloadSubScene
-            {
-                value = new Unity.Entities.Hash128(scene.sceneGuid)
-            }); 
-          
+            scene.UnloadSubScene();
+
+
         });
     }
 

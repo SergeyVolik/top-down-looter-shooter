@@ -28,7 +28,7 @@ public class LevelTimerUI : MonoBehaviour
 
     private void OnDestroy()
     {
-        timerQ.Dispose();
+       
     }
     private void Update()
     {

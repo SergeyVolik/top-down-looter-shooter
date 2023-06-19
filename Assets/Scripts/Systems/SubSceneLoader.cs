@@ -1,59 +1,102 @@
-using SV.ECS;
-using System;
-using System.Diagnostics;
 using Unity.Collections;
 using Unity.Entities;
+using Unity.Entities.Serialization;
 using Unity.Scenes;
 
 public struct LoadSubScene : IComponentData
 {
-    public Hash128 value;
+    public EntitySceneReference value;
 }
 
 public struct UnloadSubScene : IComponentData
 {
-    public Hash128 value;
+    public EntitySceneReference value;
+}
+
+public struct SubSceneInjstanceData : IComponentData
+{
+    public EntitySceneReference value;
 }
 
 [UpdateInGroup(typeof(SimulationSystemGroup))]
 public partial struct SubSceneLoader : ISystem
 {
-    private EntityQuery unloadSubSceneQuery;
-    private EntityQuery loadSubSceneQuery;
+    private EntityQuery loadRequests;
+    private EntityQuery unloadRequests;
+    private EntityQuery subSceneDataRequests;
 
     public void OnCreate(ref SystemState state)
     {
-        unloadSubSceneQuery = SystemAPI.QueryBuilder().WithAll<UnloadSubScene>().Build();
-        loadSubSceneQuery = SystemAPI.QueryBuilder().WithAll<LoadSubScene>().Build();
 
+        loadRequests = state.GetEntityQuery(typeof(LoadSubScene));
+        unloadRequests = state.GetEntityQuery(typeof(UnloadSubScene));
+        subSceneDataRequests = state.GetEntityQuery(typeof(SubSceneInjstanceData));
     }
+
+    
 
     public void OnUpdate(ref SystemState state)
     {
-        var unloadComponents = unloadSubSceneQuery.ToComponentDataArray<UnloadSubScene>(Allocator.Temp);
-        var loadComponents = loadSubSceneQuery.ToComponentDataArray<LoadSubScene>(Allocator.Temp);
 
-        var ecb = SystemAPI.GetSingleton<BeginSimulationEntityCommandBufferSystem.Singleton>().CreateCommandBuffer(state.WorldUnmanaged);
-        for (int i = 0; i < loadComponents.Length; i += 1)
+
+     
+
+        var loadData = loadRequests.ToComponentDataArray<LoadSubScene>(Allocator.Temp);
+        var unloadData = unloadRequests.ToComponentDataArray<UnloadSubScene>(Allocator.Temp);
+        var entities = subSceneDataRequests.ToEntityArray(Allocator.Temp);
+        var subScenes = subSceneDataRequests.ToComponentDataArray<SubSceneInjstanceData>(Allocator.Temp);
+
+        foreach (var loadSubSCene in loadData)
         {
-            SceneSystem.LoadSceneAsync(state.WorldUnmanaged, loadComponents[i].value);
+            var loadParams = new SceneSystem.LoadParameters
+            {
+                AutoLoad = true,
+                //Flags = SceneLoadFlags.NewInstance
+
+            };
+            var sceneEntity = SceneSystem.LoadSceneAsync(state.WorldUnmanaged, loadSubSCene.value,  parameters: loadParams);
+            state.EntityManager.AddComponent<SubSceneInjstanceData>(sceneEntity);
+            state.EntityManager.SetComponentData<SubSceneInjstanceData>(sceneEntity, new SubSceneInjstanceData { 
+                 value = loadSubSCene.value
+            });
+            UnityEngine.Debug.Log("Sub Scene loaded");
         }
 
         var unloadParameters = SceneSystem.UnloadParameters.DestroyMetaEntities;
-        for (int i = 0; i < unloadComponents.Length; i += 1)
+
+
+        foreach (var unloadCOmp in unloadData)
         {
-            SceneSystem.UnloadScene(state.WorldUnmanaged, unloadComponents[i].value, unloadParameters);
+
+            for (int i = 0; i < entities.Length; i++)
+            {
+                
+                var sceneInfo = subScenes[i];
+                if (sceneInfo.value.Equals(unloadCOmp.value))
+                {
+                    UnityEngine.Debug.Log("Sub Scene unloaded");
+                    //SceneSystem.UnloadScene(state.WorldUnmanaged, unloadCOmp.value, unloadParameters)
+                    SceneSystem.UnloadScene(state.WorldUnmanaged, entities[i], unloadParameters);
+                }
+            }
+
+
+
+           
+
+
         }
 
-        unloadComponents.Dispose();
-        loadComponents.Dispose();
-        ecb.DestroyEntity(unloadSubSceneQuery);
-        ecb.DestroyEntity(loadSubSceneQuery);
+        state.EntityManager.DestroyEntity(loadRequests);
+        state.EntityManager.DestroyEntity(unloadRequests);
 
-      
 
-     
     }
-    
+
 
 }
+
+
+
+
+

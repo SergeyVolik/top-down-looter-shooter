@@ -21,6 +21,7 @@ public class PlayerStatsView : MonoBehaviour, IPageShowedListener, IPageHidedLis
 
     private void Awake()
     {
+       
         em = World.DefaultGameObjectInjectionWorld.EntityManager;
 
         entity = em.CreateEntity();
@@ -37,6 +38,7 @@ public class PlayerStatsView : MonoBehaviour, IPageShowedListener, IPageHidedLis
 
     private void OnDestroy()
     {
+       
         em.DestroyEntity(entity);
     }
 
