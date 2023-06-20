@@ -177,10 +177,7 @@ namespace SV.ECS
 
                 instance.hideFlags |= HideFlags.HideAndDontSave;
 
-                if (instance.TryGetComponent<VisualMessage>(out var vmComp))
-                {
-                    EntityManager.AddComponentObject(e, new VisualMessageGO { value = vmComp });
-                }
+               
 
                 if (instance.TryGetComponent<Animator>(out var aniamtor))
                 {

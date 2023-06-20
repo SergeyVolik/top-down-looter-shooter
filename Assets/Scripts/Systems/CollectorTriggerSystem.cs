@@ -10,7 +10,6 @@ namespace SV.ECS
 {
     [UpdateAfter(typeof(StatefulTriggerEventBufferSystem))]
     [UpdateInGroup(typeof(GameFixedStepSystemGroup))]
-  
     public partial struct CollectorTriggerSystem : ISystem
     {
         public void OnUpdate(ref SystemState state)
@@ -24,7 +23,7 @@ namespace SV.ECS
             {
                 collectableLookup = collectableLookup,
                 collectedLookup = collectedLookup,
-                ecb = ecb.AsParallelWriter()
+                ecb = ecb
             }.Schedule();
         }
 
@@ -32,6 +31,7 @@ namespace SV.ECS
       
         [BurstCompile]
         [WithAll(typeof(CollectorComponent))]
+       
         public partial struct CollectorJob : IJobEntity
         {
             [ReadOnly]
@@ -39,7 +39,7 @@ namespace SV.ECS
           
             public ComponentLookup<CollectedComponent> collectedLookup;
 
-            public EntityCommandBuffer.ParallelWriter ecb;
+            public EntityCommandBuffer ecb;
 
 
             [BurstCompile]
@@ -53,12 +53,15 @@ namespace SV.ECS
 
                         if (collectableLookup.HasComponent(targetEntity))
                         {
-                            collectedLookup.SetComponentEnabled(targetEntity, true);
-                            ecb.DestroyEntity(entityInQueryIndex,targetEntity);
+                            if (!collectedLookup.IsComponentEnabled(targetEntity))
+                            {
+                                collectedLookup.SetComponentEnabled(targetEntity, true);
+                                ecb.DestroyEntity(targetEntity);
 
-                            var sfx = ecb.CreateEntity(entityInQueryIndex);
+                                var sfx = ecb.CreateEntity();
 
-                            ecb.AddComponent(entityInQueryIndex, sfx, new PlaySFX { sfxSettingGuid = collectableLookup.GetRefRO(targetEntity).ValueRO.sfxGuid });
+                                ecb.AddComponent(sfx, new PlaySFX { sfxSettingGuid = collectableLookup.GetRefRO(targetEntity).ValueRO.sfxGuid });
+                            }
                         }
 
                     }

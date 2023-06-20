@@ -12,6 +12,7 @@ using UnityEngine.InputSystem.LowLevel;
 using Unity.VisualScripting;
 using DG.Tweening;
 using Unity.Mathematics;
+using Unity.Collections;
 
 namespace SV
 {
@@ -38,9 +39,29 @@ namespace SV
 
     }
 
-    public struct PlaySFX : IComponentData
+    public struct PlaySFX : IComponentData, IEquatable<PlaySFX>
     {
         public Guid sfxSettingGuid;
+
+        public bool Equals(PlaySFX other)
+        {
+            return other.GetHashCode() == GetHashCode();
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (obj is PlaySFX sfx)
+            {
+                return Equals(sfx);
+            }
+
+            return false;
+        }
+
+        public override int GetHashCode()
+        {
+            return sfxSettingGuid.GetHashCode();
+        }
     }
     public class SFXDatabaseComponent : IComponentData
     {
@@ -61,9 +82,17 @@ namespace SV
             var ecb = SystemAPI.GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>().CreateCommandBuffer(state.WorldUnmanaged);
             var sfxdatabase = SystemAPI.ManagedAPI.GetSingleton<SFXDatabaseComponent>().value;
 
+            NativeHashSet<PlaySFX> playerdSfxes = new NativeHashSet<PlaySFX>(0, Allocator.Temp);
+
             foreach (var (sfx, e) in SystemAPI.Query<PlaySFX>().WithEntityAccess())
             {
-                AudioManager.Instance.PlaySFX(sfxdatabase.GetItem(sfx.sfxSettingGuid));
+                if (!playerdSfxes.Contains(sfx))
+                {
+                    AudioManager.Instance.PlaySFX(sfxdatabase.GetItem(sfx.sfxSettingGuid));
+
+                    playerdSfxes.Add(sfx);
+                }
+
                 ecb.DestroyEntity(e);
             }
 

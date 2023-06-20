@@ -31,14 +31,20 @@ public partial struct SubSceneLoader : ISystem
         loadRequests = state.GetEntityQuery(typeof(LoadSubScene));
         unloadRequests = state.GetEntityQuery(typeof(UnloadSubScene));
         subSceneDataRequests = state.GetEntityQuery(typeof(SubSceneInjstanceData));
+
+
+        state.RequireAnyForUpdate(loadRequests, unloadRequests);
+      
+
+
     }
 
-    
+
 
     public void OnUpdate(ref SystemState state)
     {
 
-
+      
      
 
         var loadData = loadRequests.ToComponentDataArray<LoadSubScene>(Allocator.Temp);

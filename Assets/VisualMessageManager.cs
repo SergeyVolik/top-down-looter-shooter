@@ -25,7 +25,7 @@ public class VisualMessageDataBaker : Baker<VisualMessageManager>
 {
     public override void Bake(VisualMessageManager authoring)
     {
-        var entity = GetEntity(TransformUsageFlags.Dynamic);
+        var entity = GetEntity(TransformUsageFlags.None);
 
         AddComponent(entity, new VisualMessageData
         {
@@ -44,6 +44,8 @@ public partial class VisualMessageSystem : SystemBase
     {
         base.OnCreate();
         RequireForUpdate<VisualMessageData>();
+
+      
     }
 
     protected override void OnUpdate()
@@ -52,6 +54,7 @@ public partial class VisualMessageSystem : SystemBase
 
         var ecbSys = SystemAPI.GetSingleton<BeginSimulationEntityCommandBufferSystem.Singleton>();
         var ecb = ecbSys.CreateCommandBuffer(World.Unmanaged);
+
         foreach (var (damageList, visualMessage, ltw) in SystemAPI.Query<DynamicBuffer<DamageToApplyComponent>, RefRO<DamageVisualMessageComponent>, RefRO<LocalToWorld>>())
         {
             foreach (var damage in damageList)
@@ -72,8 +75,8 @@ public partial class VisualMessageSystem : SystemBase
                 }
 
                 sm.pos = ltw.ValueRO.Position;
-                ecb.AddComponent(vmEntity, sm);
-
+                ecb.SetComponent(vmEntity, sm);
+                ecb.SetComponentEnabled<ShowVisualMessageComponent>(vmEntity, true);
 
 
             }
@@ -98,7 +101,10 @@ public partial class VisualMessageSystem : SystemBase
 
         foreach (var (sm, visualMessage, trans, e) in SystemAPI.Query<ShowVisualMessageComponent, VisualMessageGO, RefRW<LocalTransform>>().WithEntityAccess())
         {
-            visualMessage.value.Show(sm.text, sm.color);
+            visualMessage.text.color = sm.color;
+            visualMessage.text.text = sm.text;
+
+            
 
             var pos = sm.pos;
 

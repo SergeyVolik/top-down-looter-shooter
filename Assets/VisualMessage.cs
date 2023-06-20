@@ -11,15 +11,23 @@ namespace SV.ECS
     public class VisualMessage : MonoBehaviour
     {
         [SerializeField]
-        private TMPro.TMP_Text m_TextMeshPro;
+        private TextMesh m_TextMeshPro;
 
-        [Button]
-        public void Show(string text, Color color)
+
+        public class Baker : Baker<VisualMessage>
         {
-            m_TextMeshPro.color = color;
-            m_TextMeshPro.text = text;
-        }
+            public override void Bake(VisualMessage authoring)
+            {
+                var entity = GetEntity(TransformUsageFlags.Dynamic);
 
+                AddComponentObject(entity, new VisualMessageGO {  
+                      text = authoring.m_TextMeshPro
+                });
+
+                AddComponentObject(entity, new ShowVisualMessageComponent { });
+              
+            }
+        }
 
     }
 
@@ -31,7 +39,7 @@ namespace SV.ECS
     }
     public class VisualMessageGO : IComponentData
     {
-        public VisualMessage value;
+        public TextMesh text;
     }
 
 

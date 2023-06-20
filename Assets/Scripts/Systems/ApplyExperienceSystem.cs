@@ -21,37 +21,37 @@ namespace SV.ECS
         {
 
 
-            var expEntity = SystemAPI.GetSingletonEntity<PlayerLevelComponent>();
-            var currentExp = SystemAPI.GetSingletonRW<PlayerLevelComponent>();
-            var playerExpUpgradeData = SystemAPI.GetBuffer<PlayerExpUpgradeComponent>(expEntity);
+            //var expEntity = SystemAPI.GetSingletonEntity<PlayerLevelComponent>();
+            //var currentExp = SystemAPI.GetSingletonRW<PlayerLevelComponent>();
+            //var playerExpUpgradeData = SystemAPI.GetBuffer<PlayerExpUpgradeComponent>(expEntity);
 
-            var ecb = SystemAPI.GetSingleton<BeginSimulationEntityCommandBufferSystem.Singleton>().CreateCommandBuffer(state.WorldUnmanaged);
+            //var ecb = SystemAPI.GetSingleton<BeginSimulationEntityCommandBufferSystem.Singleton>().CreateCommandBuffer(state.WorldUnmanaged);
 
-            foreach (var (exp, e) in SystemAPI.Query<RefRO<ExperienceComponent>>().WithAll<CollectedComponent>().WithEntityAccess())
-            {
-                if (currentExp.ValueRO.level >= playerExpUpgradeData.Length)
-                    break;
+            //foreach (var (exp, e) in SystemAPI.Query<RefRO<ExperienceComponent>>().WithAll<CollectedComponent>().WithEntityAccess())
+            //{
+            //    if (currentExp.ValueRO.level >= playerExpUpgradeData.Length)
+            //        break;
 
-                var nextLevel = playerExpUpgradeData[currentExp.ValueRW.level - 1];
+            //    var nextLevel = playerExpUpgradeData[currentExp.ValueRW.level - 1];
 
-                currentExp.ValueRW.currentExp += exp.ValueRO.value;
-
-
-                if (currentExp.ValueRO.currentExp >= nextLevel.expForNextLevel)
-                {
-
-                    var entity = ecb.CreateEntity();
+            //    currentExp.ValueRW.currentExp += exp.ValueRO.value;
 
 
-                    currentExp.ValueRW.currentExp = currentExp.ValueRO.currentExp - nextLevel.expForNextLevel;
-                    currentExp.ValueRW.level += 1;
+            //    if (currentExp.ValueRO.currentExp >= nextLevel.expForNextLevel)
+            //    {
 
-                    ecb.AddComponent(entity, new LevelUpComponent
-                    {
-                        currentLevel = currentExp.ValueRO.level,
-                    });
-                }
-            }
+            //        var entity = ecb.CreateEntity();
+
+
+            //        currentExp.ValueRW.currentExp = currentExp.ValueRO.currentExp - nextLevel.expForNextLevel;
+            //        currentExp.ValueRW.level += 1;
+
+            //        ecb.AddComponent(entity, new LevelUpComponent
+            //        {
+            //            currentLevel = currentExp.ValueRO.level,
+            //        });
+            //    }
+            //}
 
 
 
@@ -82,26 +82,26 @@ namespace SV.ECS
 
 
 
-            var ecb = SystemAPI.GetSingleton<BeginSimulationEntityCommandBufferSystem.Singleton>().CreateCommandBuffer(World.Unmanaged);
+            //var ecb = SystemAPI.GetSingleton<BeginSimulationEntityCommandBufferSystem.Singleton>().CreateCommandBuffer(World.Unmanaged);
 
-            var hasItems = false;
-            foreach (var (exp, e) in SystemAPI.Query<RefRO<LevelUpComponent>>().WithEntityAccess())
-            {
-                hasItems = true;
+            //var hasItems = false;
+            //foreach (var (exp, e) in SystemAPI.Query<RefRO<LevelUpComponent>>().WithEntityAccess())
+            //{
+            //    hasItems = true;
 
-                //foreach (var (health, maxHealth) in SystemAPI.Query<RefRW<HealthComponent>, RefRW<MaxHealthComponent>>().WithAll<PlayerComponent>())
-                //{
-                //    maxHealth.ValueRW.value += 1;
-                //    health.ValueRW.value = maxHealth.ValueRO.value;
-                //}
+            //    //foreach (var (health, maxHealth) in SystemAPI.Query<RefRW<HealthComponent>, RefRW<MaxHealthComponent>>().WithAll<PlayerComponent>())
+            //    //{
+            //    //    maxHealth.ValueRW.value += 1;
+            //    //    health.ValueRW.value = maxHealth.ValueRO.value;
+            //    //}
 
-                ecb.DestroyEntity(e);
-            }
+            //    ecb.DestroyEntity(e);
+            //}
 
-            if (hasItems)
-            {
-                OnLevelUp.Invoke();
-            }
+            //if (hasItems)
+            //{
+            //    OnLevelUp.Invoke();
+            //}
 
            
 
