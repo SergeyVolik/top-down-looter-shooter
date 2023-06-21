@@ -43,23 +43,58 @@ namespace SV.UI
         public override void Show()
         {
             base.Show();
-            m_PassCode.text = LobbyManager.Instance.GetLobbyCode();
-            m_LobbyName.text = LobbyManager.Instance.GetLobbyName();
+           
+            m_LobbyName.text = $"name: { LobbyManager.Instance.GetLobbyName()} code:{LobbyManager.Instance.GetLobbyCode()} id:{LobbyManager.Instance.GetLobbyId()} ";
+
+            UpdatePlayersList();
+
+            LobbyManager.Instance.OnLobbyChanged += Instance_OnLobbyChanged;
+           
+            LobbyManager.Instance.LobbyEventCallbacks.KickedFromLobby += LobbyEventCallbacks_KickedFromLobby;
+        }
+
+        private void Instance_OnLobbyChanged(Unity.Services.Lobbies.Models.Lobby obj)
+        {
+            Debug.Log("LobbyManager LobbyEventConnectionStateChanged callback");
 
             UpdatePlayersList();
         }
 
+        private void LobbyEventCallbacks_KickedFromLobby()
+        {
+            ModalWindow.Instance.Show("Lobby", "You was kicked from the lobby!", () =>
+            {
+                UINavigationManager.Instance.Pop();
+            });
+          
+        }
+
+        public override void Hide(bool onlyDosableInput = false)
+        {
+            base.Hide(onlyDosableInput);
+            if (LobbyManager.Instance)
+            {
+                LobbyManager.Instance.OnLobbyChanged -= Instance_OnLobbyChanged;
+                LobbyManager.Instance.LobbyEventCallbacks.KickedFromLobby -= LobbyEventCallbacks_KickedFromLobby;
+            }
+        }
+
+
         private void UpdatePlayersList()
         {
-            var players = LobbyManager.Instance.GetPlayerData();
+            
 
             ClearList();
+            var lobby = LobbyManager.Instance.Lobby;
 
-            foreach (var player in players)
+
+            foreach (var player in lobby.Players)
             {
                 var data = Instantiate(m_ListItemPrfab, m_PlayersList);
 
-                data.Setup(player.DysplayName, LobbyManager.Instance.IsHost());
+                player.TryGetDisplayName(out var DisplayName);
+
+                data.Setup(DisplayName, player.IsHost(lobby));
 
                 listItems.Add(data);
             }
@@ -70,7 +105,7 @@ namespace SV.UI
 
             foreach (var item in listItems)
             {
-                Destroy(item);
+                Destroy(item.gameObject);
             }
 
             listItems.Clear();

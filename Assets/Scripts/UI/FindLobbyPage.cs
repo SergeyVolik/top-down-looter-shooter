@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -27,6 +28,9 @@ namespace SV.UI
         [SerializeField]
         private TMPro.TMP_Text m_NoLobbiesText;
 
+        [SerializeField]
+        private InLobbyPage m_InLobby;
+        
         
         private List<LobbyUIListItem> m_LobbyItems = new List<LobbyUIListItem>();
 
@@ -34,14 +38,21 @@ namespace SV.UI
         {
             base.Awake();
 
-            m_NickName.text = LobbyManager.Instance.localPlayer.DysplayName;
+            m_NickName.text = LobbyManager.Instance.localPlayer.DisplayName.Value;
             m_NickName.onValueChanged.AddListener((v) =>
             {
-                LobbyManager.Instance.localPlayer.DysplayName = v;
+                LobbyManager.Instance.localPlayer.DisplayName.Value = v;
             });
 
             m_RefreshButton.onClick.AddListener(RefershListOfLobbies);
 
+            m_JoinButton.onClick.AddListener(JoinEvent);
+        }
+
+        private async void JoinEvent()
+        {
+            await LobbyManager.Instance.JoinLobbyByIdAsync(m_LobbyName.text, m_Lobbypassword.text, LobbyManager.Instance.localPlayer);
+            UINavigationManager.Instance.Navigate(m_InLobby);
 
         }
 
@@ -69,7 +80,7 @@ namespace SV.UI
                 {
                     var lobby = queryResult.Results[i];
                     var item = Instantiate(m_ListItemPrefab, m_LobyItemsListParent);
-                    item.Setup($"Lobby{lobby.Name}", lobby.Players.Count, lobby.MaxPlayers);
+                    item.Setup($"{lobby.Name}", lobby.Players.Count, lobby.MaxPlayers);
                     m_LobbyItems.Add(item);
                 }
 

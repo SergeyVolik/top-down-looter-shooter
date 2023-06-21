@@ -9,12 +9,18 @@ public interface IPauseService
 }
 public class PauseManager : MonoBehaviour, IPauseService
 {
-    public static PauseManager Instance { get; private set; }
-
-    private void Awake()
+    public static PauseManager Instance
     {
-        Instance = this;
+        get
+        {
+            if (m_Instance == null)
+                m_Instance = FindObjectOfType<PauseManager>();
+            return m_Instance;
+        }
     }
+
+    private static PauseManager m_Instance;
+
 
     public void Pause()
     {
