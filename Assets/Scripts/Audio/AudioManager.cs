@@ -103,12 +103,28 @@ namespace SV
 
     public class AudioManager : MonoBehaviour
     {
-        public static AudioManager Instance { get; private set; }
+        public static AudioManager Instance
+        {
+            get
+            {
+                if (m_Instance == null)
+                {
+                    m_Instance = FindAnyObjectByType<AudioManager>();
 
+                    if (m_Instance != null)
+                        m_Instance.Awake();
+                }
+
+                return m_Instance;
+            }
+
+        }
+
+        public static AudioManager m_Instance;
         private const string SFXVolumeParam = "SFXVolume";
         private const string MasterVolumeParam = "MasterVolume";
         private const string MusicVolumeParam = "MusicVolume";
-
+        private bool m_awaked;
         private EntityManager em;
         public AudioSFXDatabase database;
         public AudioSFX initMusic;
@@ -120,8 +136,10 @@ namespace SV
         private float musicVolume = 1f;
         private void Awake()
         {
-            Instance = this;
 
+            if (m_awaked)
+                return;
+            m_awaked = true;
 
 
             em = World.DefaultGameObjectInjectionWorld.EntityManager;
@@ -148,7 +166,7 @@ namespace SV
 
         public float GetSFXGlobalVolume()
         {
-         
+
             return sfxVolume;
         }
         public float GetMasterGlobalVolume()
@@ -158,7 +176,7 @@ namespace SV
         }
         public float GetMusicGlobalVolume()
         {
-           
+
             return musicVolume;
         }
 
@@ -182,12 +200,12 @@ namespace SV
             var clamped = Mathf.Clamp(volume, 0, 1);
             var value = (volume == 0 ? -80 : MathF.Log10(clamped) * 20);
             musicVolume = clamped;
-           
+
             mixer.SetFloat(MusicVolumeParam, value);
 
         }
 
-      
+
 
         public void SaveSettings()
         {
@@ -199,7 +217,7 @@ namespace SV
         }
         private void LoadSettings()
         {
-          
+
             SetMasterGlobalVolume(PlayerPrefs.GetFloat(MasterVolumeParam, 1f));
             SetSFXGlobalVolume(PlayerPrefs.GetFloat(SFXVolumeParam, 1f));
             SetMusicGlobalVolume(PlayerPrefs.GetFloat(MusicVolumeParam, 1f));
@@ -215,8 +233,8 @@ namespace SV
             if (audioSFX == null)
                 return;
 
-            
-           
+
+
             Pool.Get(out var source);
 
             audioSFX.Play(source);
