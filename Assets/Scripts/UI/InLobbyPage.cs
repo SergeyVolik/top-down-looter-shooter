@@ -28,10 +28,13 @@ namespace SV.UI
         private RectTransform m_PlayersList;
 
         private List<LobbyPlayerListItem> listItems = new List<LobbyPlayerListItem>();
+
+        public static InLobbyPage Instance { get; private set; }
+
         protected override void Awake()
         {
             base.Awake();
-
+            Instance = this;
             m_ReturnButton.onClick.AddListener(() =>
             {
                 LobbyManager.Instance.LeaveLobby();
@@ -50,7 +53,7 @@ namespace SV.UI
 
             LobbyManager.Instance.OnLobbyChanged += Instance_OnLobbyChanged;
            
-            LobbyManager.Instance.LobbyEventCallbacks.KickedFromLobby += LobbyEventCallbacks_KickedFromLobby;
+            LobbyManager.Instance.OnKicked += LobbyEventCallbacks_KickedFromLobby;
         }
 
         private void Instance_OnLobbyChanged(Unity.Services.Lobbies.Models.Lobby obj)
@@ -62,10 +65,13 @@ namespace SV.UI
 
         private void LobbyEventCallbacks_KickedFromLobby()
         {
-            ModalWindow.Instance.Show("Lobby", "You was kicked from the lobby!", () =>
-            {
-                UINavigationManager.Instance.Pop();
-            });
+
+            UINavigationManager.Instance.Pop(); ;
+
+            //ModalWindow.Instance.Show("Lobby", "You was kicked from the lobby!", () =>
+            //{
+            //    UINavigationManager.Instance.Pop();
+            //});
           
         }
 
@@ -75,7 +81,7 @@ namespace SV.UI
             if (LobbyManager.Instance)
             {
                 LobbyManager.Instance.OnLobbyChanged -= Instance_OnLobbyChanged;
-                LobbyManager.Instance.LobbyEventCallbacks.KickedFromLobby -= LobbyEventCallbacks_KickedFromLobby;
+                LobbyManager.Instance.OnKicked -= LobbyEventCallbacks_KickedFromLobby;
             }
         }
 
@@ -87,6 +93,7 @@ namespace SV.UI
             ClearList();
             var lobby = LobbyManager.Instance.Lobby;
 
+            var isHostCreated = LobbyManager.Instance.IsHost();
 
             foreach (var player in lobby.Players)
             {
@@ -94,7 +101,7 @@ namespace SV.UI
 
                 player.TryGetDisplayName(out var DisplayName);
 
-                data.Setup(DisplayName, player.IsHost(lobby));
+                data.Setup(DisplayName, player.IsHost(lobby), player.Id, isHostCreated);
 
                 listItems.Add(data);
             }

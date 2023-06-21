@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class LobbyPlayerListItem : MonoBehaviour
 {
@@ -8,10 +9,22 @@ public class LobbyPlayerListItem : MonoBehaviour
     private TMPro.TextMeshProUGUI m_name;
     [SerializeField]
     private GameObject hostToggle;
-    public void Setup(string name, bool host)
+    [SerializeField]
+    private Button m_KickButton;
+    public void Setup(string name, bool hostItem, string playerId, bool hostCreated)
     {
         m_name.text = name;
 
-        hostToggle.gameObject.SetActive(host);
+        hostToggle.gameObject.SetActive(hostItem);
+        m_KickButton.gameObject.SetActive(false);
+        if (hostCreated && !hostItem)
+        {
+            m_KickButton.gameObject.SetActive(true);
+            m_KickButton.onClick.AddListener(async () =>
+            {
+                await LobbyManager.Instance.KickPlayer(playerId);
+            });
+        }
+        
     }
 }

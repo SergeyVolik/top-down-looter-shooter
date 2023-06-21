@@ -1,3 +1,4 @@
+using SV.UI;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -12,7 +13,8 @@ public class LobbyUIListItem : MonoBehaviour
     [SerializeField]
     private TMPro.TMP_Text m_UsersText;
 
-   
+    [SerializeField]
+    private Button m_Connect;
 
     public event Action onSelected = delegate { };
 
@@ -25,9 +27,16 @@ public class LobbyUIListItem : MonoBehaviour
             onSelected.Invoke();
         });
     }
-    public void Setup(string name, int currentUsers,  int maxUsers)
+    public void Setup(string name, int currentUsers, int maxUsers, string lobbyId)
     {
         m_LobbyName.text = name;
         m_UsersText.text = $"{currentUsers}/{maxUsers}";
+
+        m_Connect.onClick.AddListener(async () =>
+        {
+            await LobbyManager.Instance.JoinLobbyByIdAsync(lobbyId, null, LobbyManager.Instance.localPlayer);
+
+            UINavigationManager.Instance.Navigate(InLobbyPage.Instance);
+        });
     }
 }

@@ -41,6 +41,7 @@ public class LobbyManager : MonoBehaviour
     
     private bool m_Awaked;
 
+    public string PlayerId => AuthenticationService.Instance.PlayerId;
     public string GetLobbyCode() => m_CurrentLobby?.LobbyCode;
     public string GetLobbyId() => m_CurrentLobby?.Id;
     public string GetLobbyName() => m_CurrentLobby?.Name;
@@ -57,33 +58,58 @@ public class LobbyManager : MonoBehaviour
     ServiceRateLimiter m_HeartBeatCooldown = new ServiceRateLimiter(5, 30);
 
     private Task m_HeartBeatTask;
+    private LobbyEventConnectionState m_lastConnectionState;
 
-    
     public LobbyEventCallbacks LobbyEventCallbacks { get; private set; } = new LobbyEventCallbacks();
 
 
     public event Action<Lobby> OnLobbyChanged = delegate { };
+    public event Action OnKicked = delegate { };
     public async Task BindLocalLobbyToRemote(string lobbyID)
     {
      
 
         LobbyEventCallbacks.LobbyChanged += (data) =>
         {
-            data.ApplyToLobby(m_CurrentLobby);
-            OnLobbyChanged.Invoke(m_CurrentLobby);
-           
+            Debug.Log("LobbyChanged");
+            if (m_CurrentLobby != null)
+            {
+                data.ApplyToLobby(m_CurrentLobby);
+                OnLobbyChanged.Invoke(m_CurrentLobby);
 
+
+                if (m_CurrentLobby.HostId == PlayerId)
+                {
+                    StartHeartBeat();
+                }
+                else
+                {
+                    StopHeartBeat();
+                }
+
+            }
+            else {
+                StopHeartBeat();
+            }
 
         };
 
         LobbyEventCallbacks.KickedFromLobby += () =>
         {
-            Debug.Log("Left Lobby");
-            Dispose();
+            Debug.Log("Kicked Executed");
+
+            if (m_lastConnectionState == LobbyEventConnectionState.Unsubscribed)
+            {
+                OnKicked.Invoke();
+                Debug.Log("Left Lobby");
+                Dispose();
+            }
+           
         };
 
         LobbyEventCallbacks.LobbyEventConnectionStateChanged += (eventData) =>
         {
+            m_lastConnectionState = eventData;
             Debug.Log($"Lobby ConnectionState Changed to {eventData}");
         };
 
@@ -202,7 +228,9 @@ public class LobbyManager : MonoBehaviour
 
         await KickPlayer(AuthenticationService.Instance.PlayerId);
 
+        Debug.Log("Left from lobby");
 
+        Dispose();
     }
 
     public async Task KickPlayer(string playerId)
@@ -224,9 +252,6 @@ public class LobbyManager : MonoBehaviour
 
             await LobbyService.Instance.RemovePlayerAsync(m_CurrentLobby.Id, playerId);
 
-            Debug.Log("Left from lobby");
-
-            Dispose();
         }
         catch (LobbyServiceException e)
         {
@@ -363,7 +388,14 @@ public class LobbyManager : MonoBehaviour
     }
 
 
-
+    void StopHeartBeat()
+    {
+        if (m_HeartBeatTask != null)
+        {
+            m_HeartBeatTask.Dispose();
+            m_HeartBeatTask = null;
+        }
+    }
     void StartHeartBeat()
     {
 #pragma warning disable 4014

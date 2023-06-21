@@ -80,7 +80,7 @@ namespace SV.UI
                 {
                     var lobby = queryResult.Results[i];
                     var item = Instantiate(m_ListItemPrefab, m_LobyItemsListParent);
-                    item.Setup($"{lobby.Name}", lobby.Players.Count, lobby.MaxPlayers);
+                    item.Setup($"{lobby.Name}", lobby.Players.Count, lobby.MaxPlayers, lobby.Id);
                     m_LobbyItems.Add(item);
                 }
 
