@@ -29,7 +29,7 @@ namespace SV.UI
             m_CreateLobby.onClick.AddListener(async () =>
             {
                
-                await LobbyManager.Instance.CreateLobby(lobbyName: m_LobbyName.text,  isPrivate: m_PrivateToggle.isOn, password: m_Lobbypassword.text);
+                await LobbyManager.Instance.CreateLobby(lobbyName: m_LobbyName.text, isPrivate: m_PrivateToggle.isOn, password: m_Lobbypassword.text);
                 UINavigationManager.Instance.Pop();
                 UINavigationManager.Instance.Navigate(m_InLobbyPage);
             });

@@ -14,7 +14,7 @@ namespace SV.UI
         [SerializeField]
         private Button m_JoinButton;
         [SerializeField]
-        private TMPro.TMP_InputField m_LobbyName;
+        private Button m_QuickJoinButton;
         [SerializeField]
         private TMPro.TMP_InputField m_Lobbypassword;
         [SerializeField]
@@ -47,17 +47,29 @@ namespace SV.UI
             m_RefreshButton.onClick.AddListener(RefershListOfLobbies);
 
             m_JoinButton.onClick.AddListener(JoinEvent);
+
+            m_QuickJoinButton.onClick.AddListener(async () => {
+                await LobbyManager.Instance.QuickJoinLobbyAsync(LobbyManager.Instance.localPlayer);
+
+                if (UINavigationManager.Instance != null)
+                {
+                    UINavigationManager.Instance.Navigate(m_InLobby);
+                }
+            });
         }
 
         private async void JoinEvent()
         {
-            await LobbyManager.Instance.JoinLobbyByIdAsync(m_LobbyName.text, m_Lobbypassword.text, LobbyManager.Instance.localPlayer);
+            await LobbyManager.Instance.JoinLobbyByIdAsync(null, m_Lobbypassword.text, LobbyManager.Instance.localPlayer);
             UINavigationManager.Instance.Navigate(m_InLobby);
 
         }
 
         private async void RefershListOfLobbies()
         {
+            if (LobbyManager.Instance == null)
+                return;
+
             for (int i = 0; i < m_LobbyItems.Count; i++)
             {
                 Destroy(m_LobbyItems[i].gameObject);

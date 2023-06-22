@@ -89,6 +89,8 @@ namespace SV.UI
             if (m_GraphicRaycaster)
                 m_GraphicRaycaster.enabled = true;
 
+            transform.SetAsLastSibling();
+           
         }
 
         

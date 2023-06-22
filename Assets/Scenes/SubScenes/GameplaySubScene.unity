@@ -520,7 +520,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   prefab: {fileID: 8599641753126581788, guid: fe0ff06c25a5ba246957ca252bc3bb20, type: 3}
   gridSize:
-    x: 3
+    x: 1
     y: 1
     z: 1
   gridOffset:
@@ -532,7 +532,7 @@ MonoBehaviour:
     y: 1
     z: -30
   relativeToSpawner: 1
-  maxCycles: 100
+  maxCycles: 20
   spawnEvery: 0.1
 --- !u!1 &383386372
 GameObject:

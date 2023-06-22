@@ -28,8 +28,8 @@ namespace SV.ECS
 
 
                 });
-                
-               
+
+
             }
         }
 
@@ -54,24 +54,30 @@ namespace SV.ECS
         public UnityEngine.SceneManagement.Scene sceneInstance;
     }
 
-    [WorldSystemFilter(WorldSystemFilterFlags.Default)]
+    [WorldSystemFilter(WorldSystemFilterFlags.Default | WorldSystemFilterFlags.ClientSimulation)]
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     public partial struct LoadSceneFromWeakObjectReferenceSystem : ISystem
     {
-       
+
         public void OnCreate(ref SystemState state)
         {
+            state.RequireAnyForUpdate(
+              state.GetEntityQuery(typeof(LoadScene)),
+              state.GetEntityQuery(typeof(UnloadScene)));
 
-            
+
         }
+
         public void OnDestroy(ref SystemState state) { }
         public void OnUpdate(ref SystemState state)
         {
 
+            Debug.Log("LoadSceneFromWeakObjectReferenceSystem OnUpdate");
+
             var query = new EntityQueryBuilder(Allocator.Temp).WithAll<LoadScene>().Build(ref state);
             var query1 = new EntityQueryBuilder(Allocator.Temp).WithAll<UnloadScene>().Build(ref state);
 
-            
+
 
             foreach (var sceneData in SystemAPI.Query<RefRO<LoadScene>>())
             {
@@ -81,7 +87,8 @@ namespace SV.ECS
                     {
                         var sceneInstance = weakScenes.ValueRW.weakSceneRef.LoadAsync(new Unity.Loading.ContentSceneParameters()
                         {
-                            loadSceneMode = UnityEngine.SceneManagement.LoadSceneMode.Additive
+                            loadSceneMode = UnityEngine.SceneManagement.LoadSceneMode.Single,
+                            autoIntegrate = true,
                         });
 
                         weakScenes.ValueRW.sceneInstance = sceneInstance;
@@ -95,7 +102,7 @@ namespace SV.ECS
 
 
                 sceneData.ValueRW.weakSceneRef.Unload(ref sceneData.ValueRW.sceneInstance);
-             
+
 
             }
 

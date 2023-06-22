@@ -36,6 +36,7 @@ public class LobbyUIListItem : MonoBehaviour
         {
             await LobbyManager.Instance.JoinLobbyByIdAsync(lobbyId, null, LobbyManager.Instance.localPlayer);
 
+            Debug.Log("Navigate InLobbyPage");
             UINavigationManager.Instance.Navigate(InLobbyPage.Instance);
         });
     }

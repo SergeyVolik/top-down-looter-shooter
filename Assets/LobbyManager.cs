@@ -1,3 +1,4 @@
+using ProjectDawn.Navigation.Sample.Zerg;
 using SV.ECS;
 using System;
 using System.Collections;
@@ -10,9 +11,29 @@ using Unity.Services.Lobbies;
 using Unity.Services.Lobbies.Models;
 using UnityEngine;
 
+[Flags]
+public enum PlayerStatus
+{
+    None = 0,
+    Connecting = 1, // User has joined a lobby but has not yet connected to Relay.
+    Lobby = 2, // User is in a lobby and connected to Relay.
+    Ready = 4, // User has selected the ready button, to ready for the "game" to start.
+    InGame = 8, // User is part of a "game" that has started.
+    Menu = 16 // User is not in a lobby, in one of the main menus.
+}
+
+[Flags] // Some UI elements will want to specify multiple states in which to be active, so this is Flags.
+public enum LobbyState
+{
+    None = 0,
+    Lobby = 1,
+    CountDown = 2,
+    InGame = 4
+}
 
 public class LobbyManager : MonoBehaviour
 {
+    private const string LocalLobbyState = "LocalLobbyState";
     [Range(1, 12)]
     public int maxLobbies = 1;
     public static LobbyManager Instance
@@ -38,10 +59,10 @@ public class LobbyManager : MonoBehaviour
     private Lobby m_CurrentLobby;
     public Lobby Lobby => m_CurrentLobby;
     public LocalPlayer localPlayer = new LocalPlayer();
-    
+
     private bool m_Awaked;
 
-    public string PlayerId => AuthenticationService.Instance.PlayerId;
+    public string LocalPlayerId => AuthenticationService.Instance.PlayerId;
     public string GetLobbyCode() => m_CurrentLobby?.LobbyCode;
     public string GetLobbyId() => m_CurrentLobby?.Id;
     public string GetLobbyName() => m_CurrentLobby?.Name;
@@ -62,12 +83,139 @@ public class LobbyManager : MonoBehaviour
 
     public LobbyEventCallbacks LobbyEventCallbacks { get; private set; } = new LobbyEventCallbacks();
 
+    public bool IsHost() => m_CurrentLobby != null && m_CurrentLobby.HostId == AuthenticationService.Instance.PlayerId;
 
+    public Player GetLocalPlayer() => m_CurrentLobby.Players.FirstOrDefault(e => e.Id == LocalPlayerId);
     public event Action<Lobby> OnLobbyChanged = delegate { };
     public event Action OnKicked = delegate { };
+
+    private void Awake()
+    {
+        if (m_Awaked == true)
+            return;
+
+        m_Awaked = true;
+
+
+
+        SetupLocalPlayer();
+
+
+    }
+    private void OnDestroy()
+    {
+        PlayerPrefs.SetString(nameof(localPlayer.DisplayName), localPlayer.DisplayName.Value);
+    }
+
+    public async Task SetLobbyStatusAsync(LobbyState status)
+    {
+        if (!InLobby())
+            return;
+
+        if (m_UpdateLobbyCooldown.TaskQueued)
+            return;
+
+        await m_UpdateLobbyCooldown.QueueUntilCooldown();
+
+
+        UpdateLobbyOptions updateOptions = new UpdateLobbyOptions();
+
+        updateOptions.Data = new Dictionary<string, DataObject>()
+        {
+            {
+                LobbyExtention.key_LobbyState, new DataObject(
+                    visibility: DataObject.VisibilityOptions.Public, // Visible publicly.
+                    value: ((int)status).ToString(),
+                    index: DataObject.IndexOptions.N1)
+            },
+        };
+
+        m_CurrentLobby = await LobbyService.Instance.UpdateLobbyAsync(m_CurrentLobby.Id, updateOptions);
+    }
+
+    public async Task SetPlayerStatusAsync(PlayerStatus status)
+    {
+        if (!InLobby())
+            return;
+
+        if (m_UpdatePlayerCooldown.TaskQueued)
+            return;
+
+        await m_UpdatePlayerCooldown.QueueUntilCooldown();
+
+        UpdatePlayerOptions options = new UpdatePlayerOptions
+        {
+              Data = new Dictionary<string, PlayerDataObject> {
+                  { 
+                      PlayerExtention.key_PlayerStatus,
+                      new PlayerDataObject ( PlayerDataObject.VisibilityOptions.Member, ((int)status).ToString())
+                  }
+              }
+        };
+
+        string playerId = AuthenticationService.Instance.PlayerId;
+
+        m_CurrentLobby = await LobbyService.Instance.UpdatePlayerAsync(m_CurrentLobby.Id, playerId, options);
+    }
+    public async Task UpdateLobbyVisabilityAsync(bool isPrivate)
+    {
+        if (m_UpdateLobbyCooldown.TaskQueued)
+            return;
+
+        await m_UpdateLobbyCooldown.QueueUntilCooldown();
+
+        UpdateLobbyOptions updateOptions = new UpdateLobbyOptions
+        {
+           
+            IsPrivate = isPrivate,
+        };
+
+        m_CurrentLobby = await LobbyService.Instance.UpdateLobbyAsync(m_CurrentLobby.Id, updateOptions);
+    }
+
+    public async Task UpdateLobbyDataAsync(Dictionary<string, string> data)
+    {
+        if (!InLobby())
+            return;
+
+        Dictionary<string, DataObject> dataCurr = m_CurrentLobby.Data ?? new Dictionary<string, DataObject>();
+
+        var shouldLock = false;
+        foreach (var dataNew in data)
+        {
+
+            DataObject dataObj = new DataObject(DataObject.VisibilityOptions.Public, dataNew.Value);
+
+            if (dataCurr.ContainsKey(dataNew.Key))
+                dataCurr[dataNew.Key] = dataObj;
+            else
+                dataCurr.Add(dataNew.Key, dataObj);
+
+            //Special Use: Get the state of the Local lobby so we can lock it from appearing in queries if it's not in the "Lobby" LocalLobbyState
+            if (dataNew.Key == LocalLobbyState)
+            {
+                Enum.TryParse(dataNew.Value, out LobbyState lobbyState);
+                shouldLock = lobbyState != LobbyState.Lobby;
+            }
+        }
+
+        //We can still update the latest data to send to the service, but we will not send multiple UpdateLobbySyncCalls
+        if (m_UpdateLobbyCooldown.TaskQueued)
+            return;
+        await m_UpdateLobbyCooldown.QueueUntilCooldown();
+
+        UpdateLobbyOptions updateOptions = new UpdateLobbyOptions
+        {
+            Data = dataCurr,
+            IsLocked = shouldLock,
+        };
+
+        m_CurrentLobby = await LobbyService.Instance.UpdateLobbyAsync(m_CurrentLobby.Id, updateOptions);
+    }
+
     public async Task BindLocalLobbyToRemote(string lobbyID)
     {
-     
+
 
         LobbyEventCallbacks.LobbyChanged += (data) =>
         {
@@ -78,7 +226,7 @@ public class LobbyManager : MonoBehaviour
                 OnLobbyChanged.Invoke(m_CurrentLobby);
 
 
-                if (m_CurrentLobby.HostId == PlayerId)
+                if (m_CurrentLobby.HostId == LocalPlayerId)
                 {
                     StartHeartBeat();
                 }
@@ -88,7 +236,8 @@ public class LobbyManager : MonoBehaviour
                 }
 
             }
-            else {
+            else
+            {
                 StopHeartBeat();
             }
 
@@ -104,7 +253,7 @@ public class LobbyManager : MonoBehaviour
                 Debug.Log("Left Lobby");
                 Dispose();
             }
-           
+
         };
 
         LobbyEventCallbacks.LobbyEventConnectionStateChanged += (eventData) =>
@@ -119,11 +268,33 @@ public class LobbyManager : MonoBehaviour
     }
 
 
-    void ParseCustomPlayerData(LocalPlayer player, string dataKey, string playerDataValue)
-    {
 
-        
-            player.DisplayName.Value = playerDataValue;
+    public async Task<Lobby> QuickJoinLobbyAsync(LocalPlayer localUser)
+    {
+        //We dont want to queue a quickjoin
+        if (m_QuickJoinCooldown.IsCoolingDown)
+        {
+            UnityEngine.Debug.LogWarning("Quick Join Lobby hit the rate limit.");
+            return null;
+        }
+
+        await m_QuickJoinCooldown.QueueUntilCooldown();
+        List<QueryFilter> filters = new List<QueryFilter>();
+
+
+        string uasId = AuthenticationService.Instance.PlayerId;
+
+        var joinRequest = new QuickJoinLobbyOptions
+        {
+            Filter = filters,
+            Player = new Player(id: uasId, data: CreateInitialPlayerData(localUser))
+        };
+
+        m_CurrentLobby = await LobbyService.Instance.QuickJoinLobbyAsync(joinRequest);
+
+        await BindLocalLobbyToRemote(m_CurrentLobby.Id);
+
+        return m_CurrentLobby;
     }
 
     public bool InLobby()
@@ -137,19 +308,7 @@ public class LobbyManager : MonoBehaviour
         return true;
     }
 
-    private void Awake()
-    {
-        if (m_Awaked == true)
-            return;
 
-        m_Awaked = true;
-
-
-
-        SetupLocalPlayer();
-
-
-    }
 
     private void SetupLocalPlayer()
     {
@@ -161,14 +320,10 @@ public class LobbyManager : MonoBehaviour
         }
     }
 
-    private void OnDestroy()
-    {
-        PlayerPrefs.SetString(nameof(localPlayer.DisplayName), localPlayer.DisplayName.Value);
-    }
 
 
 
-    public bool IsHost() => m_CurrentLobby != null && m_CurrentLobby.HostId == AuthenticationService.Instance.PlayerId;
+
 
     public async Task<QueryResponse> QueryLobbies(int items = 25)
     {
@@ -216,7 +371,7 @@ public class LobbyManager : MonoBehaviour
     {
         m_CurrentLobby = null;
         LobbyEventCallbacks = new LobbyEventCallbacks();
-       
+
     }
 
     public async void LeaveLobby()
@@ -311,9 +466,9 @@ public class LobbyManager : MonoBehaviour
         options.Data = new Dictionary<string, DataObject>()
         {
             {
-                "Password", new DataObject(
+                LobbyExtention.key_LobbyState, new DataObject(
                     visibility: DataObject.VisibilityOptions.Public, // Visible publicly.
-                    value: "25",
+                    value: ((int)LobbyState.Lobby).ToString(),
                     index: DataObject.IndexOptions.N1)
             },
         };
@@ -321,8 +476,8 @@ public class LobbyManager : MonoBehaviour
 
         m_CurrentLobby = await LobbyService.Instance.CreateLobbyAsync(lobbyName, maxPlayers, options);
 
-    
-       
+
+
 
         await BindLocalLobbyToRemote(m_CurrentLobby.Id);
 
@@ -364,8 +519,8 @@ public class LobbyManager : MonoBehaviour
             Debug.Log($"Join with lobbyCode: {lobbyCode}");
         }
 
-      
-      
+
+
         await BindLocalLobbyToRemote(m_CurrentLobby.Id);
 
 
@@ -415,14 +570,11 @@ public class LobbyManager : MonoBehaviour
 
     void OnApplicationQuit()
     {
-        RemoveCreateLobbies();
+        LeaveLobby();
+       
     }
 
-    private void RemoveCreateLobbies()
-    {
-        DeleteCurrentLobby();
 
-    }
 }
 
 public class CallbackValue<T>
@@ -542,11 +694,11 @@ public class ServiceRateLimiter
 [Serializable]
 public class LocalPlayer
 {
-    
+
     public CallbackValue<string> DisplayName = new CallbackValue<string>("");
-   
+
     public const string key_DisplayName = nameof(DisplayName);
-    
+
 
     public LocalPlayer()
     {
@@ -558,11 +710,38 @@ public class LocalPlayer
 
 public static class LobbyExtention
 {
-   
+    public const string key_LobbyState = "LobbyState";
+    public static LobbyState GetLobbyState(this Lobby Lobby)
+    {
+        var result = Lobby.Data.TryGetValue(key_LobbyState, out var dataValue);
 
+
+        if (result)
+        {
+            return (LobbyState)int.Parse(dataValue.Value);
+        }
+        return LobbyState.None;
+
+    }
+
+    public static int GetReadyPlayersCount(this Lobby Lobby)
+    {
+        int ready = 0;
+
+
+        foreach (var item in Lobby.Players)
+        {
+            if (item.GetStatus() == PlayerStatus.Ready)
+            {
+                ready++;
+            }
+        }
+        return ready;
+    }
 }
 public static class PlayerExtention
 {
+    public const string key_PlayerStatus = "PlayerStatus";
     public static bool IsHost(this Player player, Lobby lobby)
     {
         return lobby.HostId == player.Id;
@@ -570,9 +749,29 @@ public static class PlayerExtention
 
     public static bool TryGetDisplayName(this Player player, out string DisplayName)
     {
+        DisplayName = null;
 
         var result = player.Data.TryGetValue(LocalPlayer.key_DisplayName, out var name);
-        DisplayName = name.Value;
+
+       
+        if (result)
+        {
+            DisplayName = name.Value;
+        }
+       
         return result;
     }
+
+    public static PlayerStatus GetStatus(this Player player)
+    {
+        var result = player.Data.TryGetValue(key_PlayerStatus, out var playerDataValue);
+
+        if (result)
+        {
+            return (PlayerStatus)int.Parse(playerDataValue.Value);
+        }
+        return PlayerStatus.None;
+    }
+
+  
 }

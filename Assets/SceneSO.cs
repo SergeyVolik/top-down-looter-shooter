@@ -1,36 +1,18 @@
 using Sirenix.OdinInspector;
 using SV.ECS;
-using System.Collections;
-using System.Collections.Generic;
 using Unity.Entities;
 using Unity.Entities.Content;
-using Unity.Entities.Serialization;
 #if UNITY_EDITOR
-using UnityEditor;
 #endif
 using UnityEngine;
 
 [CreateAssetMenu]
 public class SceneSO : ScriptableObject
 {
-#if UNITY_EDITOR
-    public SceneAsset sceneAsset;
-#endif
-    [ReadOnly]
-    public SerializableGuid sceneGuid;
 
     public WeakObjectSceneReference scene;
    
 
-    private void OnValidate()
-    {
-#if UNITY_EDITOR
-        var guid = AssetDatabase.GUIDFromAssetPath(AssetDatabase.GetAssetPath(sceneAsset));
-    
-        Debug.Log($"scene guid {guid.ToString()}");
-        sceneGuid = guid.ToString();
-#endif
-    }
 
     [Button]
     public void LoadScene()
@@ -43,6 +25,8 @@ public class SceneSO : ScriptableObject
             scene = scene
 
         });
+
+        Debug.Log("Load scene");
     }
 
     [Button]
@@ -56,13 +40,12 @@ public class SceneSO : ScriptableObject
 
              scene = scene
         });
+
+        Debug.Log("Unload scene");
+
     }
 
-    [Button]
-    private void UpdateGuid()
-    {
-        OnValidate();
-    }
+
 
 }
 
