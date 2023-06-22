@@ -33,9 +33,8 @@ public enum LobbyState
 
 public class LobbyManager : MonoBehaviour
 {
-    private const string LocalLobbyState = "LocalLobbyState";
-    [Range(1, 12)]
-    public int maxLobbies = 1;
+    
+    public const int maxPlayers = 4;
     public static LobbyManager Instance
     {
         get
@@ -107,33 +106,9 @@ public class LobbyManager : MonoBehaviour
         PlayerPrefs.SetString(nameof(localPlayer.DisplayName), localPlayer.DisplayName.Value);
     }
 
-    public async Task SetLobbyStatusAsync(LobbyState status)
-    {
-        if (!InLobby())
-            return;
+    
 
-        if (m_UpdateLobbyCooldown.TaskQueued)
-            return;
-
-        await m_UpdateLobbyCooldown.QueueUntilCooldown();
-
-
-        UpdateLobbyOptions updateOptions = new UpdateLobbyOptions();
-
-        updateOptions.Data = new Dictionary<string, DataObject>()
-        {
-            {
-                LobbyExtention.key_LobbyState, new DataObject(
-                    visibility: DataObject.VisibilityOptions.Public, // Visible publicly.
-                    value: ((int)status).ToString(),
-                    index: DataObject.IndexOptions.N1)
-            },
-        };
-
-        m_CurrentLobby = await LobbyService.Instance.UpdateLobbyAsync(m_CurrentLobby.Id, updateOptions);
-    }
-
-    public async Task SetPlayerStatusAsync(PlayerStatus status)
+    public async Task UpdatePlayerAsync(UpdatePlayerBuilder builder )
     {
         if (!InLobby())
             return;
@@ -143,75 +118,28 @@ public class LobbyManager : MonoBehaviour
 
         await m_UpdatePlayerCooldown.QueueUntilCooldown();
 
-        UpdatePlayerOptions options = new UpdatePlayerOptions
-        {
-              Data = new Dictionary<string, PlayerDataObject> {
-                  { 
-                      PlayerExtention.key_PlayerStatus,
-                      new PlayerDataObject ( PlayerDataObject.VisibilityOptions.Member, ((int)status).ToString())
-                  }
-              }
-        };
+
+      
 
         string playerId = AuthenticationService.Instance.PlayerId;
 
-        m_CurrentLobby = await LobbyService.Instance.UpdatePlayerAsync(m_CurrentLobby.Id, playerId, options);
+        m_CurrentLobby = await LobbyService.Instance.UpdatePlayerAsync(m_CurrentLobby.Id, playerId, builder.Build());
     }
-    public async Task UpdateLobbyVisabilityAsync(bool isPrivate)
+
+    public async Task UpdateLobby(UpdateLobbyBuilder updateOptions)
     {
         if (m_UpdateLobbyCooldown.TaskQueued)
             return;
 
         await m_UpdateLobbyCooldown.QueueUntilCooldown();
 
-        UpdateLobbyOptions updateOptions = new UpdateLobbyOptions
-        {
-           
-            IsPrivate = isPrivate,
-        };
-
-        m_CurrentLobby = await LobbyService.Instance.UpdateLobbyAsync(m_CurrentLobby.Id, updateOptions);
+        
+        m_CurrentLobby = await LobbyService.Instance.UpdateLobbyAsync(m_CurrentLobby.Id, updateOptions.Build());
     }
 
-    public async Task UpdateLobbyDataAsync(Dictionary<string, string> data)
-    {
-        if (!InLobby())
-            return;
+  
 
-        Dictionary<string, DataObject> dataCurr = m_CurrentLobby.Data ?? new Dictionary<string, DataObject>();
 
-        var shouldLock = false;
-        foreach (var dataNew in data)
-        {
-
-            DataObject dataObj = new DataObject(DataObject.VisibilityOptions.Public, dataNew.Value);
-
-            if (dataCurr.ContainsKey(dataNew.Key))
-                dataCurr[dataNew.Key] = dataObj;
-            else
-                dataCurr.Add(dataNew.Key, dataObj);
-
-            //Special Use: Get the state of the Local lobby so we can lock it from appearing in queries if it's not in the "Lobby" LocalLobbyState
-            if (dataNew.Key == LocalLobbyState)
-            {
-                Enum.TryParse(dataNew.Value, out LobbyState lobbyState);
-                shouldLock = lobbyState != LobbyState.Lobby;
-            }
-        }
-
-        //We can still update the latest data to send to the service, but we will not send multiple UpdateLobbySyncCalls
-        if (m_UpdateLobbyCooldown.TaskQueued)
-            return;
-        await m_UpdateLobbyCooldown.QueueUntilCooldown();
-
-        UpdateLobbyOptions updateOptions = new UpdateLobbyOptions
-        {
-            Data = dataCurr,
-            IsLocked = shouldLock,
-        };
-
-        m_CurrentLobby = await LobbyService.Instance.UpdateLobbyAsync(m_CurrentLobby.Id, updateOptions);
-    }
 
     public async Task BindLocalLobbyToRemote(string lobbyID)
     {
@@ -439,7 +367,7 @@ public class LobbyManager : MonoBehaviour
         return data;
     }
 
-    public async Task CreateLobby(string lobbyName, bool isPrivate, string password = null, int maxPlayers = 4)
+    public async Task CreateLobby(string lobbyName, bool isPrivate, int maxPlayers = 4)
     {
         if (m_CreateCooldown.IsCoolingDown)
         {
@@ -462,6 +390,9 @@ public class LobbyManager : MonoBehaviour
         options.Player = new Player(
             id: AuthenticationService.Instance.PlayerId,
             data: initplayerData);
+
+
+       
 
         options.Data = new Dictionary<string, DataObject>()
         {
@@ -573,7 +504,6 @@ public class LobbyManager : MonoBehaviour
         LeaveLobby();
        
     }
-
 
 }
 
@@ -706,11 +636,115 @@ public class LocalPlayer
     }
 }
 
+public class UpdateLobbyBuilder
+{
+    private UpdateLobbyOptions updateOptions;
 
+    public UpdateLobbyBuilder()
+    {
+        updateOptions = new UpdateLobbyOptions
+        {
+
+             Data = new Dictionary<string, DataObject>(),
+
+        };
+    }
+
+    public UpdateLobbyBuilder SetPrivate(bool isPrivate)
+    {
+        updateOptions.IsPrivate = isPrivate;
+        return this;
+    }
+
+    public UpdateLobbyBuilder SetLocked(bool isLocked)
+    {
+        updateOptions.IsLocked = isLocked;
+        return this;
+    }
+
+    public UpdateLobbyBuilder SetHostId(string hostId)
+    {
+        updateOptions.HostId = hostId;
+        return this;
+    }
+
+    public UpdateLobbyBuilder SetMaxPlayers(int maxPlayers)
+    {
+        updateOptions.MaxPlayers = maxPlayers;
+        return this;
+    }
+
+    public UpdateLobbyBuilder SetName(string name)
+    {
+        updateOptions.Name = name;
+        return this;
+    }
+
+    public UpdateLobbyBuilder SetLobbyStatus(LobbyState state)
+    {
+        DataObject data = new DataObject(DataObject.VisibilityOptions.Public, ((int)state).ToString(), DataObject.IndexOptions.N1);
+        updateOptions.Data.Add(LobbyExtention.key_LobbyState, data);
+        return this;
+    }
+
+    public UpdateLobbyBuilder SetRaplyCode(string replayCode)
+    {
+        DataObject data = new DataObject(DataObject.VisibilityOptions.Public, replayCode, DataObject.IndexOptions.S1);
+        updateOptions.Data.Add(LobbyExtention.key_RelayCode, data);
+        return this;
+    }
+
+    public UpdateLobbyOptions Build()
+    {
+        return updateOptions;
+    }
+
+}
+
+public class UpdatePlayerBuilder
+{
+    private UpdatePlayerOptions updateOptions;
+
+    public UpdatePlayerBuilder()
+    {
+        updateOptions = new UpdatePlayerOptions
+        {
+
+            Data = new Dictionary<string, PlayerDataObject>()
+
+        };
+    }
+
+    public UpdatePlayerBuilder SetDiplayName(string name)
+    {
+        updateOptions.Data.Add(
+            LocalPlayer.key_DisplayName,
+            new PlayerDataObject(PlayerDataObject.VisibilityOptions.Member, name));
+                  
+        return this;
+    }
+
+    public UpdatePlayerBuilder SetPlayerStatus(PlayerStatus status)
+    {
+        updateOptions.Data.Add(
+           PlayerExtention.key_PlayerStatus,
+           new PlayerDataObject(PlayerDataObject.VisibilityOptions.Member, ((int)status).ToString()));
+        return this;
+    }
+
+
+
+    public UpdatePlayerOptions Build()
+    {
+        return updateOptions;
+    }
+
+}
 
 public static class LobbyExtention
 {
     public const string key_LobbyState = "LobbyState";
+    public const string key_RelayCode = "RelayCode";
     public static LobbyState GetLobbyState(this Lobby Lobby)
     {
         var result = Lobby.Data.TryGetValue(key_LobbyState, out var dataValue);
@@ -721,6 +755,20 @@ public static class LobbyExtention
             return (LobbyState)int.Parse(dataValue.Value);
         }
         return LobbyState.None;
+
+    }
+
+    public static string GetReplayCode(this Lobby Lobby)
+    {
+        var result = Lobby.Data.TryGetValue(key_RelayCode, out var dataValue);
+
+
+        if (result)
+        {
+            return dataValue.Value;
+        }
+
+        return null;
 
     }
 

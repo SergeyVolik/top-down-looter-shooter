@@ -1,6 +1,12 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using Unity.Entities;
+using Unity.Networking.Transport;
+using Unity.Networking.Transport.Relay;
+using Unity.Services.Lobbies.Models;
+using Unity.Services.Relay;
+using Unity.Services.Relay.Models;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.SceneManagement;
@@ -53,7 +59,19 @@ namespace SV.UI
             });
             m_StartGameButton.onClick.AddListener(async () =>
             {
-                await LobbyManager.Instance.SetLobbyStatusAsync(LobbyState.InGame);
+
+                var regionList = await RelayService.Instance.ListRegionsAsync();
+                var targetRegion = regionList[0].Id;
+
+
+                var allocation = await RelayService.Instance.CreateAllocationAsync(LobbyManager.maxPlayers, targetRegion);
+
+                var joinCodeTask = await RelayService.Instance.GetJoinCodeAsync(allocation.AllocationId);
+
+                
+                await LobbyManager.Instance.UpdateLobby(
+                    new UpdateLobbyBuilder()
+                    .SetLobbyStatus(LobbyState.InGame));
                 
             });
 
@@ -61,6 +79,30 @@ namespace SV.UI
 
         }
 
+        static RelayServerData HostRelayData(Allocation allocation, string connectionType = "dtls")
+        {
+            // Select endpoint based on desired connectionType
+            var endpoint = RelayUtilities.GetEndpointForConnectionType(allocation.ServerEndpoints, connectionType);
+            if (endpoint == null)
+            {
+                throw new InvalidOperationException($"endpoint for connectionType {connectionType} not found");
+            }
+
+            // Prepare the server endpoint using the Relay server IP and port
+            var serverEndpoint = NetworkEndpoint.Parse(endpoint.Host, (ushort)endpoint.Port);
+
+            // UTP uses pointers instead of managed arrays for performance reasons, so we use these helper functions to convert them
+            var allocationIdBytes = RelayAllocationId.FromByteArray(allocation.AllocationIdBytes);
+            var connectionData = RelayConnectionData.FromByteArray(allocation.ConnectionData);
+            var key = RelayHMACKey.FromByteArray(allocation.Key);
+
+            // Prepare the Relay server data and compute the nonce value
+            // The host passes its connectionData twice into this function
+            var relayServerData = new RelayServerData(ref serverEndpoint, 0, ref allocationIdBytes, ref connectionData,
+                ref connectionData, ref key, connectionType == "dtls");
+
+            return relayServerData;
+        }
 
 
         private async void UpdateReadyToggle(bool value)
@@ -69,11 +111,11 @@ namespace SV.UI
 
             if (value)
             {
-                await LobbyManager.Instance.SetPlayerStatusAsync(PlayerStatus.Ready);
+                await LobbyManager.Instance.UpdatePlayerAsync(new UpdatePlayerBuilder().SetPlayerStatus(PlayerStatus.Ready));
             }
             else
             {
-                await LobbyManager.Instance.SetPlayerStatusAsync(PlayerStatus.Lobby);
+                await LobbyManager.Instance.UpdatePlayerAsync(new UpdatePlayerBuilder().SetPlayerStatus(PlayerStatus.Lobby));
             }
         }
         public override void Show()
@@ -101,7 +143,7 @@ namespace SV.UI
 
         }
 
-        private void UpdatePageData()
+        private async void UpdatePageData()
         {
             var isHost = LobbyManager.Instance.IsHost();
             var readyPlayers = LobbyManager.Instance.Lobby.GetReadyPlayersCount();
@@ -150,11 +192,8 @@ namespace SV.UI
                 {
                     SceneManager.LoadSceneAsync(2, LoadSceneMode.Additive);
                 };
-                
-              
 
-
-
+               
             }
         }
 
@@ -162,7 +201,7 @@ namespace SV.UI
         {
 
 
-            await LobbyManager.Instance.UpdateLobbyVisabilityAsync(value);
+            await LobbyManager.Instance.UpdateLobby(new UpdateLobbyBuilder().SetPrivate(value));
 
         }
 
