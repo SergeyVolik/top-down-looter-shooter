@@ -13,11 +13,12 @@ using Unity.Services.Core;
 using Unity.Services.Relay;
 using Unity.Services.Relay.Models;
 using UnityEngine;
+using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 public class RelayConnection : MonoBehaviour
 {
-    HostServer m_HostServerSystem;
-    private ConnectingPlayer m_HostClientSystem;
+    
 
     public static RelayConnection Instance { get; private set; }
 
@@ -25,41 +26,248 @@ public class RelayConnection : MonoBehaviour
     {
         Instance = this;
     }
-    public void HostServer()
+    protected void DestroyLocalSimulationWorld()
+    {
+        foreach (var world in World.All)
+        {
+            if (world.Flags == WorldFlags.Game)
+            {
+               
+                world.Dispose();
+                break;
+            }
+        }
+    }
+    #region Client
+    void SetupClient()
     {
         var world = World.All[0];
-        m_HostServerSystem = world.GetOrCreateSystemManaged<HostServer>();
+       
+        var simGroup = world.GetExistingSystemManaged<SimulationSystemGroup>();
+       
+    }
+
+    public async void JoinAsClient(string joinCode)
+    {
+        SetupClient();
+        var world = World.All[0];
+        var enableRelayServerEntity = world.EntityManager.CreateEntity(ComponentType.ReadWrite<EnableRelayServer>());
+        world.EntityManager.AddComponent<EnableRelayServer>(enableRelayServerEntity);
+
+
+        await ConnectToRelayServer(joinCode);
+
+        Debug.Log($"Cliend connected. replayCode: {joinCode}");
+    }
+
+    async Task ConnectToRelayServer(string hostServerJoinCode)
+    {
+        var allocation = await RelayService.Instance.JoinAllocationAsync(hostServerJoinCode);
+        var relayClientData = PlayerRelayData(allocation);
+
+        var oldConstructor = NetworkStreamReceiveSystem.DriverConstructor;
+        NetworkStreamReceiveSystem.DriverConstructor = new RelayDriverConstructor(new RelayServerData(), relayClientData);
+        var client = ClientServerBootstrap.CreateClientWorld("ClientWorld");
+        NetworkStreamReceiveSystem.DriverConstructor = oldConstructor;
+  
+
+        //Destroy the local simulation world to avoid the game scene to be loaded into it
+        //This prevent rendering (rendering from multiple world with presentation is not greatly supported)
+        //and other issues.
+        DestroyLocalSimulationWorld();
+        if (World.DefaultGameObjectInjectionWorld == null)
+            World.DefaultGameObjectInjectionWorld = client;
+
+       
+
+        var networkStreamEntity = client.EntityManager.CreateEntity(ComponentType.ReadWrite<NetworkStreamRequestConnect>());
+        client.EntityManager.SetName(networkStreamEntity, "NetworkStreamRequestConnect");
+        // For IPC this will not work and give an error in the transport layer. For this sample we force the client to connect through the relay service.
+        // For a locally hosted server, the client would need to connect to NetworkEndpoint.AnyIpv4, and the relayClientData.Endpoint in all other cases.
+        client.EntityManager.SetComponentData(networkStreamEntity, new NetworkStreamRequestConnect { Endpoint = relayClientData.Endpoint });
+    }
+
+    static RelayServerData PlayerRelayData(JoinAllocation allocation, string connectionType = "dtls")
+    {
+        // Select endpoint based on desired connectionType
+        var endpoint = RelayUtilities.GetEndpointForConnectionType(allocation.ServerEndpoints, connectionType);
+        if (endpoint == null)
+        {
+            throw new Exception($"endpoint for connectionType {connectionType} not found");
+        }
+
+        // Prepare the server endpoint using the Relay server IP and port
+        var serverEndpoint = NetworkEndpoint.Parse(endpoint.Host, (ushort)endpoint.Port);
+
+        // UTP uses pointers instead of managed arrays for performance reasons, so we use these helper functions to convert them
+        var allocationIdBytes = RelayAllocationId.FromByteArray(allocation.AllocationIdBytes);
+        var connectionData = RelayConnectionData.FromByteArray(allocation.ConnectionData);
+        var hostConnectionData = RelayConnectionData.FromByteArray(allocation.HostConnectionData);
+        var key = RelayHMACKey.FromByteArray(allocation.Key);
+
+        // Prepare the Relay server data and compute the nonce values
+        // A player joining the host passes its own connectionData as well as the host's
+        var relayServerData = new RelayServerData(ref serverEndpoint, 0, ref allocationIdBytes, ref connectionData,
+            ref hostConnectionData, ref key, connectionType == "dtls");
+
+        return relayServerData;
+    }
+    #endregion
+
+    #region Server
+
+
+    async Task SetupRelayHostedServerAndConnect(Allocation allocation, string hostServerJoinCode)
+    {
+        if (ClientServerBootstrap.RequestedPlayType != ClientServerBootstrap.PlayType.ClientAndServer)
+        {
+            UnityEngine.Debug.LogError($"Creating client/server worlds is not allowed if playmode is set to {ClientServerBootstrap.RequestedPlayType}");
+            return;
+        }
+
+      
+
+        var  joinTask =  await RelayService.Instance.JoinAllocationAsync(hostServerJoinCode);
+        var relayClientData = PlayerRelayData(joinTask);
+        var relayServerData = HostRelayData(allocation);
+
+        var world = World.All[0];
+        
+
+        var oldConstructor = NetworkStreamReceiveSystem.DriverConstructor;
+        NetworkStreamReceiveSystem.DriverConstructor = new RelayDriverConstructor(relayServerData, relayClientData);
+        var server = ClientServerBootstrap.CreateServerWorld("ServerWorld");
+        var client = ClientServerBootstrap.CreateClientWorld("ClientWorld");
+        NetworkStreamReceiveSystem.DriverConstructor = oldConstructor;
+
+      
+
+        //Destroy the local simulation world to avoid the game scene to be loaded into it
+        //This prevent rendering (rendering from multiple world with presentation is not greatly supported)
+        //and other issues.
+        DestroyLocalSimulationWorld();
+        if (World.DefaultGameObjectInjectionWorld == null)
+            World.DefaultGameObjectInjectionWorld = server;
+
+       
+
+        var joinCodeEntity = server.EntityManager.CreateEntity(ComponentType.ReadOnly<JoinCode>());
+        server.EntityManager.SetComponentData(joinCodeEntity, new JoinCode { Value = hostServerJoinCode });
+
+        var networkStreamEntity = server.EntityManager.CreateEntity(ComponentType.ReadWrite<NetworkStreamRequestListen>());
+        server.EntityManager.SetName(networkStreamEntity, "NetworkStreamRequestListen");
+        server.EntityManager.SetComponentData(networkStreamEntity, new NetworkStreamRequestListen { Endpoint = NetworkEndpoint.AnyIpv4 });
+
+        networkStreamEntity = client.EntityManager.CreateEntity(ComponentType.ReadWrite<NetworkStreamRequestConnect>());
+        client.EntityManager.SetName(networkStreamEntity, "NetworkStreamRequestConnect");
+        // For IPC this will not work and give an error in the transport layer. For this sample we force the client to connect through the relay service.
+        // For a locally hosted server, the client would need to connect to NetworkEndpoint.AnyIpv4, and the relayClientData.Endpoint in all other cases.
+        client.EntityManager.SetComponentData(networkStreamEntity, new NetworkStreamRequestConnect { Endpoint = relayClientData.Endpoint });
+
+        Debug.Log($"Cliend/Server started replayCode {hostServerJoinCode}");
+    }
+
+    public async Task<string> HostServerAndClient()
+    {
+        var regionList = await RelayService.Instance.ListRegionsAsync();
+        var targetRegion = regionList[0].Id;
+
+
+        var allocation = await RelayService.Instance.CreateAllocationAsync(LobbyManager.maxPlayers, targetRegion);
+
+        var joinCode = await RelayService.Instance.GetJoinCodeAsync(allocation.AllocationId);
+
+        var world = World.All[0];
+      
         var enableRelayServerEntity = world.EntityManager.CreateEntity(ComponentType.ReadWrite<EnableRelayServer>());
         world.EntityManager.AddComponent<EnableRelayServer>(enableRelayServerEntity);
 
        
-        var simGroup = world.GetExistingSystemManaged<SimulationSystemGroup>();
-        simGroup.AddSystemToUpdateList(m_HostServerSystem);
+      
+       
+        await SetupRelayHostedServerAndConnect(allocation, joinCode);
+
+
+        return joinCode;
     }
 
-    void SetupClient()
+    static RelayServerData HostRelayData(Allocation allocation, string connectionType = "dtls")
     {
-        var world = World.All[0];
-        m_HostClientSystem = world.GetOrCreateSystemManaged<ConnectingPlayer>();
-        
-        var simGroup = world.GetExistingSystemManaged<SimulationSystemGroup>();
-        simGroup.AddSystemToUpdateList(m_HostClientSystem);
-    }
-
-    public void Disconnect()
-    {
-        var clientServerWorlds = new List<World>();
-        foreach (var world in World.All)
+        // Select endpoint based on desired connectionType
+        var endpoint = RelayUtilities.GetEndpointForConnectionType(allocation.ServerEndpoints, connectionType);
+        if (endpoint == null)
         {
-            if (world.IsClient() || world.IsServer())
-                clientServerWorlds.Add(world);
+            throw new InvalidOperationException($"endpoint for connectionType {connectionType} not found");
         }
 
-        foreach (var world in clientServerWorlds)
-            world.Dispose();
+        // Prepare the server endpoint using the Relay server IP and port
+        var serverEndpoint = NetworkEndpoint.Parse(endpoint.Host, (ushort)endpoint.Port);
 
-       
-        ClientServerBootstrap.CreateLocalWorld("DefaultWorld");
+        // UTP uses pointers instead of managed arrays for performance reasons, so we use these helper functions to convert them
+        var allocationIdBytes = RelayAllocationId.FromByteArray(allocation.AllocationIdBytes);
+        var connectionData = RelayConnectionData.FromByteArray(allocation.ConnectionData);
+        var key = RelayHMACKey.FromByteArray(allocation.Key);
+
+        // Prepare the Relay server data and compute the nonce value
+        // The host passes its connectionData twice into this function
+        var relayServerData = new RelayServerData(ref serverEndpoint, 0, ref allocationIdBytes, ref connectionData,
+            ref connectionData, ref key, connectionType == "dtls");
+
+        return relayServerData;
+    }
+
+    #endregion
+
+}
+
+public struct JoinCode : IComponentData
+{
+    public FixedString64Bytes Value;
+}
+
+public class RelayHUD : MonoBehaviour
+{
+    public Text JoinCodeLabel;
+
+    public void Awake()
+    {
+        var world = World.All[0];
+        var joinQuery = world.EntityManager.CreateEntityQuery(ComponentType.ReadOnly<JoinCode>());
+        if (joinQuery.HasSingleton<JoinCode>())
+        {
+            var joinCode = joinQuery.GetSingleton<JoinCode>().Value;
+            JoinCodeLabel.text = $"Join code: {joinCode}";
+        }
+    }
+}
+
+public class RelayDriverConstructor : INetworkStreamDriverConstructor
+{
+    RelayServerData m_RelayClientData;
+    RelayServerData m_RelayServerData;
+
+    public RelayDriverConstructor(RelayServerData serverData, RelayServerData clientData)
+    {
+        m_RelayServerData = serverData;
+        m_RelayClientData = clientData;
+    }
+
+    /// <summary>
+    /// This method will ensure that we only register a UDP driver. This forces the client to always go through the
+    /// relay service. In a setup with client-hosted servers it will make sense to allow for IPC connections and
+    /// UDP both, which is what invoking
+    /// <see cref="DefaultDriverBuilder.RegisterClientDriver(World, ref NetworkDriverStore, NetDebug, ref RelayServerData)"/> will do.
+    /// </summary>
+    public void CreateClientDriver(World world, ref NetworkDriverStore driverStore, NetDebug netDebug)
+    {
+        var settings = DefaultDriverBuilder.GetNetworkSettings();
+        settings.WithRelayParameters(ref m_RelayClientData);
+        DefaultDriverBuilder.RegisterClientUdpDriver(world, ref driverStore, netDebug, settings);
+    }
+
+    public void CreateServerDriver(World world, ref NetworkDriverStore driverStore, NetDebug netDebug)
+    {
+        DefaultDriverBuilder.RegisterServerDriver(world, ref driverStore, netDebug, ref m_RelayServerData);
     }
 }
 
@@ -89,280 +297,7 @@ public class EnableRelayServerAuthoring : MonoBehaviour
 /// 4. Retrieving join code
 /// 5. Getting relay server information. I.e. IP-address, etc.
 /// </summary>
-[DisableAutoCreation]
-[UpdateInGroup(typeof(SimulationSystemGroup))]
-public partial class HostServer : SystemBase
-{
 
-    const int RelayMaxConnections = 4;
-    public string JoinCode;
-
-    public RelayServerData RelayServerData;
-    HostStatus m_HostStatus;
-    Task<List<Region>> m_RegionsTask;
-    Task<Allocation> m_AllocationTask;
-    Task<string> m_JoinCodeTask;
-    Task m_InitializeTask;
-    Task m_SignInTask;
-
-    [Flags]
-    enum HostStatus
-    {
-        Unknown,
-        InitializeServices,
-        Initializing,
-        SigningIn,
-        FailedToHost,
-        Ready,
-        GettingRegions,
-        Allocating,
-        GettingJoinCode,
-        GetRelayData,
-    }
-
-    protected override void OnCreate()
-    {
-        RequireForUpdate<EnableRelayServer>();
-        m_HostStatus = HostStatus.InitializeServices;
-    }
-
-    protected override void OnUpdate()
-    {
-        switch (m_HostStatus)
-        {
-            case HostStatus.FailedToHost:
-                {
-
-                Debug.Log($"Failed check console {HostStatus.FailedToHost.ToString()}");
-                   
-
-                    m_HostStatus = HostStatus.Unknown;
-                    return;
-                }
-            case HostStatus.Ready:
-                {
-
-                    Debug.Log("Success, players may now connect");
-                
-
-                    m_HostStatus = HostStatus.Unknown;
-                    return;
-                }
-            case HostStatus.InitializeServices:
-                {
-
-                    Debug.Log("Initializing services");
-                    m_InitializeTask = UnityServices.InitializeAsync();
-                    m_HostStatus = HostStatus.Initializing;
-                    return;
-                }
-            case HostStatus.Initializing:
-                {
-                    m_HostStatus = WaitForInitialization(m_InitializeTask, out m_SignInTask);
-                    return;
-                }
-            case HostStatus.SigningIn:
-                {
-
-                    Debug.Log("Logging in anonymously");
-                    m_HostStatus = WaitForSignIn(m_SignInTask, out m_RegionsTask);
-                    return;
-                }
-            case HostStatus.GettingRegions:
-                {
-
-                    Debug.Log("Waiting for regions");
-                    m_HostStatus = WaitForRegions(m_RegionsTask, out m_AllocationTask);
-                    return;
-                }
-            case HostStatus.Allocating:
-                {
-
-                    Debug.Log("Waiting for allocation");
-                    m_HostStatus = WaitForAllocations(m_AllocationTask, out m_JoinCodeTask);
-                    return;
-                }
-            case HostStatus.GettingJoinCode:
-                {
-
-                    Debug.Log("Waiting for join code");
-                    m_HostStatus = WaitForJoin(m_JoinCodeTask, out JoinCode);
-                    return;
-                }
-            case HostStatus.GetRelayData:
-                {
-
-                    Debug.Log("Getting relay data");
-                    m_HostStatus = BindToHost(m_AllocationTask, out RelayServerData);
-                    return;
-                }
-            case HostStatus.Unknown:
-            default:
-                break;
-        }
-    }
-
-    static HostStatus WaitForSignIn(Task signInTask, out Task<List<Region>> regionTask)
-    {
-        if (!signInTask.IsCompleted)
-        {
-            regionTask = default;
-            return HostStatus.SigningIn;
-        }
-
-        if (signInTask.IsFaulted)
-        {
-            Debug.LogError("Signing in failed");
-            Debug.LogException(signInTask.Exception);
-            regionTask = default;
-            return HostStatus.FailedToHost;
-        }
-
-        // Request list of valid regions
-        regionTask = RelayService.Instance.ListRegionsAsync();
-        return HostStatus.GettingRegions;
-    }
-
-    static HostStatus WaitForInitialization(Task initializeTask, out Task nextTask)
-    {
-        if (!initializeTask.IsCompleted)
-        {
-            nextTask = default;
-            return HostStatus.Initializing;
-        }
-
-        if (initializeTask.IsFaulted)
-        {
-            Debug.LogError("UnityServices Initialization failed");
-            Debug.LogException(initializeTask.Exception);
-            nextTask = default;
-            return HostStatus.FailedToHost;
-        }
-
-        if (AuthenticationService.Instance.IsSignedIn)
-        {
-            nextTask = Task.CompletedTask;
-            return HostStatus.SigningIn;
-        }
-        else
-        {
-            nextTask = AuthenticationService.Instance.SignInAnonymouslyAsync();
-            return HostStatus.SigningIn;
-        }
-    }
-
-    // Bind and listen to the Relay server
-    static HostStatus BindToHost(Task<Allocation> allocationTask, out RelayServerData relayServerData)
-    {
-        var allocation = allocationTask.Result;
-        try
-        {
-            // Format the server data, based on desired connectionType
-            relayServerData = HostRelayData(allocation);
-        }
-        catch (Exception e)
-        {
-            Debug.LogException(e);
-            relayServerData = default;
-            return HostStatus.FailedToHost;
-        }
-        return HostStatus.Ready;
-    }
-
-    // Get the Join Code, you can then share it with the clients so they can join
-    static HostStatus WaitForJoin(Task<string> joinCodeTask, out string joinCode)
-    {
-        joinCode = null;
-        if (!joinCodeTask.IsCompleted)
-        {
-            return HostStatus.GettingJoinCode;
-        }
-
-        if (joinCodeTask.IsFaulted)
-        {
-            Debug.LogError("Create join code request failed");
-            Debug.LogException(joinCodeTask.Exception);
-            return HostStatus.FailedToHost;
-        }
-
-        joinCode = joinCodeTask.Result;
-        return HostStatus.GetRelayData;
-    }
-
-    static HostStatus WaitForAllocations(Task<Allocation> allocationTask, out Task<string> joinCodeTask)
-    {
-        if (!allocationTask.IsCompleted)
-        {
-            joinCodeTask = null;
-            return HostStatus.Allocating;
-        }
-
-        if (allocationTask.IsFaulted)
-        {
-            Debug.LogError("Create allocation request failed");
-            Debug.LogException(allocationTask.Exception);
-            joinCodeTask = null;
-            return HostStatus.FailedToHost;
-        }
-
-        // Request the join code to the Relay service
-        var allocation = allocationTask.Result;
-        joinCodeTask = RelayService.Instance.GetJoinCodeAsync(allocation.AllocationId);
-        return HostStatus.GettingJoinCode;
-    }
-
-    static HostStatus WaitForRegions(Task<List<Region>> collectRegionTask, out Task<Allocation> allocationTask)
-    {
-        if (!collectRegionTask.IsCompleted)
-        {
-            allocationTask = null;
-            return HostStatus.GettingRegions;
-        }
-
-        if (collectRegionTask.IsFaulted)
-        {
-            Debug.LogError("List regions request failed");
-            Debug.LogException(collectRegionTask.Exception);
-            allocationTask = null;
-            return HostStatus.FailedToHost;
-        }
-
-        var regionList = collectRegionTask.Result;
-        // pick a region from the list
-        var targetRegion = regionList[0].Id;
-
-        // Request an allocation to the Relay service
-        // with a maximum of 5 peer connections, for a maximum of 6 players.
-        allocationTask = RelayService.Instance.CreateAllocationAsync(RelayMaxConnections, targetRegion);
-        return HostStatus.Allocating;
-    }
-
-    // connectionType also supports udp, but this is not recommended
-    static RelayServerData HostRelayData(Allocation allocation, string connectionType = "dtls")
-    {
-        // Select endpoint based on desired connectionType
-        var endpoint = RelayUtilities.GetEndpointForConnectionType(allocation.ServerEndpoints, connectionType);
-        if (endpoint == null)
-        {
-            throw new InvalidOperationException($"endpoint for connectionType {connectionType} not found");
-        }
-
-        // Prepare the server endpoint using the Relay server IP and port
-        var serverEndpoint = NetworkEndpoint.Parse(endpoint.Host, (ushort)endpoint.Port);
-
-        // UTP uses pointers instead of managed arrays for performance reasons, so we use these helper functions to convert them
-        var allocationIdBytes = RelayAllocationId.FromByteArray(allocation.AllocationIdBytes);
-        var connectionData = RelayConnectionData.FromByteArray(allocation.ConnectionData);
-        var key = RelayHMACKey.FromByteArray(allocation.Key);
-
-        // Prepare the Relay server data and compute the nonce value
-        // The host passes its connectionData twice into this function
-        var relayServerData = new RelayServerData(ref serverEndpoint, 0, ref allocationIdBytes, ref connectionData,
-            ref connectionData, ref key, connectionType == "dtls");
-
-        return relayServerData;
-    }
-}
 
 public static class RelayUtilities
 {
@@ -417,189 +352,5 @@ public class EnableGoInGameAuthoring : MonoBehaviour
             var entity = GetEntity(TransformUsageFlags.Dynamic);
             AddComponent(entity, component);
         }
-    }
-}
-/// <summary>
-/// Responsible for joining relay server using join code retrieved from <see cref="HostServer"/>.
-/// </summary>
-[DisableAutoCreation]
-[UpdateInGroup(typeof(SimulationSystemGroup))]
-public partial class ConnectingPlayer : SystemBase
-{
-    Task<JoinAllocation> m_JoinTask;
-    Task m_SetupTask;
-    ClientStatus m_ClientStatus;
-    string m_RelayJoinCode;
-    NetworkEndpoint m_Endpoint;
-    NetworkConnection m_ClientConnection;
-    public RelayServerData RelayClientData;
-
-
-    [Flags]
-    enum ClientStatus
-    {
-        Unknown,
-        FailedToConnect,
-        Ready,
-        GetJoinCodeFromHost,
-        WaitForJoin,
-        WaitForInit,
-        WaitForSignIn,
-    }
-
-    protected override void OnCreate()
-    {
-        RequireForUpdate<EnableRelayServer>();
-        m_ClientStatus = ClientStatus.Unknown;
-    }
-
-    public void GetJoinCodeFromHost()
-    {
-        m_ClientStatus = ClientStatus.GetJoinCodeFromHost;
-    }
-
-    public void JoinUsingCode(string joinCode)
-    {
-
-        Debug.Log("Waiting for relay response");
-
-        m_RelayJoinCode = joinCode;
-        m_SetupTask = UnityServices.InitializeAsync();
-        m_ClientStatus = ClientStatus.WaitForInit;
-    }
-
-    protected override void OnUpdate()
-    {
-        switch (m_ClientStatus)
-        {
-            case ClientStatus.Ready:
-                {
-
-                    Debug.Log("Success");
-                    m_ClientStatus = ClientStatus.Unknown;
-                    return;
-                }
-            case ClientStatus.FailedToConnect:
-                {
-
-                    Debug.Log("Failed, check console");
-                    m_ClientStatus = ClientStatus.Unknown;
-                    return;
-                }
-            case ClientStatus.GetJoinCodeFromHost:
-                {
-
-                    Debug.Log("Waiting for join code from host server");
-                    var hostServer = World.GetExistingSystemManaged<HostServer>();
-                    m_ClientStatus = JoinUsingJoinCode(hostServer.JoinCode, out m_JoinTask);
-                    return;
-                }
-            case ClientStatus.WaitForJoin:
-                {
-
-                    Debug.Log("Binding to relay server");
-                    m_ClientStatus = WaitForJoin(m_JoinTask, out RelayClientData);
-                    return;
-                }
-            case ClientStatus.WaitForInit:
-                {
-                    if (m_SetupTask.IsCompleted)
-                    {
-                        if (!AuthenticationService.Instance.IsSignedIn)
-                        {
-                            m_SetupTask = AuthenticationService.Instance.SignInAnonymouslyAsync();
-                            m_ClientStatus = ClientStatus.WaitForSignIn;
-                        }
-                    }
-                    return;
-                }
-            case ClientStatus.WaitForSignIn:
-                {
-                    if (m_SetupTask.IsCompleted)
-                        m_ClientStatus = JoinUsingJoinCode(m_RelayJoinCode, out m_JoinTask);
-                    return;
-                }
-            case ClientStatus.Unknown:
-            default:
-                break;
-        }
-    }
-
-    static ClientStatus WaitForJoin(Task<JoinAllocation> joinTask, out RelayServerData relayClientData)
-    {
-        if (!joinTask.IsCompleted)
-        {
-            relayClientData = default;
-            return ClientStatus.WaitForJoin;
-        }
-
-        if (joinTask.IsFaulted)
-        {
-            relayClientData = default;
-            Debug.LogError("Join Relay request failed");
-            Debug.LogException(joinTask.Exception);
-            return ClientStatus.FailedToConnect;
-        }
-
-        return BindToRelay(joinTask, out relayClientData);
-    }
-
-    static ClientStatus BindToRelay(Task<JoinAllocation> joinTask, out RelayServerData relayClientData)
-    {
-        // Collect and convert the Relay data from the join response
-        var allocation = joinTask.Result;
-
-        // Format the server data, based on desired connectionType
-        try
-        {
-            relayClientData = PlayerRelayData(allocation);
-        }
-        catch (Exception e)
-        {
-            Debug.LogException(e);
-            relayClientData = default;
-            return ClientStatus.FailedToConnect;
-        }
-
-        return ClientStatus.Ready;
-    }
-
-    static ClientStatus JoinUsingJoinCode(string hostServerJoinCode, out Task<JoinAllocation> joinTask)
-    {
-        if (hostServerJoinCode == null)
-        {
-            joinTask = null;
-            return ClientStatus.GetJoinCodeFromHost;
-        }
-
-        // Send the join request to the Relay service
-        joinTask = RelayService.Instance.JoinAllocationAsync(hostServerJoinCode);
-        return ClientStatus.WaitForJoin;
-    }
-
-    static RelayServerData PlayerRelayData(JoinAllocation allocation, string connectionType = "dtls")
-    {
-        // Select endpoint based on desired connectionType
-        var endpoint = RelayUtilities.GetEndpointForConnectionType(allocation.ServerEndpoints, connectionType);
-        if (endpoint == null)
-        {
-            throw new Exception($"endpoint for connectionType {connectionType} not found");
-        }
-
-        // Prepare the server endpoint using the Relay server IP and port
-        var serverEndpoint = NetworkEndpoint.Parse(endpoint.Host, (ushort)endpoint.Port);
-
-        // UTP uses pointers instead of managed arrays for performance reasons, so we use these helper functions to convert them
-        var allocationIdBytes = RelayAllocationId.FromByteArray(allocation.AllocationIdBytes);
-        var connectionData = RelayConnectionData.FromByteArray(allocation.ConnectionData);
-        var hostConnectionData = RelayConnectionData.FromByteArray(allocation.HostConnectionData);
-        var key = RelayHMACKey.FromByteArray(allocation.Key);
-
-        // Prepare the Relay server data and compute the nonce values
-        // A player joining the host passes its own connectionData as well as the host's
-        var relayServerData = new RelayServerData(ref serverEndpoint, 0, ref allocationIdBytes, ref connectionData,
-            ref hostConnectionData, ref key, connectionType == "dtls");
-
-        return relayServerData;
     }
 }

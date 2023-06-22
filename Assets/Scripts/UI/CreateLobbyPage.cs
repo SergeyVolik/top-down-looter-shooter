@@ -14,9 +14,6 @@ namespace SV.UI
         private TMPro.TMP_InputField m_LobbyName;
 
         [SerializeField]
-        private TMPro.TMP_InputField m_Lobbypassword;
-
-        [SerializeField]
         private Toggle m_PrivateToggle;
 
         [SerializeField]
@@ -29,7 +26,7 @@ namespace SV.UI
             m_CreateLobby.onClick.AddListener(async () =>
             {
                
-                await LobbyManager.Instance.CreateLobby(lobbyName: m_LobbyName.text, isPrivate: m_PrivateToggle.isOn, password: m_Lobbypassword.text);
+                await LobbyManager.Instance.CreateLobby(lobbyName: m_LobbyName.text, isPrivate: m_PrivateToggle.isOn);
                 UINavigationManager.Instance.Pop();
                 UINavigationManager.Instance.Navigate(m_InLobbyPage);
             });

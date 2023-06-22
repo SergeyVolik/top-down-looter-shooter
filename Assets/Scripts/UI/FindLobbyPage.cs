@@ -67,7 +67,7 @@ namespace SV.UI
 
         private async void RefershListOfLobbies()
         {
-            if (LobbyManager.Instance == null)
+            if (GameState.IsDestroyed())
                 return;
 
             for (int i = 0; i < m_LobbyItems.Count; i++)
@@ -81,9 +81,10 @@ namespace SV.UI
             m_NoLobbiesText.gameObject.SetActive(true);
 
             var queryResult = await LobbyManager.Instance.QueryLobbies();
-          
 
-            
+            if (GameState.IsDestroyed())
+                return;
+
             if (queryResult.Results.Count != 0)
             {
                 m_LobyItemsListParent.gameObject.SetActive(true);

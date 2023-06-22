@@ -60,17 +60,13 @@ namespace SV.UI
             m_StartGameButton.onClick.AddListener(async () =>
             {
 
-                var regionList = await RelayService.Instance.ListRegionsAsync();
-                var targetRegion = regionList[0].Id;
+                var joinCode = await RelayConnection.Instance.HostServerAndClient();
 
 
-                var allocation = await RelayService.Instance.CreateAllocationAsync(LobbyManager.maxPlayers, targetRegion);
 
-                var joinCodeTask = await RelayService.Instance.GetJoinCodeAsync(allocation.AllocationId);
-
-                
                 await LobbyManager.Instance.UpdateLobby(
                     new UpdateLobbyBuilder()
+                    .SetRaplyCode(joinCode)
                     .SetLobbyStatus(LobbyState.InGame));
                 
             });
@@ -79,30 +75,8 @@ namespace SV.UI
 
         }
 
-        static RelayServerData HostRelayData(Allocation allocation, string connectionType = "dtls")
-        {
-            // Select endpoint based on desired connectionType
-            var endpoint = RelayUtilities.GetEndpointForConnectionType(allocation.ServerEndpoints, connectionType);
-            if (endpoint == null)
-            {
-                throw new InvalidOperationException($"endpoint for connectionType {connectionType} not found");
-            }
 
-            // Prepare the server endpoint using the Relay server IP and port
-            var serverEndpoint = NetworkEndpoint.Parse(endpoint.Host, (ushort)endpoint.Port);
-
-            // UTP uses pointers instead of managed arrays for performance reasons, so we use these helper functions to convert them
-            var allocationIdBytes = RelayAllocationId.FromByteArray(allocation.AllocationIdBytes);
-            var connectionData = RelayConnectionData.FromByteArray(allocation.ConnectionData);
-            var key = RelayHMACKey.FromByteArray(allocation.Key);
-
-            // Prepare the Relay server data and compute the nonce value
-            // The host passes its connectionData twice into this function
-            var relayServerData = new RelayServerData(ref serverEndpoint, 0, ref allocationIdBytes, ref connectionData,
-                ref connectionData, ref key, connectionType == "dtls");
-
-            return relayServerData;
-        }
+        
 
 
         private async void UpdateReadyToggle(bool value)
@@ -143,7 +117,7 @@ namespace SV.UI
 
         }
 
-        private async void UpdatePageData()
+        private void UpdatePageData()
         {
             var isHost = LobbyManager.Instance.IsHost();
             var readyPlayers = LobbyManager.Instance.Lobby.GetReadyPlayersCount();
@@ -152,7 +126,7 @@ namespace SV.UI
                $" id:{LobbyManager.Instance.GetLobbyId()}" +
                $" lobbyState: {LobbyManager.Instance.Lobby.GetLobbyState()}" +
                $" readyPlayers: {LobbyManager.Instance.Lobby.GetReadyPlayersCount()}" +
-               $" isHost: {isHost}";
+               $" isHost: {isHost} replayCode: {LobbyManager.Instance.Lobby.GetReplayCode()}";
 
             UpdatePlayersList();
 
@@ -179,12 +153,10 @@ namespace SV.UI
 
             if (LobbyManager.Instance.Lobby.GetLobbyState() == LobbyState.InGame)
             {
-                foreach (var world in World.All)
+
+                if (!LobbyManager.Instance.IsHost())
                 {
-                    if (world.Flags.HasFlag(WorldFlags.GameClient))
-                    {
-                        World.DefaultGameObjectInjectionWorld = world;
-                    }
+                    RelayConnection.Instance.JoinAsClient(LobbyManager.Instance.Lobby.GetReplayCode());
                 }
 
                 var asyncOp = SceneManager.UnloadSceneAsync(1);
