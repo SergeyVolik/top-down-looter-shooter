@@ -189,8 +189,8 @@ public class RelayConnection : MonoBehaviour
         var oldConstructor = NetworkStreamReceiveSystem.DriverConstructor;
         NetworkStreamReceiveSystem.DriverConstructor = new RelayDriverConstructor(relayServerData, relayClientData);
 
-        var server = ClientServerBootstrap.CreateServerWorld("ServerWorld1");
-        var client = ClientServerBootstrap.CreateClientWorld("ClientWorld1");
+        var server = ClientServerBootstrap.CreateServerWorld("ServerWorld");
+        var client = ClientServerBootstrap.CreateClientWorld("ClientWorld");
 
         NetworkStreamReceiveSystem.DriverConstructor = oldConstructor;
 
