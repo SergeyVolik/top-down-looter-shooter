@@ -142,13 +142,13 @@ namespace SV
             m_awaked = true;
 
 
-            em = World.DefaultGameObjectInjectionWorld.EntityManager;
+            //em = World.DefaultGameObjectInjectionWorld.EntityManager;
 
-            entity = em.CreateSingleton<SFXDatabaseComponent>(new SFXDatabaseComponent
-            {
-                value = database
+            //entity = em.CreateSingleton<SFXDatabaseComponent>(new SFXDatabaseComponent
+            //{
+            //    value = database
 
-            }, new Unity.Collections.FixedString64Bytes("SFXDatabase"));
+            //}, new Unity.Collections.FixedString64Bytes("SFXDatabase"));
 
             PlayMusic(initMusic);
         }

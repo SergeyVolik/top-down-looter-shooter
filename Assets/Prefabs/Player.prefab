@@ -5809,7 +5809,7 @@ MonoBehaviour:
   slot2: {fileID: 4663963423215784043}
   slot3: {fileID: 1175663467414430616}
   mainGunSlot: {fileID: 5044547805542533592}
-  mainGun: {fileID: 11400000, guid: a5245cc6745b71b4eba2e32e792594af, type: 2}
+  mainGun: {fileID: 0}
   gun1: {fileID: 0}
   gun2: {fileID: 0}
   gun3: {fileID: 0}

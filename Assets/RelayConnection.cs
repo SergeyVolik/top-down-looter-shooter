@@ -18,7 +18,7 @@ using UnityEngine.UI;
 
 public class RelayConnection : MonoBehaviour
 {
-    
+
 
     public static RelayConnection Instance { get; private set; }
 
@@ -26,50 +26,80 @@ public class RelayConnection : MonoBehaviour
     {
         Instance = this;
     }
+    private Allocation allocation;
+    private JoinAllocation joinAllocation;
+    
+
+    private void OnDestroy()
+    {
+       
+    }
+
+    public void LeaveGame()
+    {
+        DestroyClientServerWorlds();
+
+        var handle = SceneManager.UnloadSceneAsync(2);
+
+        handle.completed += (ers) =>
+        {
+            SceneManager.LoadSceneAsync(1, LoadSceneMode.Additive);
+        };
+     
+
+    }
+
+    private static void DestroyClientServerWorlds()
+    {
+        var clientServerWorlds = new List<World>();
+        foreach (var world in World.All)
+        {
+            if (world.IsClient() || world.IsServer())
+                clientServerWorlds.Add(world);
+        }
+
+
+        foreach (var item in clientServerWorlds)
+        {
+            item.Dispose();
+        }
+    }
+
     protected void DestroyLocalSimulationWorld()
     {
         foreach (var world in World.All)
         {
             if (world.Flags == WorldFlags.Game)
             {
-               
+                
                 world.Dispose();
                 break;
             }
         }
     }
     #region Client
-    void SetupClient()
-    {
-        var world = World.All[0];
-       
-        var simGroup = world.GetExistingSystemManaged<SimulationSystemGroup>();
-       
-    }
 
-    public async void JoinAsClient(string joinCode)
+
+    public async Task JoinAsClient(string joinCode)
     {
-        SetupClient();
-        var world = World.All[0];
-        var enableRelayServerEntity = world.EntityManager.CreateEntity(ComponentType.ReadWrite<EnableRelayServer>());
-        world.EntityManager.AddComponent<EnableRelayServer>(enableRelayServerEntity);
 
 
         await ConnectToRelayServer(joinCode);
 
         Debug.Log($"Cliend connected. replayCode: {joinCode}");
+
     }
 
     async Task ConnectToRelayServer(string hostServerJoinCode)
     {
-        var allocation = await RelayService.Instance.JoinAllocationAsync(hostServerJoinCode);
-        var relayClientData = PlayerRelayData(allocation);
+        joinAllocation = await RelayService.Instance.JoinAllocationAsync(hostServerJoinCode);
+        var relayClientData = PlayerRelayData(joinAllocation);
 
         var oldConstructor = NetworkStreamReceiveSystem.DriverConstructor;
         NetworkStreamReceiveSystem.DriverConstructor = new RelayDriverConstructor(new RelayServerData(), relayClientData);
         var client = ClientServerBootstrap.CreateClientWorld("ClientWorld");
         NetworkStreamReceiveSystem.DriverConstructor = oldConstructor;
-  
+
 
         //Destroy the local simulation world to avoid the game scene to be loaded into it
         //This prevent rendering (rendering from multiple world with presentation is not greatly supported)
@@ -78,7 +108,7 @@ public class RelayConnection : MonoBehaviour
         if (World.DefaultGameObjectInjectionWorld == null)
             World.DefaultGameObjectInjectionWorld = client;
 
-       
+
 
         var networkStreamEntity = client.EntityManager.CreateEntity(ComponentType.ReadWrite<NetworkStreamRequestConnect>());
         client.EntityManager.SetName(networkStreamEntity, "NetworkStreamRequestConnect");
@@ -117,41 +147,65 @@ public class RelayConnection : MonoBehaviour
     #region Server
 
 
-    async Task SetupRelayHostedServerAndConnect(Allocation allocation, string hostServerJoinCode)
+
+
+    public async Task<string> HostServerAndClient()
     {
         if (ClientServerBootstrap.RequestedPlayType != ClientServerBootstrap.PlayType.ClientAndServer)
         {
             UnityEngine.Debug.LogError($"Creating client/server worlds is not allowed if playmode is set to {ClientServerBootstrap.RequestedPlayType}");
-            return;
+            return null;
         }
 
-      
+        Debug.Log("HostServerAndClient");
+        var regionList = await RelayService.Instance.ListRegionsAsync();
+        var targetRegion = regionList[0].Id;
+        Debug.Log($"Region found region: {targetRegion}");
 
-        var  joinTask =  await RelayService.Instance.JoinAllocationAsync(hostServerJoinCode);
-        var relayClientData = PlayerRelayData(joinTask);
-        var relayServerData = HostRelayData(allocation);
+        allocation = await RelayService.Instance.CreateAllocationAsync(LobbyManager.maxPlayers, targetRegion);
+        Debug.Log("RelayService CreateAllocationAsync executed");
 
-        var world = World.All[0];
+        hostServerJoinCode = await RelayService.Instance.GetJoinCodeAsync(allocation.AllocationId);
+
+        Debug.Log($"GetJoinCodeAsync {hostServerJoinCode}");
+
+
+        joinAllocation = await RelayService.Instance.JoinAllocationAsync(hostServerJoinCode);
+
         
+        CreateServerClientWorlds();
+
+        return hostServerJoinCode;
+    }
+
+    private void CreateServerClientWorlds()
+    {
+        var relayClientData = PlayerRelayData(joinAllocation);
+
+        Debug.Log($"client Address {relayClientData.Endpoint.Address}");
+        var relayServerData = HostRelayData(allocation);
+        Debug.Log($"server Address {relayServerData.Endpoint.Address}");
 
         var oldConstructor = NetworkStreamReceiveSystem.DriverConstructor;
         NetworkStreamReceiveSystem.DriverConstructor = new RelayDriverConstructor(relayServerData, relayClientData);
-        var server = ClientServerBootstrap.CreateServerWorld("ServerWorld");
-        var client = ClientServerBootstrap.CreateClientWorld("ClientWorld");
+
+        var server = ClientServerBootstrap.CreateServerWorld("ServerWorld1");
+        var client = ClientServerBootstrap.CreateClientWorld("ClientWorld1");
+
         NetworkStreamReceiveSystem.DriverConstructor = oldConstructor;
 
-      
 
         //Destroy the local simulation world to avoid the game scene to be loaded into it
         //This prevent rendering (rendering from multiple world with presentation is not greatly supported)
         //and other issues.
+
         DestroyLocalSimulationWorld();
+
         if (World.DefaultGameObjectInjectionWorld == null)
             World.DefaultGameObjectInjectionWorld = server;
 
-       
-
         var joinCodeEntity = server.EntityManager.CreateEntity(ComponentType.ReadOnly<JoinCode>());
+        server.EntityManager.SetName(joinCodeEntity, "joinCode");
         server.EntityManager.SetComponentData(joinCodeEntity, new JoinCode { Value = hostServerJoinCode });
 
         var networkStreamEntity = server.EntityManager.CreateEntity(ComponentType.ReadWrite<NetworkStreamRequestListen>());
@@ -165,30 +219,6 @@ public class RelayConnection : MonoBehaviour
         client.EntityManager.SetComponentData(networkStreamEntity, new NetworkStreamRequestConnect { Endpoint = relayClientData.Endpoint });
 
         Debug.Log($"Cliend/Server started replayCode {hostServerJoinCode}");
-    }
-
-    public async Task<string> HostServerAndClient()
-    {
-        var regionList = await RelayService.Instance.ListRegionsAsync();
-        var targetRegion = regionList[0].Id;
-
-
-        var allocation = await RelayService.Instance.CreateAllocationAsync(LobbyManager.maxPlayers, targetRegion);
-
-        var joinCode = await RelayService.Instance.GetJoinCodeAsync(allocation.AllocationId);
-
-        var world = World.All[0];
-      
-        var enableRelayServerEntity = world.EntityManager.CreateEntity(ComponentType.ReadWrite<EnableRelayServer>());
-        world.EntityManager.AddComponent<EnableRelayServer>(enableRelayServerEntity);
-
-       
-      
-       
-        await SetupRelayHostedServerAndConnect(allocation, joinCode);
-
-
-        return joinCode;
     }
 
     static RelayServerData HostRelayData(Allocation allocation, string connectionType = "dtls")
@@ -216,6 +246,11 @@ public class RelayConnection : MonoBehaviour
         return relayServerData;
     }
 
+
+ 
+    private string hostServerJoinCode;
+
+
     #endregion
 
 }
@@ -225,21 +260,7 @@ public struct JoinCode : IComponentData
     public FixedString64Bytes Value;
 }
 
-public class RelayHUD : MonoBehaviour
-{
-    public Text JoinCodeLabel;
 
-    public void Awake()
-    {
-        var world = World.All[0];
-        var joinQuery = world.EntityManager.CreateEntityQuery(ComponentType.ReadOnly<JoinCode>());
-        if (joinQuery.HasSingleton<JoinCode>())
-        {
-            var joinCode = joinQuery.GetSingleton<JoinCode>().Value;
-            JoinCodeLabel.text = $"Join code: {joinCode}";
-        }
-    }
-}
 
 public class RelayDriverConstructor : INetworkStreamDriverConstructor
 {
@@ -271,22 +292,7 @@ public class RelayDriverConstructor : INetworkStreamDriverConstructor
     }
 }
 
-public struct EnableRelayServer : IComponentData { }
 
-// Each sample system is enabled by adding these types of enable components to the entity
-// scene. This prevents all the systems in all the samples to run simultaneously all the time.
-// Each sample can then also enable systems from previous samples by adding it's enable component.
-public class EnableRelayServerAuthoring : MonoBehaviour
-{
-    class Baker : Baker<EnableRelayServerAuthoring>
-    {
-        public override void Bake(EnableRelayServerAuthoring authoring)
-        {
-            var entity = GetEntity(TransformUsageFlags.Dynamic);
-            AddComponent<EnableRelayServer>(entity);
-        }
-    }
-}
 
 /// <summary>
 /// Responsible for contacting relay server and setting up <see cref="RelayServerData"/> and <see cref="JoinCode"/>.

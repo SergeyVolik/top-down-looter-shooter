@@ -33,8 +33,9 @@ namespace SV.UI
             LevelUpSystemSystem.OnLevelUp += LevelUpSystemSystem_OnLevelUp;
         }
 
-        private void OnDestroy()
+        protected override void OnDestroy()
         {
+            base.OnDestroy();
             LevelUpSystemSystem.OnLevelUp -= LevelUpSystemSystem_OnLevelUp;
         }
 

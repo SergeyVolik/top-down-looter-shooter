@@ -8,6 +8,7 @@ using Unity.Entities;
 using Unity.Jobs;
 using Unity.Mathematics;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 [Serializable]
 public class WeaponsDictionary : UnitySerializedDictionary<string, WeaponSO> { }
@@ -42,7 +43,7 @@ public class ConsoleCommands : MonoBehaviour
 
             if (gunsDatabase.guns.TryGetValue(gunData.guid, out var gunPrefabEntity))
             {
-                var playerQuery = _entityManager.CreateEntityQuery(new ComponentType[] { typeof(GunSlotsComponent)  });
+                var playerQuery = _entityManager.CreateEntityQuery(new ComponentType[] { typeof(GunSlotsComponent) });
 
                 if (playerQuery.CalculateEntityCount() == 0)
                 {
@@ -180,5 +181,46 @@ public class ConsoleCommands : MonoBehaviour
         maxHealth.Dispose();
         entities.Dispose();
 
+    }
+
+    [Command("start-client-server")]
+    public async static void StartClientServer()
+    {
+        await RelayConnection.Instance.HostServerAndClient();
+
+        var handle = SceneManager.UnloadSceneAsync(1);
+
+        handle.completed += (res) =>
+        {
+            SceneManager.LoadSceneAsync(2, LoadSceneMode.Additive);
+        };
+
+
+
+    }
+    [Command("join-server")]
+    public async static void JoinServer(string relayCode)
+    {
+        await RelayConnection.Instance.JoinAsClient(relayCode);
+
+        var handle = SceneManager.UnloadSceneAsync(1);
+
+        handle.completed += (res) =>
+        {
+            SceneManager.LoadSceneAsync(2, LoadSceneMode.Additive);
+        };
+    }
+
+    [Command("leave-server")]
+    public static void LeaveServer()
+    {
+        RelayConnection.Instance.LeaveGame();
+
+        var handle = SceneManager.UnloadSceneAsync(2);
+
+        handle.completed += (res) =>
+        {
+            SceneManager.LoadSceneAsync(1, LoadSceneMode.Additive);
+        };
     }
 }
