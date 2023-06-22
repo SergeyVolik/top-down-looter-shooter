@@ -32,7 +32,7 @@ namespace SV.UI
         [SerializeField]
         private TMPro.TextMeshProUGUI m_LobbyName;
 
-      
+
 
 
 
@@ -62,13 +62,27 @@ namespace SV.UI
 
                 var joinCode = await RelayConnection.Instance.HostServerAndClient();
 
+                var asyncOp = SceneManager.UnloadSceneAsync(1);
+                asyncOp.completed += (op) =>
+                {
+                    var handle = SceneManager.LoadSceneAsync(2, LoadSceneMode.Additive);
+
+                    handle.completed += async (res) =>
+                    {
+                        await System.Threading.Tasks.Task.Delay(1000);
+
+                        await LobbyManager.Instance.UpdateLobby(
+                        new UpdateLobbyBuilder()
+                       .SetRaplyCode(joinCode)
+                       .SetLobbyStatus(LobbyState.InGame));
+
+                       
+                    };
+
+                };
 
 
-                await LobbyManager.Instance.UpdateLobby(
-                    new UpdateLobbyBuilder()
-                    .SetRaplyCode(joinCode)
-                    .SetLobbyStatus(LobbyState.InGame));
-                
+
             });
 
 
@@ -76,7 +90,7 @@ namespace SV.UI
         }
 
 
-        
+
 
 
         private async void UpdateReadyToggle(bool value)
@@ -113,11 +127,11 @@ namespace SV.UI
             Debug.Log("LobbyManager LobbyEventConnectionStateChanged callback");
             UpdatePageData();
 
-           
+
 
         }
 
-        private void UpdatePageData()
+        private async void UpdatePageData()
         {
             var isHost = LobbyManager.Instance.IsHost();
             var readyPlayers = LobbyManager.Instance.Lobby.GetReadyPlayersCount();
@@ -134,13 +148,13 @@ namespace SV.UI
 
             m_PrivateToggle.interactable = isHost;
 
-           
+
             m_PrivateToggle.onValueChanged.RemoveListener(UpdatePrivateToggle);
             m_PrivateToggle.isOn = LobbyManager.Instance.Lobby.IsPrivate;
             m_PrivateToggle.onValueChanged.AddListener(UpdatePrivateToggle);
-          
 
-           
+
+
 
             m_ReadyToggle.onValueChanged.RemoveListener(UpdateReadyToggle);
 
@@ -156,16 +170,18 @@ namespace SV.UI
 
                 if (!LobbyManager.Instance.IsHost())
                 {
-                    RelayConnection.Instance.JoinAsClient(LobbyManager.Instance.Lobby.GetReplayCode());
+                    await RelayConnection.Instance.JoinAsClient(LobbyManager.Instance.Lobby.GetReplayCode());
+
+                    var asyncOp = SceneManager.UnloadSceneAsync(1);
+                    asyncOp.completed += (op) =>
+                    {
+                        SceneManager.LoadSceneAsync(2, LoadSceneMode.Additive);
+                    };
                 }
 
-                var asyncOp = SceneManager.UnloadSceneAsync(1);
-                asyncOp.completed += (op) =>
-                {
-                    SceneManager.LoadSceneAsync(2, LoadSceneMode.Additive);
-                };
 
-               
+
+
             }
         }
 
