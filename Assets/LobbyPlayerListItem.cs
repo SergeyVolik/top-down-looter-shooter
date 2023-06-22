@@ -11,9 +11,12 @@ public class LobbyPlayerListItem : MonoBehaviour
     private GameObject hostToggle;
     [SerializeField]
     private Button m_KickButton;
-    public void Setup(string name, bool hostItem, string playerId, bool hostCreated)
+
+   
+    public void Setup(string name, bool hostItem, string playerId, bool hostCreated, bool ready)
     {
-        m_name.text = name;
+        var readyStr = ready ? "(Ready)" : "(Not Ready)";
+        m_name.text = $"{name} {readyStr}";
 
         hostToggle.gameObject.SetActive(hostItem);
         m_KickButton.gameObject.SetActive(false);

@@ -204,7 +204,7 @@ namespace SV.UI
 
                 player.TryGetDisplayName(out var DisplayName);
 
-                data.Setup(DisplayName, player.IsHost(lobby), player.Id, isHostCreated);
+                data.Setup(DisplayName, player.IsHost(lobby), player.Id, isHostCreated, player.GetStatus() == PlayerStatus.Ready);
 
                 listItems.Add(data);
             }
