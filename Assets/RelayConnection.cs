@@ -29,10 +29,10 @@ public class RelayConnection : MonoBehaviour
     private Allocation allocation;
     private JoinAllocation joinAllocation;
     
-
+   
     private void OnDestroy()
     {
-       
+        DestroyClientServerWorlds();
     }
 
     public void LeaveGame()

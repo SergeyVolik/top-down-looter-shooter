@@ -34,7 +34,7 @@ public class LobbyUIListItem : MonoBehaviour
 
         m_Connect.onClick.AddListener(async () =>
         {
-            await LobbyManager.Instance.JoinLobbyByIdAsync(lobbyId, null, LobbyManager.Instance.localPlayer);
+            await LobbyManager.Instance.JoinLobbyByIdAsync(lobbyId, null, LocalPlayerData.Player);
 
             Debug.Log("Navigate InLobbyPage");
             UINavigationManager.Instance.Navigate(InLobbyPage.Instance);

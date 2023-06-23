@@ -38,10 +38,10 @@ namespace SV.UI
         {
             base.Awake();
 
-            m_NickName.text = LobbyManager.Instance.localPlayer.DisplayName.Value;
+            m_NickName.text = LocalPlayerData.Player.DisplayName.Value;
             m_NickName.onValueChanged.AddListener((v) =>
             {
-                LobbyManager.Instance.localPlayer.DisplayName.Value = v;
+                LocalPlayerData.Player.DisplayName.Value = v;
             });
 
             m_RefreshButton.onClick.AddListener(RefershListOfLobbies);
@@ -49,7 +49,7 @@ namespace SV.UI
             m_JoinButton.onClick.AddListener(JoinEvent);
 
             m_QuickJoinButton.onClick.AddListener(async () => {
-                await LobbyManager.Instance.QuickJoinLobbyAsync(LobbyManager.Instance.localPlayer);
+                await LobbyManager.Instance.QuickJoinLobbyAsync(LocalPlayerData.Player);
 
                 if (UINavigationManager.Instance != null)
                 {
@@ -60,7 +60,7 @@ namespace SV.UI
 
         private async void JoinEvent()
         {
-            await LobbyManager.Instance.JoinLobbyByIdAsync(null, m_Lobbypassword.text, LobbyManager.Instance.localPlayer);
+            await LobbyManager.Instance.JoinLobbyByIdAsync(null, m_Lobbypassword.text, LocalPlayerData.Player);
             UINavigationManager.Instance.Navigate(m_InLobby);
 
         }

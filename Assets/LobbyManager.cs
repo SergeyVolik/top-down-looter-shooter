@@ -57,7 +57,7 @@ public class LobbyManager : MonoBehaviour
 
     private Lobby m_CurrentLobby;
     public Lobby Lobby => m_CurrentLobby;
-    public LocalPlayer localPlayer = new LocalPlayer();
+  
 
     private bool m_Awaked;
 
@@ -95,16 +95,8 @@ public class LobbyManager : MonoBehaviour
 
         m_Awaked = true;
 
-
-
-        SetupLocalPlayer();
-
-
     }
-    private void OnDestroy()
-    {
-        PlayerPrefs.SetString(nameof(localPlayer.DisplayName), localPlayer.DisplayName.Value);
-    }
+   
 
     
 
@@ -197,7 +189,7 @@ public class LobbyManager : MonoBehaviour
 
 
 
-    public async Task<Lobby> QuickJoinLobbyAsync(LocalPlayer localUser)
+    public async Task<Lobby> QuickJoinLobbyAsync(LocalPlayerData.LocalPlayer localUser)
     {
         //We dont want to queue a quickjoin
         if (m_QuickJoinCooldown.IsCoolingDown)
@@ -238,15 +230,7 @@ public class LobbyManager : MonoBehaviour
 
 
 
-    private void SetupLocalPlayer()
-    {
-        if (PlayerPrefs.HasKey(nameof(localPlayer.DisplayName)))
-            localPlayer.DisplayName.Value = PlayerPrefs.GetString(nameof(localPlayer.DisplayName));
-        else
-        {
-            localPlayer.DisplayName.Value = $"Player{UnityEngine.Random.Range(0, 100)}";
-        }
-    }
+   
 
 
 
@@ -357,13 +341,13 @@ public class LobbyManager : MonoBehaviour
 
     }
 
-    Dictionary<string, PlayerDataObject> CreateInitialPlayerData(LocalPlayer user)
+    Dictionary<string, PlayerDataObject> CreateInitialPlayerData(LocalPlayerData.LocalPlayer user)
     {
         Dictionary<string, PlayerDataObject> data = new Dictionary<string, PlayerDataObject>();
 
         var displayNameObject =
             new PlayerDataObject(PlayerDataObject.VisibilityOptions.Member, user.DisplayName.Value);
-        data.Add(LocalPlayer.key_DisplayName, displayNameObject);
+        data.Add(LocalPlayerData.LocalPlayer.key_DisplayName, displayNameObject);
         return data;
     }
 
@@ -383,7 +367,7 @@ public class LobbyManager : MonoBehaviour
         // Ensure you sign-in before calling Authentication Instance.
         // See IAuthenticationService interface.
 
-        var initplayerData = CreateInitialPlayerData(localPlayer);
+        var initplayerData = CreateInitialPlayerData(LocalPlayerData.Player);
 
         options.IsPrivate = isPrivate;
 
@@ -419,7 +403,7 @@ public class LobbyManager : MonoBehaviour
 
 
 
-    public async Task<Lobby> JoinLobbyByIdAsync(string lobbyId, string lobbyCode, LocalPlayer localUser,
+    public async Task<Lobby> JoinLobbyByIdAsync(string lobbyId, string lobbyCode, LocalPlayerData.LocalPlayer localUser,
             string password = null)
     {
 
@@ -621,20 +605,7 @@ public class ServiceRateLimiter
     }
 }
 
-[Serializable]
-public class LocalPlayer
-{
 
-    public CallbackValue<string> DisplayName = new CallbackValue<string>("");
-
-    public const string key_DisplayName = nameof(DisplayName);
-
-
-    public LocalPlayer()
-    {
-
-    }
-}
 
 public class UpdateLobbyBuilder
 {
@@ -718,7 +689,7 @@ public class UpdatePlayerBuilder
     public UpdatePlayerBuilder SetDiplayName(string name)
     {
         updateOptions.Data.Add(
-            LocalPlayer.key_DisplayName,
+            LocalPlayerData.LocalPlayer.key_DisplayName,
             new PlayerDataObject(PlayerDataObject.VisibilityOptions.Member, name));
                   
         return this;
@@ -799,7 +770,7 @@ public static class PlayerExtention
     {
         DisplayName = null;
 
-        var result = player.Data.TryGetValue(LocalPlayer.key_DisplayName, out var name);
+        var result = player.Data.TryGetValue(LocalPlayerData.LocalPlayer.key_DisplayName, out var name);
 
        
         if (result)

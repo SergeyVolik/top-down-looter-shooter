@@ -223,4 +223,10 @@ public class ConsoleCommands : MonoBehaviour
             SceneManager.LoadSceneAsync(1, LoadSceneMode.Additive);
         };
     }
+
+    [Command("set-name")]
+    public static void SetUserServer(string name)
+    {
+        LocalPlayerData.Player.DisplayName.Value = name;
+    }
 }
