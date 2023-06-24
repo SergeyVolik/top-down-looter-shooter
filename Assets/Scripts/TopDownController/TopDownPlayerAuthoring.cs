@@ -2,6 +2,7 @@ using System;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
+using Unity.NetCode;
 using UnityEngine;
 
 public class TopDownPlayerAuthoring : MonoBehaviour
@@ -9,8 +10,9 @@ public class TopDownPlayerAuthoring : MonoBehaviour
     
 }
 
+[GhostComponent(PrefabType = GhostPrefabType.All)]
 [Serializable]
-public struct TopDownPlayer : IComponentData
+public struct TopDownPlayer : IInputComponentData
 {
 
     [NonSerialized]

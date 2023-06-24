@@ -6,6 +6,7 @@ using Unity.NetCode;
 using UnityEngine;
 
 
+
 [UpdateInGroup(typeof(GhostInputSystemGroup))]
 public partial class TopDownChracterInputSystem : SystemBase
 {
@@ -40,7 +41,7 @@ public partial class TopDownChracterInputSystem : SystemBase
             characterInputs.moveX = moveInput.x; 
             characterInputs.moveY = moveInput.y;
 
-            Debug.Log($"input: {characterInputs.moveX} {characterInputs.moveY}");
+            //Debug.Log($"input: {characterInputs.moveX} {characterInputs.moveY}");
             if (jumpInput)
             {
                 characterInputs.JumpRequested.Set();
