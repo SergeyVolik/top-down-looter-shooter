@@ -11,6 +11,8 @@ using Unity.Transforms;
 using Rival;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Burst.Intrinsics;
+using Unity.NetCode;
+
 
 [UpdateInGroup(typeof(KinematicCharacterUpdateGroup))]
 public partial struct TopDownCharacterMovementSystem : ISystem, ISystemStartStop
@@ -157,6 +159,7 @@ public partial struct TopDownCharacterMovementSystem : ISystem, ISystemStartStop
                 {
                     typeof(TopDownCharacterComponent),
                     typeof(TopDownCharacterInputs),
+                    typeof(Simulate)
                 }),
         });
 

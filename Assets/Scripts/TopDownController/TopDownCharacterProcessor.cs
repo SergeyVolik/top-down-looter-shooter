@@ -182,11 +182,11 @@ public struct TopDownCharacterProcessor : IKinematicCharacterProcessor
         if (CharacterBody.IsGrounded)
         {
             // Move on ground
-            float3 targetVelocity = ThirdPersonCharacterInputs.MoveVector * ThirdPersonCharacter.GroundMaxSpeed;
+            float3 targetVelocity = ThirdPersonCharacterInputs.GetFloat3Move() * ThirdPersonCharacter.GroundMaxSpeed;
             CharacterControlUtilities.StandardGroundMove_Interpolated(ref CharacterBody.RelativeVelocity, targetVelocity, ThirdPersonCharacter.GroundedMovementSharpness, DeltaTime, ThirdPersonCharacter.GroundingUp, CharacterBody.GroundHit.Normal);
 
             // Jump
-            if (ThirdPersonCharacterInputs.JumpRequested)
+            if (ThirdPersonCharacterInputs.JumpRequested.IsSet)
             {
                 CharacterControlUtilities.StandardJump(ref CharacterBody, ThirdPersonCharacter.GroundingUp * ThirdPersonCharacter.JumpSpeed, true, ThirdPersonCharacter.GroundingUp);
             }
@@ -194,7 +194,7 @@ public struct TopDownCharacterProcessor : IKinematicCharacterProcessor
         else
         {
             // Move in air
-            float3 airAcceleration = ThirdPersonCharacterInputs.MoveVector * ThirdPersonCharacter.AirAcceleration;
+            float3 airAcceleration = ThirdPersonCharacterInputs.GetFloat3Move() * ThirdPersonCharacter.AirAcceleration;
             CharacterControlUtilities.StandardAirMove(ref CharacterBody.RelativeVelocity, airAcceleration, ThirdPersonCharacter.AirMaxSpeed, ThirdPersonCharacter.GroundingUp, DeltaTime, false);
 
             // Gravity

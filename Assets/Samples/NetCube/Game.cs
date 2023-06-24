@@ -8,6 +8,7 @@ using Unity.Transforms;
 // RPC request from client to server for game to go "in game" and send snapshots / inputs
 public struct GoInGameRequest : IRpcCommand
 {
+
 }
 
 // When client has a connection with network id, go in game and tell server to also go in game
@@ -62,6 +63,7 @@ public partial struct GoInGameServerSystem : ISystem
     public void OnUpdate(ref SystemState state)
     {
         var prefab = SystemAPI.GetSingleton<NetCubeSpawner>().Cube;
+
         state.EntityManager.GetName(prefab, out var prefabName);
         var worldName = state.WorldUnmanaged.Name;
 

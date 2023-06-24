@@ -7,6 +7,7 @@ using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using Unity.Jobs;
 using Unity.Mathematics;
+using Unity.NetCode;
 using Unity.Physics;
 using Unity.Physics.Authoring;
 using Unity.Physics.Extensions;
@@ -33,12 +34,15 @@ namespace Rival
         StepUpHit,
     }
 
-    [UpdateInGroup(typeof(FixedStepSimulationSystemGroup))]
+
+    [UpdateInGroup(typeof(PredictedSimulationSystemGroup))]
+    //[UpdateInGroup(typeof(FixedStepSimulationSystemGroup))]
     [UpdateAfter(typeof(ExportPhysicsWorld))]
     [UpdateAfter(typeof(PhysicsSystemGroup))]
     [UpdateAfter(typeof(TrackedTransformFixedSimulationSystem))]
     public partial class KinematicCharacterUpdateGroup : ComponentSystemGroup
     {
+
     }
 
     public interface IKinematicCharacterProcessor

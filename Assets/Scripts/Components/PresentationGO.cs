@@ -104,7 +104,7 @@ namespace SV.ECS
                 //Debug.Log("Update Player Animator");
 
                 var animator = animatorComp.Value;
-                animator.SetFloat(moveParam, math.length(input.ValueRO.MoveVector));
+                animator.SetFloat(moveParam, math.length(input.ValueRO.GetFloat3Move()));
             }
         }
     }

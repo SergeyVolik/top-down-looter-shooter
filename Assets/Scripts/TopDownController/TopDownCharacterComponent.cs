@@ -2,6 +2,7 @@ using System;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
+using Unity.NetCode;
 using UnityEngine;
 
 [Serializable]
@@ -62,9 +63,18 @@ public struct TopDownCharacterComponent : IComponentData
     }
 }
 
+[GhostComponent(PrefabType = GhostPrefabType.All)]
 [Serializable]
-public struct TopDownCharacterInputs : IComponentData
+public struct TopDownCharacterInputs : IInputComponentData
 {
-    public float3 MoveVector;
-    public bool JumpRequested;
+    public float moveX;
+    public float moveY;
+
+
+    public InputEvent JumpRequested;
+
+    public float3 GetFloat3Move()
+    {
+        return new float3(moveX, 0, moveY);
+    }
 }

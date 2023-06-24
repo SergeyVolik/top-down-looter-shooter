@@ -1,14 +1,12 @@
 using SV.ECS;
 using Unity.Burst;
-using Unity.Collections;
 using Unity.Entities;
-using Unity.Jobs;
 using Unity.Mathematics;
-using Unity.Transforms;
+using Unity.NetCode;
 using UnityEngine;
 
-[UpdateInGroup(typeof(SimulationSystemGroup), OrderFirst = true)]
-[UpdateBefore(typeof(FixedStepSimulationSystemGroup))]
+
+[UpdateInGroup(typeof(GhostInputSystemGroup))]
 public partial class TopDownChracterInputSystem : SystemBase
 {
     public FixedUpdateTickSystem FixedUpdateTickSystem;
@@ -24,7 +22,7 @@ public partial class TopDownChracterInputSystem : SystemBase
     }
 
 
-    [WithAll(typeof(PlayerComponent), typeof(ReadPlayerInputComponent))]
+    [WithAll(typeof(PlayerComponent), typeof(ReadPlayerInputComponent), typeof(GhostOwnerIsLocal))]
     [BurstCompile]
     public partial struct TopDownPlayerSystemJob : IJobEntity
     {
@@ -39,26 +37,14 @@ public partial class TopDownChracterInputSystem : SystemBase
         public void Execute(ref TopDownPlayer player, ref TopDownCharacterInputs characterInputs)
         {
 
-         
+            characterInputs.moveX = moveInput.x; 
+            characterInputs.moveY = moveInput.y;
 
-          
-            characterInputs.MoveVector = new float3(moveInput.x, 0, moveInput.y);
-            
-
-            // Jump
-            // Punctual input presses need special handling when they will be used in a fixed step system.
-            // We essentially need to remember if the button was pressed at any point over the last fixed update
-            if (player.LastInputsProcessingTick == fixedTick)
+            Debug.Log($"input: {characterInputs.moveX} {characterInputs.moveY}");
+            if (jumpInput)
             {
-                characterInputs.JumpRequested = jumpInput || characterInputs.JumpRequested;
+                characterInputs.JumpRequested.Set();
             }
-            else
-            {
-                characterInputs.JumpRequested = jumpInput;
-            }
-
-
-
             player.LastInputsProcessingTick = fixedTick;
         }
     }

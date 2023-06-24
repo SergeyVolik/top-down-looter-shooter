@@ -54,10 +54,15 @@ public partial class TopDownCharacterRotationSystem : SystemBase
         {
 
             // Rotate towards move direction
-            if (math.lengthsq(characterInputs.MoveVector) > 0f)
+            if (math.lengthsq(new float2(characterInputs.moveX, characterInputs.moveY)) > 0f)
             {
                 var rot = localTransfrom.Rotation;
-                CharacterControlUtilities.SlerpRotationTowardsDirectionAroundUp(ref rot, deltaTime, math.normalizesafe(characterInputs.MoveVector), MathUtilities.GetUpFromRotation(localTransfrom.Rotation), character.RotationSharpness);
+                CharacterControlUtilities
+                    .SlerpRotationTowardsDirectionAroundUp(
+                    ref rot, deltaTime,
+                    math.normalizesafe(new float3(characterInputs.moveX, 0, characterInputs.moveY)),
+                    MathUtilities.GetUpFromRotation(localTransfrom.Rotation), character.RotationSharpness);
+
                 localTransfrom.Rotation = rot;
             }
 
