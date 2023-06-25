@@ -1,9 +1,12 @@
 using SV.ECS;
 using Unity.Burst;
+using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
 using Unity.NetCode;
+using Unity.Services.Lobbies.Models;
 using UnityEngine;
+
 
 
 
@@ -23,33 +26,6 @@ public partial class TopDownChracterInputSystem : SystemBase
     }
 
 
-    [WithAll(typeof(PlayerComponent), typeof(ReadPlayerInputComponent), typeof(GhostOwnerIsLocal))]
-    [BurstCompile]
-    public partial struct TopDownPlayerSystemJob : IJobEntity
-    {
-        public float2 moveInput;
-        public bool jumpInput;
-
-
-        public uint fixedTick;
-
-
-        [BurstCompile]
-        public void Execute(ref TopDownPlayer player, ref TopDownCharacterInputs characterInputs)
-        {
-
-            characterInputs.moveX = moveInput.x; 
-            characterInputs.moveY = moveInput.y;
-
-            //Debug.Log($"input: {characterInputs.moveX} {characterInputs.moveY}");
-            if (jumpInput)
-            {
-                characterInputs.JumpRequested.Set();
-            }
-            player.LastInputsProcessingTick = fixedTick;
-        }
-    }
-
     protected override void OnUpdate()
     {
         uint fixedTick = FixedUpdateTickSystem.FixedTick;
@@ -57,23 +33,27 @@ public partial class TopDownChracterInputSystem : SystemBase
         // Gather raw input
         float2 moveInput = input.Controlls.Move.ReadValue<Vector2>();
 
+        var worldname = World.Unmanaged.Name;
 
 
+        bool jumpInput = input.Controlls.Jump.triggered;
 
-        bool jumpInput = false;//input.Controlls.Jump.triggered;
+        //Debug.Log($"Update TopDownChracterInputSystem");
 
-
-        var job = new TopDownPlayerSystemJob
+        foreach (var characterInputs in SystemAPI.Query<RefRW<TopDownCharacterInputs>>().WithAll<GhostOwnerIsLocal>())
         {
-            fixedTick = fixedTick,
-            jumpInput = jumpInput,
-            moveInput = moveInput
-           
-        };
+            characterInputs.ValueRW.moveX = moveInput.x;
+            characterInputs.ValueRW.moveY = moveInput.y;
+         
+            if (jumpInput)
+            {
+                characterInputs.ValueRW.JumpRequested = jumpInput;
+            }
 
-    
-        //job.Run();
-        Dependency = job.Schedule(Dependency);
+            characterInputs.ValueRW.LastInputsProcessingTick = fixedTick;
+        }
+
+
 
     }
 }

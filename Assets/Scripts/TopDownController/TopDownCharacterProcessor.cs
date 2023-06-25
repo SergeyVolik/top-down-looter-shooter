@@ -186,7 +186,7 @@ public struct TopDownCharacterProcessor : IKinematicCharacterProcessor
             CharacterControlUtilities.StandardGroundMove_Interpolated(ref CharacterBody.RelativeVelocity, targetVelocity, ThirdPersonCharacter.GroundedMovementSharpness, DeltaTime, ThirdPersonCharacter.GroundingUp, CharacterBody.GroundHit.Normal);
 
             // Jump
-            if (ThirdPersonCharacterInputs.JumpRequested.IsSet)
+            if (ThirdPersonCharacterInputs.JumpRequested)
             {
                 CharacterControlUtilities.StandardJump(ref CharacterBody, ThirdPersonCharacter.GroundingUp * ThirdPersonCharacter.JumpSpeed, true, ThirdPersonCharacter.GroundingUp);
             }

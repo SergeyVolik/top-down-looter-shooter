@@ -9,6 +9,10 @@ namespace SV.ECS
     public class HPRegen : MonoBehaviour
     {
         public float regenInterval;
+        private void OnEnable()
+        {
+            
+        }
     }
 
 
@@ -25,6 +29,8 @@ namespace SV.ECS
     {
         public override void Bake(HPRegen authoring)
         {
+            if (!authoring.enabled)
+                return;
             var entity = GetEntity(TransformUsageFlags.Dynamic);
 
             AddComponent<HPRegenComponent>(entity, new HPRegenComponent

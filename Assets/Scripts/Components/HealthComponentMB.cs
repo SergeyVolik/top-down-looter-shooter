@@ -12,6 +12,11 @@ namespace SV.ECS
 
         public bool destroyAfterDeath;
         public bool isDamageable = true;
+
+        private void OnEnable()
+        {
+            
+        }
     }
     public struct HealthComponent : IComponentData
     {
@@ -54,6 +59,8 @@ namespace SV.ECS
     {
         public override void Bake(HealthComponentMB authoring)
         {
+            if (!authoring.enabled)
+                return;
             var entity = GetEntity(TransformUsageFlags.Dynamic);
             AddComponent(entity, new HealthComponent
             {

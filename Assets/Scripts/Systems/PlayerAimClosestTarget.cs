@@ -19,6 +19,11 @@ namespace SV.ECS
             Gizmos.color = Color.red;
             Gizmos.DrawWireSphere(transform.position, aimDistance);
         }
+
+        private void OnEnable()
+        {
+            
+        }
     }
 
 
@@ -41,6 +46,9 @@ namespace SV.ECS
     {
         public override void Bake(PlayerAimClosestTarget authoring)
         {
+            if (!authoring.enabled)
+                return;
+
             var entity = GetEntity(TransformUsageFlags.Dynamic);
             AddComponent(entity, new PlayerAimClosestTargetComponent
             {

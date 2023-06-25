@@ -35,7 +35,7 @@ namespace Rival
     }
 
 
-    [UpdateInGroup(typeof(PredictedSimulationSystemGroup))]
+    [UpdateInGroup(typeof(PredictedFixedStepSimulationSystemGroup))]
     //[UpdateInGroup(typeof(FixedStepSimulationSystemGroup))]
     [UpdateAfter(typeof(ExportPhysicsWorld))]
     [UpdateAfter(typeof(PhysicsSystemGroup))]

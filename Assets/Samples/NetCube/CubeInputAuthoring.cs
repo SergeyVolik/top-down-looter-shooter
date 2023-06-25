@@ -12,10 +12,17 @@ public struct CubeInput : IInputComponentData
 [DisallowMultipleComponent]
 public class CubeInputAuthoring : MonoBehaviour
 {
+    private void OnEnable()
+    {
+        
+    }
     class CubeInputBaking : Unity.Entities.Baker<CubeInputAuthoring>
     {
         public override void Bake(CubeInputAuthoring authoring)
         {
+            if (!authoring.enabled)
+                return;
+
             var entity = GetEntity(TransformUsageFlags.Dynamic);
             AddComponent<CubeInput>(entity);
         }

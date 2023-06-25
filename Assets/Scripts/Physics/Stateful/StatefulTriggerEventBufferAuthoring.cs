@@ -11,12 +11,18 @@ namespace Unity.Physics.Stateful
 
     public class StatefulTriggerEventBufferAuthoring : MonoBehaviour
     {
+        private void OnEnable()
+        {
+            
+        }
     }
 
     class StatefulTriggerEventBufferAuthoringBaker : Baker<StatefulTriggerEventBufferAuthoring>
     {
         public override void Bake(StatefulTriggerEventBufferAuthoring authoring)
         {
+            if (!authoring.enabled)
+                return;
             var entity = GetEntity(TransformUsageFlags.Dynamic);
             AddBuffer<StatefulTriggerEvent>(entity);
         }

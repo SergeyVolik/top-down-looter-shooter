@@ -7,7 +7,10 @@ namespace SV.ECS
 {
     public class VisitProjectile : MonoBehaviour
     {
-        
+        private void OnEnable()
+        {
+            
+        }
     }
 
     [InternalBufferCapacity(3)]
@@ -24,6 +27,9 @@ namespace SV.ECS
     {
         public override void Bake(VisitProjectile authoring)
         {
+            if (!authoring.enabled)
+                return;
+
             var entity = GetEntity(TransformUsageFlags.Dynamic);
             AddBuffer<VisitProjectileBufferElem>(entity);
             AddComponent<ClearVisitProjectileBuffer>(entity);

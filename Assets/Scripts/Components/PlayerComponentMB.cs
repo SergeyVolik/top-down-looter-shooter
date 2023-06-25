@@ -7,7 +7,10 @@ namespace SV.ECS
 {
     public class PlayerComponentMB : MonoBehaviour
     {
-        
+        private void OnEnable()
+        {
+            
+        }
     }
     public struct PlayerComponent : IComponentData
     {
@@ -18,6 +21,9 @@ namespace SV.ECS
     {
         public override void Bake(PlayerComponentMB authoring)
         {
+            if (!authoring.enabled)
+                return;
+
             var entity = GetEntity(TransformUsageFlags.Dynamic);
             AddComponent<PlayerComponent>(entity);
         }

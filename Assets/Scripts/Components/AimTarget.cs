@@ -8,6 +8,10 @@ namespace SV.ECS
     public class AimTarget : MonoBehaviour
     {
         public Transform aimPoint;
+        private void OnEnable()
+        {
+            
+        }
     }
     public struct AimTargetComponent : IComponentData, IEnableableComponent
     {
@@ -18,6 +22,8 @@ namespace SV.ECS
     {
         public override void Bake(AimTarget authoring)
         {
+            if (!authoring.enabled)
+                return;
             var entity = GetEntity(TransformUsageFlags.Dynamic);
             AddComponent(entity, new AimTargetComponent
             {

@@ -6,6 +6,7 @@ using Unity.Mathematics;
 using Unity.Transforms;
 using Rival;
 using SV.ECS;
+using Unity.NetCode;
 
 [UpdateInGroup(typeof(KinematicCharacterUpdateGroup), OrderFirst = true)]
 [UpdateAfter(typeof(TopDownChracterInputSystem))]
@@ -31,6 +32,7 @@ public partial class TopDownCharacterRotationSystem : SystemBase
                 {
                     typeof(TopDownCharacterComponent),
                     typeof(TopDownCharacterInputs),
+                    typeof(PredictedGhost),
                 }),
         });
 

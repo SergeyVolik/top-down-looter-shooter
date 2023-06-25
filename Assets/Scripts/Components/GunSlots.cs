@@ -1,8 +1,5 @@
-using System.Collections;
-using System.Collections.Generic;
 using Unity.Entities;
 using Unity.Transforms;
-using Unity.VisualScripting.Antlr3.Runtime.Misc;
 using UnityEngine;
 
 namespace SV.ECS
@@ -20,6 +17,11 @@ namespace SV.ECS
         public WeaponSO gun1;
         public WeaponSO gun2;
         public WeaponSO gun3;
+
+        private void OnEnable()
+        {
+            
+        }
 
     }
 
@@ -57,6 +59,9 @@ namespace SV.ECS
     {
         public override void Bake(GunSlots authoring)
         {
+            if (!authoring.enabled)
+                return;
+
             var entity = GetEntity(TransformUsageFlags.Dynamic);
 
             AddComponent<GunSlotsComponent>(entity, new GunSlotsComponent

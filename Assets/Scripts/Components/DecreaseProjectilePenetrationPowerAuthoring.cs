@@ -8,6 +8,11 @@ namespace SV.ECS
     public class DecreaseProjectilePenetrationPowerAuthoring : MonoBehaviour
     {
         public int value;
+
+        private void OnEnable()
+        {
+            
+        }
     }
     public struct DecreaseProjectilePenetrationPowerComponent : IComponentData
     {
@@ -18,6 +23,9 @@ namespace SV.ECS
     {
         public override void Bake(DecreaseProjectilePenetrationPowerAuthoring authoring)
         {
+            if (!authoring.enabled)
+                return;
+
             AddComponent(GetEntity(TransformUsageFlags.Dynamic), new DecreaseProjectilePenetrationPowerComponent
             {
                 value = authoring.value,

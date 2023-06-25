@@ -63,15 +63,21 @@ public struct TopDownCharacterComponent : IComponentData
     }
 }
 
-[GhostComponent(PrefabType = GhostPrefabType.All)]
-[Serializable]
+
+[GhostComponent( PrefabType = GhostPrefabType.AllPredicted, OwnerSendType = SendToOwnerType.SendToNonOwner)]
 public struct TopDownCharacterInputs : IInputComponentData
 {
+
     public float moveX;
+ 
     public float moveY;
 
+  
+    public bool JumpRequested;
 
-    public InputEvent JumpRequested;
+  
+    public uint LastInputsProcessingTick;
+
 
     public float3 GetFloat3Move()
     {
