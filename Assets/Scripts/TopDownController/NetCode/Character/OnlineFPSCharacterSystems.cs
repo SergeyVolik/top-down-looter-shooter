@@ -13,6 +13,7 @@ using Unity.Collections.LowLevel.Unsafe;
 using Unity.NetCode;
 using UnityEngine;
 using System;
+using Unity.Burst.Intrinsics;
 
 namespace Rival.Samples.OnlineFPS
 {
@@ -25,14 +26,14 @@ namespace Rival.Samples.OnlineFPS
     [UpdateInGroup(typeof(KinematicCharacterUpdateGroup))]
     public partial class OnlineFPSCharacterMovementSystem : SystemBase
     {
-        public BuildPhysicsWorld BuildPhysicsWorldSystem;
+      
         public PredictedSimulationSystemGroup GhostPredictionSystemGroup;
         public EntityQuery PredictedCharacterQuery;
 
         [BurstCompile]
-        public struct OnlineFPSCharacterJob : IJobEntityBatch
+        public struct OnlineFPSCharacterJob : IJobChunk
         {
-            public uint Tick;
+            public NetworkTick Tick;
             public float DeltaTime;
             [ReadOnly]
             public CollisionWorld CollisionWorld;
@@ -48,9 +49,8 @@ namespace Rival.Samples.OnlineFPS
 
             [ReadOnly]
             public EntityTypeHandle EntityType;
-            public ComponentTypeHandle<Translation> TranslationType;
-            [ReadOnly]
-            public ComponentTypeHandle<Rotation> RotationType;
+            public ComponentTypeHandle<LocalTransform> TranslationType;
+
             public ComponentTypeHandle<KinematicCharacterBody> KinematicCharacterBodyType;
             [ReadOnly]
             public ComponentTypeHandle<PhysicsCollider> PhysicsColliderType;
@@ -74,20 +74,22 @@ namespace Rival.Samples.OnlineFPS
             [NativeDisableContainerSafetyRestriction]
             public NativeList<DistanceHit> TmpDistanceHits;
 
-            public void Execute(ArchetypeChunk chunk, int batchIndex)
+
+
+            public void Execute(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask, in v128 chunkEnabledMask)
             {
                 NativeArray<Entity> chunkEntities = chunk.GetNativeArray(EntityType);
-                NativeArray<Translation> chunkTranslations = chunk.GetNativeArray(TranslationType);
-                NativeArray<Rotation> chunkRotations = chunk.GetNativeArray(RotationType);
-                NativeArray<KinematicCharacterBody> chunkCharacterBodies = chunk.GetNativeArray(KinematicCharacterBodyType);
-                NativeArray<PhysicsCollider> chunkPhysicsColliders = chunk.GetNativeArray(PhysicsColliderType);
-                BufferAccessor<KinematicCharacterHit> chunkCharacterHitBuffers = chunk.GetBufferAccessor(CharacterHitsBufferType);
-                BufferAccessor<KinematicVelocityProjectionHit> chunkVelocityProjectionHitBuffers = chunk.GetBufferAccessor(VelocityProjectionHitsBufferType);
-                BufferAccessor<KinematicCharacterDeferredImpulse> chunkCharacterDeferredImpulsesBuffers = chunk.GetBufferAccessor(CharacterDeferredImpulsesBufferType);
-                BufferAccessor<StatefulKinematicCharacterHit> chunkStatefulCharacterHitsBuffers = chunk.GetBufferAccessor(StatefulCharacterHitsBufferType);
-                NativeArray<PredictedGhost> chunkPredictedGhosts = chunk.GetNativeArray(PredictedGhostType);
-                NativeArray<OnlineFPSCharacterComponent> chunkOnlineFPSCharacters = chunk.GetNativeArray(OnlineFPSCharacterType);
-                NativeArray<OnlineFPSCharacterInputs> chunkOnlineFPSCharacterInputs = chunk.GetNativeArray(OnlineFPSCharacterInputsType);
+                NativeArray<LocalTransform> chunkTranslations = chunk.GetNativeArray(ref TranslationType);
+
+                NativeArray<KinematicCharacterBody> chunkCharacterBodies = chunk.GetNativeArray(ref KinematicCharacterBodyType);
+                NativeArray<PhysicsCollider> chunkPhysicsColliders = chunk.GetNativeArray(ref PhysicsColliderType);
+                BufferAccessor<KinematicCharacterHit> chunkCharacterHitBuffers = chunk.GetBufferAccessor(ref CharacterHitsBufferType);
+                BufferAccessor<KinematicVelocityProjectionHit> chunkVelocityProjectionHitBuffers = chunk.GetBufferAccessor(ref VelocityProjectionHitsBufferType);
+                BufferAccessor<KinematicCharacterDeferredImpulse> chunkCharacterDeferredImpulsesBuffers = chunk.GetBufferAccessor(ref CharacterDeferredImpulsesBufferType);
+                BufferAccessor<StatefulKinematicCharacterHit> chunkStatefulCharacterHitsBuffers = chunk.GetBufferAccessor(ref StatefulCharacterHitsBufferType);
+                NativeArray<PredictedGhost> chunkPredictedGhosts = chunk.GetNativeArray(ref PredictedGhostType);
+                NativeArray<OnlineFPSCharacterComponent> chunkOnlineFPSCharacters = chunk.GetNativeArray(ref OnlineFPSCharacterType);
+                NativeArray<OnlineFPSCharacterInputs> chunkOnlineFPSCharacterInputs = chunk.GetNativeArray(ref OnlineFPSCharacterInputsType);
 
                 // Initialize the Temp collections
                 if (!TmpRigidbodyIndexesProcessed.IsCreated)
@@ -122,13 +124,17 @@ namespace Rival.Samples.OnlineFPS
 
                 for (int i = 0; i < chunk.Count; i++)
                 {
-                    if (GhostPredictionSystemGroup.ShouldPredict(Tick, chunkPredictedGhosts[i]))
+                    if (chunkPredictedGhosts[i].ShouldPredict(Tick))
                     {
+
                         Entity entity = chunkEntities[i];
                         // Assign the per-character data of the processor
+
                         processor.Entity = entity;
-                        processor.Translation = chunkTranslations[i].Value;
-                        processor.Rotation = chunkRotations[i].Value;
+
+                        var localTransform = chunkTranslations[i];
+                        processor.Translation = localTransform.Position;
+
                         processor.PhysicsCollider = chunkPhysicsColliders[i];
                         processor.CharacterBody = chunkCharacterBodies[i];
                         processor.CharacterHitsBuffer = chunkCharacterHitBuffers[i];
@@ -141,7 +147,8 @@ namespace Rival.Samples.OnlineFPS
                         processor.OnUpdate();
 
                         // Write back updated data
-                        chunkTranslations[i] = new Translation { Value = processor.Translation };
+                        localTransform.Position = processor.Translation;
+                        chunkTranslations[i] = localTransform;
                         chunkCharacterBodies[i] = processor.CharacterBody;
                         chunkOnlineFPSCharacters[i] = processor.OnlineFPSCharacter;
                     }
@@ -151,8 +158,8 @@ namespace Rival.Samples.OnlineFPS
 
         protected override void OnCreate()
         {
-            BuildPhysicsWorldSystem = World.GetOrCreateSystem<BuildPhysicsWorld>();
-            GhostPredictionSystemGroup = World.GetExistingSystem<PredictedSimulationSystemGroup>();
+         
+            GhostPredictionSystemGroup = World.GetExistingSystemManaged<PredictedSimulationSystemGroup>();
 
             PredictedCharacterQuery = GetEntityQuery(new EntityQueryDesc
             {
@@ -171,23 +178,24 @@ namespace Rival.Samples.OnlineFPS
 
         protected unsafe override void OnUpdate()
         {
-            uint tick = GhostPredictionSystemGroup.PredictingTick;
-            CollisionWorld collisionWorld = BuildPhysicsWorldSystem.PhysicsWorld.CollisionWorld;
+            var networkTick = SystemAPI.GetSingleton<NetworkTime>();
+            var tick = networkTick.ServerTick; //GhostPredictionSystemGroup.PredictingTick;
+            CollisionWorld collisionWorld = SystemAPI.GetSingletonRW<BuildPhysicsWorldData>().ValueRW.PhysicsData.PhysicsWorld.CollisionWorld; //BuildPhysicsWorldSystem.PhysicsWorld.CollisionWorld;
 
             Dependency = new OnlineFPSCharacterJob
             {
                 Tick = tick,
-                DeltaTime = Time.DeltaTime,
+                DeltaTime = SystemAPI.Time.DeltaTime,
                 CollisionWorld = collisionWorld,
 
-                PhysicsVelocityFromEntity = GetComponentDataFromEntity<PhysicsVelocity>(true),
-                PhysicsMassFromEntity = GetComponentDataFromEntity<PhysicsMass>(true),
-                StoredKinematicCharacterBodyPropertiesFromEntity = GetComponentDataFromEntity<StoredKinematicCharacterBodyProperties>(true),
-                TrackedTransformFromEntity = GetComponentDataFromEntity<TrackedTransform>(true),
+                PhysicsVelocityFromEntity = SystemAPI.GetComponentLookup<PhysicsVelocity>(true),
+                PhysicsMassFromEntity = SystemAPI.GetComponentLookup<PhysicsMass>(true),
+                StoredKinematicCharacterBodyPropertiesFromEntity = SystemAPI.GetComponentLookup<StoredKinematicCharacterBodyProperties>(true),
+                TrackedTransformFromEntity = SystemAPI.GetComponentLookup<TrackedTransform>(true),
 
                 EntityType = GetEntityTypeHandle(),
-                TranslationType = GetComponentTypeHandle<Translation>(false),
-                RotationType = GetComponentTypeHandle<Rotation>(true),
+                TranslationType = SystemAPI.GetComponentTypeHandle<LocalTransform>(false),
+
                 KinematicCharacterBodyType = GetComponentTypeHandle<KinematicCharacterBody>(false),
                 PhysicsColliderType = GetComponentTypeHandle<PhysicsCollider>(true),
                 CharacterHitsBufferType = GetBufferTypeHandle<KinematicCharacterHit>(false),
@@ -200,12 +208,12 @@ namespace Rival.Samples.OnlineFPS
                 OnlineFPSCharacterInputsType = GetComponentTypeHandle<OnlineFPSCharacterInputs>(true),
             }.Schedule(PredictedCharacterQuery, Dependency);
 
-            BuildPhysicsWorldSystem.AddInputDependencyToComplete(Dependency);
+            
         }
     }
 
     [UpdateInGroup(typeof(PredictedSimulationSystemGroup))]
-    [UpdateBefore(typeof(PredictedPhysicsSystemGroup))]
+    //[UpdateBefore(typeof(PredictedPhysicsSystemGroup))]
     [UpdateAfter(typeof(OnlineFPSPlayerControlSystem))]
     public partial class OnlineFPSCharacterRotationSystem : SystemBase
     {
@@ -215,15 +223,17 @@ namespace Rival.Samples.OnlineFPS
         {
             base.OnCreate();
 
-            GhostPredictionSystemGroup = World.GetExistingSystem<PredictedSimulationSystemGroup>();
+            GhostPredictionSystemGroup = World.GetExistingSystemManaged<PredictedSimulationSystemGroup>();
             RequireForUpdate<NetworkId>();
         }
 
         protected override void OnUpdate()
         {
-            uint tick = GhostPredictionSystemGroup.PredictingTick;
-            float deltaTime = Time.DeltaTime;
+            var networkTick = SystemAPI.GetSingleton<NetworkTime>();
+            var tick = networkTick.ServerTick;//GhostPredictionSystemGroup.PredictingTick;
+            float deltaTime = SystemAPI.Time.DeltaTime;
 
+           
             Entities.ForEach((
                 Entity entity,
                 ref OnlineFPSCharacterComponent character,
@@ -231,14 +241,14 @@ namespace Rival.Samples.OnlineFPS
                 in KinematicCharacterBody characterBody,
                 in PredictedGhost predictedGhost) =>
             {
-                if (!GhostPredictionSystemGroup.ShouldPredict(tick, predictedGhost))
+                if (!predictedGhost.ShouldPredict(tick))
                     return;
 
-                Rotation characterRotation = GetComponent<Rotation>(entity);
+                LocalTransform characterRotation = GetComponent<LocalTransform>(entity);
 
                 // Camera tilt
                 {
-                    float3 characterRight = MathUtilities.GetRightFromRotation(characterRotation.Value);
+                    float3 characterRight = MathUtilities.GetRightFromRotation(characterRotation.Rotation);
                     float characterMaxSpeed = characterBody.IsGrounded ? character.GroundMaxSpeed : character.AirMaxSpeed;
                     float3 characterLateralVelocity = math.projectsafe(characterBody.RelativeVelocity, characterRight);
                     float characterLateralVelocityRatio = math.clamp(math.length(characterLateralVelocity) / characterMaxSpeed, 0f, 1f);
@@ -247,10 +257,10 @@ namespace Rival.Samples.OnlineFPS
                     targetTiltAngle = velocityIsRight ? -targetTiltAngle : targetTiltAngle;
                     character.CameraTiltAngle = math.lerp(character.CameraTiltAngle, targetTiltAngle, math.saturate(character.TiltSharpness * deltaTime));
                 }
-                 
+
                 // Compute character & view rotations from rotation input
                 OnlineFPSCharacterUtilities.ComputeFinalRotationsFromRotationDelta(
-                    ref characterRotation.Value,
+                    ref characterRotation.Rotation,
                     ref character.ViewPitchDegrees,
                     inputs.LookYawPitchDegrees,
                     character.CameraTiltAngle,
@@ -260,7 +270,7 @@ namespace Rival.Samples.OnlineFPS
                     out float canceledPitchDegrees);
 
                 SetComponent(entity, characterRotation);
-                SetComponent(character.ViewEntity, new Rotation { Value = localViewRotation });
+                //SetComponent(character.ViewEntity, new Rotation { Value = localViewRotation });
             }).Schedule();
         }
     }
