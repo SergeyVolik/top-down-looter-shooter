@@ -5,7 +5,9 @@ using UnityEngine;
 
 public class LocalPlayerData : MonoBehaviour
 {
-    public static LocalPlayer Player { get; private set; }
+    public static LocalPlayer Player { get; private set; } = new LocalPlayer { 
+          DisplayName = new CallbackValue<string>("DefaultName")
+    };
 
     [Serializable]
     public class LocalPlayer

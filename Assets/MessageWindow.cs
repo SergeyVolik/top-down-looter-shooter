@@ -434,6 +434,8 @@ public partial class ShowMessageWindowExecutorSystem : SystemBase
 
     protected override void OnUpdate()
     {
+        if (m_Window == null)
+            return;
 
         var clearMW = SystemAPI.QueryBuilder().WithAll<ClearMWComponent>().Build();
 

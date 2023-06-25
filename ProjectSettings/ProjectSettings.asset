@@ -127,7 +127,7 @@ PlayerSettings:
   switchNVNGraphicsFirmwareMemory: 32
   stadiaPresentMode: 0
   stadiaTargetFramerate: 0
-  vulkanNumSwapchainBuffers: 3
+  vulkanNumSwapchainBuffers: 2
   vulkanEnableSetSRGBWrite: 0
   vulkanEnablePreTransform: 1
   vulkanEnableLateAcquireNextImage: 0
@@ -729,7 +729,7 @@ PlayerSettings:
   webGLPowerPreference: 2
   scriptingDefineSymbols:
     Android: ODIN_INSPECTOR;ODIN_INSPECTOR_3;ODIN_INSPECTOR_3_1
-    Standalone: ODIN_INSPECTOR;ODIN_INSPECTOR_3;ODIN_INSPECTOR_3_1;UGS_BETA_LOBBY_EVENTS;UGS_LOBBY_EVENTS;ENABLE_HYBRID_RENDERER_V2;UNITY_DISABLE_AUTOMATIC_SYSTEM_BOOTSTRAP;QC_DISABLE_BUILTIN_ALL
+    Standalone: ODIN_INSPECTOR;ODIN_INSPECTOR_3;ODIN_INSPECTOR_3_1;UGS_BETA_LOBBY_EVENTS;UGS_LOBBY_EVENTS;ENABLE_HYBRID_RENDERER_V2;QC_DISABLE_BUILTIN_ALL
     Windows Store Apps: ODIN_INSPECTOR;ODIN_INSPECTOR_3;ODIN_INSPECTOR_3_1
   additionalCompilerArguments: {}
   platformArchitecture: {}
@@ -759,7 +759,7 @@ PlayerSettings:
   selectedPlatform: 0
   additionalIl2CppArgs: 
   scriptingRuntimeVersion: 1
-  gcIncremental: 1
+  gcIncremental: 0
   gcWBarrierValidation: 0
   apiCompatibilityLevelPerPlatform: {}
   m_RenderingPath: 1
