@@ -26,7 +26,7 @@ namespace Rival.Samples.OnlineFPS
     public partial class OnlineFPSCharacterMovementSystem : SystemBase
     {
         public BuildPhysicsWorld BuildPhysicsWorldSystem;
-        public GhostPredictionSystemGroup GhostPredictionSystemGroup;
+        public PredictedSimulationSystemGroup GhostPredictionSystemGroup;
         public EntityQuery PredictedCharacterQuery;
 
         [BurstCompile]
@@ -38,13 +38,13 @@ namespace Rival.Samples.OnlineFPS
             public CollisionWorld CollisionWorld;
 
             [ReadOnly]
-            public ComponentDataFromEntity<PhysicsVelocity> PhysicsVelocityFromEntity;
+            public ComponentLookup<PhysicsVelocity> PhysicsVelocityFromEntity;
             [ReadOnly]
-            public ComponentDataFromEntity<PhysicsMass> PhysicsMassFromEntity;
+            public ComponentLookup<PhysicsMass> PhysicsMassFromEntity;
             [ReadOnly]
-            public ComponentDataFromEntity<StoredKinematicCharacterBodyProperties> StoredKinematicCharacterBodyPropertiesFromEntity;
+            public ComponentLookup<StoredKinematicCharacterBodyProperties> StoredKinematicCharacterBodyPropertiesFromEntity;
             [ReadOnly]
-            public ComponentDataFromEntity<TrackedTransform> TrackedTransformFromEntity;
+            public ComponentLookup<TrackedTransform> TrackedTransformFromEntity;
 
             [ReadOnly]
             public EntityTypeHandle EntityType;
@@ -60,7 +60,7 @@ namespace Rival.Samples.OnlineFPS
             public BufferTypeHandle<StatefulKinematicCharacterHit> StatefulCharacterHitsBufferType;
 
             [ReadOnly]
-            public ComponentTypeHandle<PredictedGhostComponent> PredictedGhostType;
+            public ComponentTypeHandle<PredictedGhost> PredictedGhostType;
             public ComponentTypeHandle<OnlineFPSCharacterComponent> OnlineFPSCharacterType;
             [ReadOnly]
             public ComponentTypeHandle<OnlineFPSCharacterInputs> OnlineFPSCharacterInputsType;
@@ -85,7 +85,7 @@ namespace Rival.Samples.OnlineFPS
                 BufferAccessor<KinematicVelocityProjectionHit> chunkVelocityProjectionHitBuffers = chunk.GetBufferAccessor(VelocityProjectionHitsBufferType);
                 BufferAccessor<KinematicCharacterDeferredImpulse> chunkCharacterDeferredImpulsesBuffers = chunk.GetBufferAccessor(CharacterDeferredImpulsesBufferType);
                 BufferAccessor<StatefulKinematicCharacterHit> chunkStatefulCharacterHitsBuffers = chunk.GetBufferAccessor(StatefulCharacterHitsBufferType);
-                NativeArray<PredictedGhostComponent> chunkPredictedGhosts = chunk.GetNativeArray(PredictedGhostType);
+                NativeArray<PredictedGhost> chunkPredictedGhosts = chunk.GetNativeArray(PredictedGhostType);
                 NativeArray<OnlineFPSCharacterComponent> chunkOnlineFPSCharacters = chunk.GetNativeArray(OnlineFPSCharacterType);
                 NativeArray<OnlineFPSCharacterInputs> chunkOnlineFPSCharacterInputs = chunk.GetNativeArray(OnlineFPSCharacterInputsType);
 
@@ -152,7 +152,7 @@ namespace Rival.Samples.OnlineFPS
         protected override void OnCreate()
         {
             BuildPhysicsWorldSystem = World.GetOrCreateSystem<BuildPhysicsWorld>();
-            GhostPredictionSystemGroup = World.GetExistingSystem<GhostPredictionSystemGroup>();
+            GhostPredictionSystemGroup = World.GetExistingSystem<PredictedSimulationSystemGroup>();
 
             PredictedCharacterQuery = GetEntityQuery(new EntityQueryDesc
             {
@@ -162,7 +162,7 @@ namespace Rival.Samples.OnlineFPS
                     {
                         typeof(OnlineFPSCharacterComponent),
                         typeof(OnlineFPSCharacterInputs),
-                        typeof(PredictedGhostComponent),
+                        typeof(PredictedGhost),
                     }),
             });
 
@@ -195,7 +195,7 @@ namespace Rival.Samples.OnlineFPS
                 CharacterDeferredImpulsesBufferType = GetBufferTypeHandle<KinematicCharacterDeferredImpulse>(false),
                 StatefulCharacterHitsBufferType = GetBufferTypeHandle<StatefulKinematicCharacterHit>(false),
 
-                PredictedGhostType = GetComponentTypeHandle<PredictedGhostComponent>(true),
+                PredictedGhostType = GetComponentTypeHandle<PredictedGhost>(true),
                 OnlineFPSCharacterType = GetComponentTypeHandle<OnlineFPSCharacterComponent>(false),
                 OnlineFPSCharacterInputsType = GetComponentTypeHandle<OnlineFPSCharacterInputs>(true),
             }.Schedule(PredictedCharacterQuery, Dependency);
@@ -204,19 +204,19 @@ namespace Rival.Samples.OnlineFPS
         }
     }
 
-    [UpdateInGroup(typeof(GhostPredictionSystemGroup))]
+    [UpdateInGroup(typeof(PredictedSimulationSystemGroup))]
     [UpdateBefore(typeof(PredictedPhysicsSystemGroup))]
     [UpdateAfter(typeof(OnlineFPSPlayerControlSystem))]
     public partial class OnlineFPSCharacterRotationSystem : SystemBase
     {
-        public GhostPredictionSystemGroup GhostPredictionSystemGroup;
+        public PredictedSimulationSystemGroup GhostPredictionSystemGroup;
 
         protected override void OnCreate()
         {
             base.OnCreate();
 
-            GhostPredictionSystemGroup = World.GetExistingSystem<GhostPredictionSystemGroup>();
-            RequireSingletonForUpdate<NetworkIdComponent>();
+            GhostPredictionSystemGroup = World.GetExistingSystem<PredictedSimulationSystemGroup>();
+            RequireForUpdate<NetworkId>();
         }
 
         protected override void OnUpdate()
@@ -229,7 +229,7 @@ namespace Rival.Samples.OnlineFPS
                 ref OnlineFPSCharacterComponent character,
                 in OnlineFPSCharacterInputs inputs,
                 in KinematicCharacterBody characterBody,
-                in PredictedGhostComponent predictedGhost) =>
+                in PredictedGhost predictedGhost) =>
             {
                 if (!GhostPredictionSystemGroup.ShouldPredict(tick, predictedGhost))
                     return;

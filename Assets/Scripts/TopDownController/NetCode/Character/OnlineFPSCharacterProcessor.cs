@@ -15,10 +15,10 @@ namespace Rival.Samples.OnlineFPS
         public float DeltaTime;
         public CollisionWorld CollisionWorld;
 
-        public ComponentDataFromEntity<StoredKinematicCharacterBodyProperties> StoredKinematicCharacterBodyPropertiesFromEntity;
-        public ComponentDataFromEntity<PhysicsMass> PhysicsMassFromEntity;
-        public ComponentDataFromEntity<PhysicsVelocity> PhysicsVelocityFromEntity;
-        public ComponentDataFromEntity<TrackedTransform> TrackedTransformFromEntity;
+        public ComponentLookup<StoredKinematicCharacterBodyProperties> StoredKinematicCharacterBodyPropertiesFromEntity;
+        public ComponentLookup<PhysicsMass> PhysicsMassFromEntity;
+        public ComponentLookup<PhysicsVelocity> PhysicsVelocityFromEntity;
+        public ComponentLookup<TrackedTransform> TrackedTransformFromEntity;
 
         public NativeList<int> TmpRigidbodyIndexesProcessed;
         public NativeList<RaycastHit> TmpRaycastHits;
@@ -41,10 +41,10 @@ namespace Rival.Samples.OnlineFPS
 
         #region Processor Getters
         public CollisionWorld GetCollisionWorld => CollisionWorld;
-        public ComponentDataFromEntity<StoredKinematicCharacterBodyProperties> GetStoredCharacterBodyPropertiesFromEntity => StoredKinematicCharacterBodyPropertiesFromEntity;
-        public ComponentDataFromEntity<PhysicsMass> GetPhysicsMassFromEntity => PhysicsMassFromEntity;
-        public ComponentDataFromEntity<PhysicsVelocity> GetPhysicsVelocityFromEntity => PhysicsVelocityFromEntity;
-        public ComponentDataFromEntity<TrackedTransform> GetTrackedTransformFromEntity => TrackedTransformFromEntity;
+        public ComponentLookup<StoredKinematicCharacterBodyProperties> GetStoredCharacterBodyPropertiesFromEntity => StoredKinematicCharacterBodyPropertiesFromEntity;
+        public ComponentLookup<PhysicsMass> GetPhysicsMassFromEntity => PhysicsMassFromEntity;
+        public ComponentLookup<PhysicsVelocity> GetPhysicsVelocityFromEntity => PhysicsVelocityFromEntity;
+        public ComponentLookup<TrackedTransform> GetTrackedTransformFromEntity => TrackedTransformFromEntity;
         public NativeList<int> GetTmpRigidbodyIndexesProcessed => TmpRigidbodyIndexesProcessed;
         public NativeList<RaycastHit> GetTmpRaycastHits => TmpRaycastHits;
         public NativeList<ColliderCastHit> GetTmpColliderCastHits => TmpColliderCastHits;

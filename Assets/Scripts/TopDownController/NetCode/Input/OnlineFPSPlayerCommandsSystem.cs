@@ -21,8 +21,8 @@ namespace Rival.Samples.OnlineFPS
         protected override void OnCreate()
         {
             base.OnCreate();
-            RequireSingletonForUpdate<NetworkIdComponent>();
-            RequireSingletonForUpdate<CommandTargetComponent>();
+            RequireForUpdate<NetworkId>();
+            RequireForUpdate<CommandTarget>();
         }
 
         protected override void OnStartRunning()
@@ -39,7 +39,7 @@ namespace Rival.Samples.OnlineFPS
 
         protected override void OnUpdate()
         {
-            if (!HasSingleton<NetworkIdComponent>())
+            if (!HasSingleton<NetworkId>())
                 return;
 
             if (Input.GetKeyDown(KeyCode.Escape))
@@ -58,7 +58,7 @@ namespace Rival.Samples.OnlineFPS
             float deltaTime = Time.DeltaTime;
             float elapsedTime = (float)Time.ElapsedTime;
             uint tick = ClientSimulationSystemGroup.ServerTick;
-            int localPlayerId = GetSingleton<NetworkIdComponent>().Value;
+            int localPlayerId = GetSingleton<NetworkId>().Value;
 
             // Update commands
             Entities
@@ -67,7 +67,7 @@ namespace Rival.Samples.OnlineFPS
                     Entity entity,
                     ref DynamicBuffer<OnlineFPSPlayerCommands> playerCommands,
                     in OnlineFPSPlayer player,
-                    in GhostOwnerComponent ghostOwner) =>
+                    in GhostOwner ghostOwner) =>
                 {
                     if (ghostOwner.NetworkId == localPlayerId && HasComponent<OnlineFPSCharacterComponent>(player.ControlledEntity))
                     {

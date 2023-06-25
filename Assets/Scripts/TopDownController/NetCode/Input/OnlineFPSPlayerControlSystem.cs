@@ -11,17 +11,17 @@ using UnityEngine;
 
 namespace Rival.Samples.OnlineFPS
 {
-    [UpdateInGroup(typeof(GhostPredictionSystemGroup))]
+    [UpdateInGroup(typeof(PredictedSimulationSystemGroup))]
     [UpdateBefore(typeof(PredictedPhysicsSystemGroup))]
     public partial class OnlineFPSPlayerControlSystem : SystemBase
     {
-        public GhostPredictionSystemGroup GhostPredictionSystemGroup;
+        public PredictedSimulationSystemGroup GhostPredictionSystemGroup;
 
         protected override void OnCreate()
         {
             base.OnCreate();
 
-            GhostPredictionSystemGroup = World.GetExistingSystem<GhostPredictionSystemGroup>();
+            GhostPredictionSystemGroup = World.GetExistingSystem<PredictedSimulationSystemGroup>();
         }
 
         protected override void OnUpdate()
@@ -32,7 +32,7 @@ namespace Rival.Samples.OnlineFPS
 
             // Iterate on all Player components to apply input to their character
             Entities
-                .ForEach((ref OnlineFPSPlayer player, in DynamicBuffer<OnlineFPSPlayerCommands> playerCommandsBuffer, in PredictedGhostComponent predictedGhost) =>
+                .ForEach((ref OnlineFPSPlayer player, in DynamicBuffer<OnlineFPSPlayerCommands> playerCommandsBuffer, in PredictedGhost predictedGhost) =>
                 {
                     if (!GhostPredictionSystemGroup.ShouldPredict(tick, predictedGhost))
                         return;
