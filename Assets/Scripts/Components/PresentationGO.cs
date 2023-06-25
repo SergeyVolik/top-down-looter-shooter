@@ -87,27 +87,27 @@ namespace SV.ECS
         }
     }
 
-    public partial class AnimatorSystem : SystemBase
-    {
-        private int moveParam;
+    //public partial class AnimatorSystem : SystemBase
+    //{
+    //    private int moveParam;
 
-        protected override void OnCreate()
-        {
-            base.OnCreate();
-            moveParam = Animator.StringToHash("Move");
+    //    protected override void OnCreate()
+    //    {
+    //        base.OnCreate();
+    //        moveParam = Animator.StringToHash("Move");
 
-        }
-        protected override void OnUpdate()
-        {
-            foreach (var (animatorComp, input) in SystemAPI.Query<SystemAPI.ManagedAPI.UnityEngineComponent<Animator>, RefRO<TopDownCharacterInputs>>())
-            {
-                //Debug.Log("Update Player Animator");
+    //    }
+    //    protected override void OnUpdate()
+    //    {
+    //        foreach (var (animatorComp, input) in SystemAPI.Query<SystemAPI.ManagedAPI.UnityEngineComponent<Animator>, RefRO<TopDownCharacterInputs>>())
+    //        {
+    //            //Debug.Log("Update Player Animator");
 
-                var animator = animatorComp.Value;
-                animator.SetFloat(moveParam, math.length(input.ValueRO.GetFloat3Move()));
-            }
-        }
-    }
+    //            var animator = animatorComp.Value;
+    //            animator.SetFloat(moveParam, math.length(input.ValueRO.GetFloat3Move()));
+    //        }
+    //    }
+    //}
 
     public partial class AnimatorAISystem : SystemBase
     {

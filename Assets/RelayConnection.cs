@@ -157,12 +157,12 @@ public class RelayConnection : MonoBehaviour
             return null;
         }
 
-        Debug.Log("HostServerAndClient");
-        var regionList = await RelayService.Instance.ListRegionsAsync();
-        var targetRegion = regionList[0].Id;
-        Debug.Log($"Region found region: {targetRegion}");
+        //Debug.Log("HostServerAndClient");
+        //var regionList = await RelayService.Instance.ListRegionsAsync();
+        //var targetRegion = regionList[0].Id;
+        //Debug.Log($"Region found region: {targetRegion}");
 
-        allocation = await RelayService.Instance.CreateAllocationAsync(LobbyManager.maxPlayers, targetRegion);
+        allocation = await RelayService.Instance.CreateAllocationAsync(LobbyManager.maxPlayers);
         Debug.Log("RelayService CreateAllocationAsync executed");
 
         hostServerJoinCode = await RelayService.Instance.GetJoinCodeAsync(allocation.AllocationId);

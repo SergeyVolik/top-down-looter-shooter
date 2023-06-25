@@ -4,7 +4,6 @@ using Unity.NetCode;
 using Unity.Transforms;
 using Unity.Collections;
 using Unity.Burst;
-using System.Diagnostics;
 
 [UpdateInGroup(typeof(PredictedSimulationSystemGroup))]
 [BurstCompile]
@@ -27,7 +26,6 @@ public partial struct MoveCubeSystem : ISystem
     {
         var moveJob = new MoveCubeJob
         {
-            worldName = state.WorldUnmanaged.Name,
             tick = SystemAPI.GetSingleton<NetworkTime>().ServerTick,
             fixedCubeSpeed = SystemAPI.Time.DeltaTime * 4
         };
@@ -40,12 +38,10 @@ public partial struct MoveCubeSystem : ISystem
     {
         public NetworkTick tick;
         public float fixedCubeSpeed;
-        public FixedString128Bytes worldName;
+
 
         public void Execute(CubeInput playerInput, ref LocalTransform trans)
         {
-
-            //UnityEngine.Debug.Log($"MoveCubeJob {worldName}");
             var moveInput = new float2(playerInput.Horizontal, playerInput.Vertical);
             moveInput = math.normalizesafe(moveInput) * fixedCubeSpeed;
             trans.Position += new float3(moveInput.x, 0, moveInput.y);
