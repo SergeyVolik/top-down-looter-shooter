@@ -34,11 +34,6 @@ namespace Rival
 
                 NativeArray<CharacterInterpolation> chunkCharacterInterpolations = chunk.GetNativeArray(ref CharacterInterpolationType);
 
-                void* chunkInterpolationsPtr = chunkCharacterInterpolations.GetUnsafePtr();
-                int chunkCount = chunk.Count;
-                int sizeCharacterInterpolation = UnsafeUtility.SizeOf<CharacterInterpolation>();
-
-                int sizeTranslation = UnsafeUtility.SizeOf<LocalTransform>();
 
                 // Copy all Translation & Rotation to the character interpolation component
                 {
@@ -182,6 +177,8 @@ namespace Rival
                 LocalToWorldType = GetComponentTypeHandle<LocalToWorld>(false),
                 CharacterInterpolationType = GetComponentTypeHandle<CharacterInterpolation>(false),
             }.ScheduleParallel(_interpolatedEntitiesQuery, Dependency);
+
+           
         }
     }
 }

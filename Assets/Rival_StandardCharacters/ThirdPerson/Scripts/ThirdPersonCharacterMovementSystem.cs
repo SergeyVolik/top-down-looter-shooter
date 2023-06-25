@@ -199,6 +199,8 @@ public partial struct ThirdPersonCharacterMovementSystem : ISystem, ISystemStart
 
        
         state.Dependency = KinematicCharacterUtilities.ScheduleDeferredImpulsesJob(ref state, CharacterQuery, state.Dependency);
+
+        
     }
 
     public void OnStartRunning(ref SystemState state)

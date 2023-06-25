@@ -10,8 +10,8 @@ using Rival;
 using Unity.NetCode;
 
 [WorldSystemFilter(WorldSystemFilterFlags.ClientSimulation)]
-[UpdateInGroup(typeof(FixedStepSimulationSystemGroup))]
-[UpdateAfter(typeof(CharacterInterpolationFixedUpdateSystem))]
+[UpdateInGroup(typeof(PresentationSystemGroup))]
+//[UpdateAfter(typeof(CharacterInterpolationFixedUpdateSystem))]
 //[UpdateBefore(typeof(LocalToWorldSystem))]
 public partial class OrbitCameraSystem : SystemBase
 {
@@ -21,7 +21,7 @@ public partial class OrbitCameraSystem : SystemBase
     {
         base.OnCreate();
 
-        Enabled = false;
+        //Enabled = false;
 
     }
 
@@ -164,10 +164,10 @@ public partial class OrbitCameraSystem : SystemBase
                 selfLocalTransformRef.Position = targetEntityLocalToWorld.Position + (-cameraForward * orbitCameraRW.CurrentDistanceFromObstruction); //math.lerp(selfLocalTransformRef.Position, targetEntityLocalToWorld.Position + (-cameraForward * orbitCameraRW.CurrentDistanceFromObstruction), fixedDeltaTime * 5);
                 //selfLocalTransformRef.Rotation = 
                 // Manually calculate the LocalToWorld since this is updating after the Transform systems, and the LtW is what rendering uses
-                LocalToWorld cameraLocalToWorld = new LocalToWorld();
-                cameraLocalToWorld.Value = new float4x4(selfLocalTransformRef.Rotation, selfLocalTransformRef.Position);
+                //LocalToWorld cameraLocalToWorld = new LocalToWorld();
+                //cameraLocalToWorld.Value = new float4x4(selfLocalTransformRef.Rotation, selfLocalTransformRef.Position);
 
-                ltwLookup.GetRefRW(entity).ValueRW = cameraLocalToWorld;
+                //ltwLookup.GetRefRW(entity).ValueRW = cameraLocalToWorld;
 
             }
         }
@@ -177,11 +177,11 @@ public partial class OrbitCameraSystem : SystemBase
 
         float fixedDeltaTime = World.GetExistingSystemManaged<FixedStepSimulationSystemGroup>().RateManager.Timestep;
 
-        float deltaTime = fixedDeltaTime;//SystemAPI.Time.DeltaTime;
+        float deltaTime = SystemAPI.Time.DeltaTime;
         CollisionWorld collisionWorld = SystemAPI.GetSingleton<BuildPhysicsWorldData>().PhysicsData.PhysicsWorld.CollisionWorld;
 
 
-        Dependency = new CameraJob
+        Dependency = new CameraJob   
         {
             deltaTime = deltaTime,
             fixedDeltaTime = fixedDeltaTime,

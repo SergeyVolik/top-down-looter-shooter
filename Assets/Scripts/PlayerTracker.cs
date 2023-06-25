@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using Unity.Entities;
 using Unity.Transforms;
 using UnityEngine;
+using Unity.NetCode;
 
 public class PlayerTracker : MonoBehaviour
 {
@@ -12,7 +13,8 @@ public class PlayerTracker : MonoBehaviour
 
     private void Start()
     {
-        em = World.DefaultGameObjectInjectionWorld.EntityManager;
+      
+        em = WorldExt.GetClientWorld().EntityManager;
         entity = em.CreateEntity();
         em.SetName(entity, name);
         em.AddComponentObject(entity, this);
@@ -21,6 +23,7 @@ public class PlayerTracker : MonoBehaviour
 
 }
 
+
 [UpdateInGroup(typeof(PresentationSystemGroup), OrderLast = true)]
 public partial class PlayerTrackerSystem : SystemBase
 {
@@ -28,21 +31,23 @@ public partial class PlayerTrackerSystem : SystemBase
     protected override void OnCreate()
     {
         base.OnCreate();
-        RequireForUpdate<PlayerComponent>();
+        RequireForUpdate<PlayerTracker>();
+        //Enabled = false;
     }
 
     protected override void OnUpdate()
     {
-       
-        if (!SystemAPI.TryGetSingletonEntity<PlayerComponent>(out var playerEntity))
-            return;
 
-        var localToWorld = SystemAPI.GetComponent<LocalToWorld>(playerEntity);
-
-        Entities.ForEach((PlayerTracker tracker) =>
+        if (!SystemAPI.ManagedAPI.TryGetSingleton<PlayerTracker>(out var playerEntity))
         {
-            tracker.transform.SetPositionAndRotation(localToWorld.Position, localToWorld.Rotation);
+            Debug.LogError("PlayerTracker not exist");
+            return;
+        }
 
-        }).WithoutBurst().Run();
+        foreach (var localToWorld in SystemAPI.Query<RefRO<LocalToWorld>>().WithAll<GhostOwnerIsLocal, ThirdPersonPlayer>())
+        {
+            playerEntity.transform.SetPositionAndRotation(localToWorld.ValueRO.Position, localToWorld.ValueRO.Rotation);
+        }
+
     }
 }
