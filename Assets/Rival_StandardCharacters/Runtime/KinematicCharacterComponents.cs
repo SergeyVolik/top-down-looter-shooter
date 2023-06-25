@@ -3,6 +3,7 @@ using System.Runtime.CompilerServices;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
+using Unity.NetCode;
 using Unity.Physics;
 using Unity.Physics.Authoring;
 using Unity.Transforms;
@@ -108,8 +109,11 @@ namespace Rival
         public bool SimulateDynamicBody;
         public float Mass;
 
+        [GhostField]
         [HideInInspector]
         public float3 RelativeVelocity;
+
+        [GhostField]
         [HideInInspector]
         public bool IsGrounded;
         [HideInInspector]

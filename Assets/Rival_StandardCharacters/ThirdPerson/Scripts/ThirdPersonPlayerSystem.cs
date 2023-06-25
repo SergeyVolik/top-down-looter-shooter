@@ -3,12 +3,12 @@ using Unity.Collections;
 using Unity.Entities;
 using Unity.Jobs;
 using Unity.Mathematics;
+using Unity.NetCode;
 using Unity.Transforms;
 using UnityEngine;
 
 [WorldSystemFilter(WorldSystemFilterFlags.ClientSimulation)]
-[UpdateInGroup(typeof(SimulationSystemGroup), OrderFirst = true)]
-[UpdateBefore(typeof(FixedStepSimulationSystemGroup))]
+[UpdateInGroup(typeof(GhostInputSystemGroup), OrderFirst = true)]
 public partial class ThirdPersonPlayerSystem : SystemBase
 {
     public FixedUpdateTickSystem FixedUpdateTickSystem;
@@ -54,12 +54,12 @@ public partial class ThirdPersonPlayerSystem : SystemBase
             // Jump
             // Punctual input presses need special handling when they will be used in a fixed step system.
             // We essentially need to remember if the button was pressed at any point over the last fixed update
-            if (player.LastInputsProcessingTick == fixedTick)
-            {
-                if (jumpInput || characterInputs.JumpRequested.IsSet)
-                    characterInputs.JumpRequested.Set();
-            }
-            else if(jumpInput)
+            //if (player.LastInputsProcessingTick == fixedTick)
+            //{
+            //    if (jumpInput || characterInputs.JumpRequested.IsSet)
+            //        characterInputs.JumpRequested.Set();
+            //}
+            if (jumpInput)
             {
                 characterInputs.JumpRequested.Set();
             }
@@ -108,7 +108,7 @@ public partial class ThirdPersonPlayerSystem : SystemBase
             orbitalCameraInputLookup = SystemAPI.GetComponentLookup<OrbitCameraInputs>(isReadOnly: false),
             cameraEntity = orbitCamera
         };
-
+        //job.Run();
         Dependency = job.Schedule(Dependency);
 
     }

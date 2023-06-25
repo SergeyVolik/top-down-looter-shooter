@@ -82,7 +82,7 @@ public class RelayConnection : MonoBehaviour
 
     public async Task JoinAsClient(string joinCode)
     {
-
+        DestroyClientServerWorlds();
 
         await ConnectToRelayServer(joinCode);
 
@@ -156,6 +156,8 @@ public class RelayConnection : MonoBehaviour
             UnityEngine.Debug.LogError($"Creating client/server worlds is not allowed if playmode is set to {ClientServerBootstrap.RequestedPlayType}");
             return null;
         }
+
+        DestroyClientServerWorlds();
 
         //Debug.Log("HostServerAndClient");
         //var regionList = await RelayService.Instance.ListRegionsAsync();

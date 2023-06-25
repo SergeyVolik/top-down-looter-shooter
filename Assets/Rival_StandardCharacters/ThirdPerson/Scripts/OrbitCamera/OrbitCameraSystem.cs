@@ -7,92 +7,104 @@ using Unity.Physics;
 using Unity.Physics.Systems;
 using Unity.Transforms;
 using Rival;
+using Unity.NetCode;
 
 [WorldSystemFilter(WorldSystemFilterFlags.ClientSimulation)]
-[UpdateAfter(typeof(PresentationSystemGroup))]
+[UpdateInGroup(typeof(FixedStepSimulationSystemGroup))]
+[UpdateAfter(typeof(CharacterInterpolationFixedUpdateSystem))]
+//[UpdateBefore(typeof(LocalToWorldSystem))]
 public partial class OrbitCameraSystem : SystemBase
 {
-   
+
 
     protected override void OnCreate()
     {
         base.OnCreate();
 
-      
+        Enabled = false;
+
     }
 
-    protected unsafe override void OnUpdate()
+    public partial struct CameraJob : IJobEntity
     {
-        float deltaTime = SystemAPI.Time.DeltaTime;
-        float fixedDeltaTime = World.GetExistingSystemManaged<FixedStepSimulationSystemGroup>().RateManager.Timestep;
-        CollisionWorld collisionWorld = SystemAPI.GetSingleton<BuildPhysicsWorldData>().PhysicsData.PhysicsWorld.CollisionWorld;
 
+        [ReadOnly]
+        public ComponentLookup<CameraTarget> camTarglookup;
 
-        foreach (var (orbitCameraRW, inputsRO, selfLocalTransformRef, ignoredEntitiesBuffer, entity) in SystemAPI.Query<RefRW<OrbitCamera>, RefRO<OrbitCameraInputs>, RefRW<LocalTransform>, DynamicBuffer<OrbitCameraIgnoredEntityBufferElement>>().WithEntityAccess())
+        [ReadOnly]
+        public ComponentLookup<LocalToWorld> ltwLookup;
+
+        [ReadOnly]
+        public ComponentLookup<KinematicCharacterBody> kinLookup;
+        public CollisionWorld collisionWorld;
+        public float fixedDeltaTime;
+
+        public float deltaTime;
+        public void Execute(Entity entity, ref OrbitCamera orbitCameraRW, in OrbitCameraInputs inputsRO, ref LocalTransform selfLocalTransformRef, DynamicBuffer<OrbitCameraIgnoredEntityBufferElement> ignoredEntitiesBuffer)
         {
             //var selfLocalTransformRef = SystemAPI.GetComponentRW<LocalTransform>(entity);
 
 
             // if there is a followed entity, place the camera relatively to it
-            if (orbitCameraRW.ValueRO.FollowedCharacterEntity != Entity.Null)
+            if (orbitCameraRW.FollowedCharacterEntity != Entity.Null)
             {
                 //var selfRotation = translation.Rotation;
 
                 // Select the real camera target
                 LocalToWorld targetEntityLocalToWorld = default;
-                if (SystemAPI.HasComponent<CameraTarget>(orbitCameraRW.ValueRO.FollowedCharacterEntity))
+                if (camTarglookup.HasComponent(orbitCameraRW.FollowedCharacterEntity))
                 {
-                    CameraTarget cameraTarget = SystemAPI.GetComponent<CameraTarget>(orbitCameraRW.ValueRO.FollowedCharacterEntity);
-                    targetEntityLocalToWorld = SystemAPI.GetComponent<LocalToWorld>(cameraTarget.TargetEntity);
+                    CameraTarget cameraTarget = camTarglookup.GetRefRO(orbitCameraRW.FollowedCharacterEntity).ValueRO;
+                    targetEntityLocalToWorld = ltwLookup.GetRefRO(cameraTarget.TargetEntity).ValueRO;
                 }
                 else
                 {
-                    targetEntityLocalToWorld = SystemAPI.GetComponent<LocalToWorld>(orbitCameraRW.ValueRO.FollowedCharacterEntity);
+                    targetEntityLocalToWorld = ltwLookup.GetRefRO(orbitCameraRW.FollowedCharacterEntity).ValueRO;
                 }
 
                 // Rotation
                 {
-                    selfLocalTransformRef.ValueRW.Rotation = quaternion.LookRotationSafe(orbitCameraRW.ValueRO.PlanarForward, targetEntityLocalToWorld.Up);
+                    selfLocalTransformRef.Rotation = quaternion.LookRotationSafe(orbitCameraRW.PlanarForward, targetEntityLocalToWorld.Up);
 
                     // Handle rotating the camera along with character's parent entity (moving platform)
-                    if (orbitCameraRW.ValueRW.RotateWithCharacterParent && SystemAPI.HasComponent<KinematicCharacterBody>(orbitCameraRW.ValueRO.FollowedCharacterEntity))
+                    if (orbitCameraRW.RotateWithCharacterParent && kinLookup.HasComponent(orbitCameraRW.FollowedCharacterEntity))
                     {
-                        KinematicCharacterBody characterBody = SystemAPI.GetComponent<KinematicCharacterBody>(orbitCameraRW.ValueRO.FollowedCharacterEntity);
-                        KinematicCharacterUtilities.ApplyParentRotationToTargetRotation(ref selfLocalTransformRef.ValueRW, in characterBody, fixedDeltaTime, deltaTime);
-                        orbitCameraRW.ValueRW.PlanarForward = math.normalizesafe(MathUtilities.ProjectOnPlane(MathUtilities.GetForwardFromRotation(selfLocalTransformRef.ValueRO.Rotation), targetEntityLocalToWorld.Up));
+                        KinematicCharacterBody characterBody = kinLookup.GetRefRO(orbitCameraRW.FollowedCharacterEntity).ValueRO;
+                        KinematicCharacterUtilities.ApplyParentRotationToTargetRotation(ref selfLocalTransformRef, in characterBody, fixedDeltaTime, deltaTime);
+                        orbitCameraRW.PlanarForward = math.normalizesafe(MathUtilities.ProjectOnPlane(MathUtilities.GetForwardFromRotation(selfLocalTransformRef.Rotation), targetEntityLocalToWorld.Up));
                     }
 
                     // Yaw
-                    float yawAngleChange = inputsRO.ValueRO.Look.x * orbitCameraRW.ValueRO.RotationSpeed;
+                    float yawAngleChange = inputsRO.Look.x * orbitCameraRW.RotationSpeed;
                     quaternion yawRotation = quaternion.Euler(targetEntityLocalToWorld.Up * math.radians(yawAngleChange));
-                    orbitCameraRW.ValueRW.PlanarForward = math.rotate(yawRotation, orbitCameraRW.ValueRO.PlanarForward);
+                    orbitCameraRW.PlanarForward = math.rotate(yawRotation, orbitCameraRW.PlanarForward);
 
                     // Pitch
-                    orbitCameraRW.ValueRW.PitchAngle += -inputsRO.ValueRO.Look.y * orbitCameraRW.ValueRO.RotationSpeed;
-                    orbitCameraRW.ValueRW.PitchAngle = math.clamp(orbitCameraRW.ValueRO.PitchAngle, orbitCameraRW.ValueRO.MinVAngle, orbitCameraRW.ValueRO.MaxVAngle);
-                    quaternion pitchRotation = quaternion.Euler(math.right() * math.radians(orbitCameraRW.ValueRW.PitchAngle));
+                    orbitCameraRW.PitchAngle += -inputsRO.Look.y * orbitCameraRW.RotationSpeed;
+                    orbitCameraRW.PitchAngle = math.clamp(orbitCameraRW.PitchAngle, orbitCameraRW.MinVAngle, orbitCameraRW.MaxVAngle);
+                    quaternion pitchRotation = quaternion.Euler(math.right() * math.radians(orbitCameraRW.PitchAngle));
 
                     // Final rotation
-                    selfLocalTransformRef.ValueRW.Rotation = quaternion.LookRotationSafe(orbitCameraRW.ValueRO.PlanarForward, targetEntityLocalToWorld.Up);
-                    selfLocalTransformRef.ValueRW.Rotation = math.mul(selfLocalTransformRef.ValueRO.Rotation, pitchRotation);
+                    selfLocalTransformRef.Rotation = quaternion.LookRotationSafe(orbitCameraRW.PlanarForward, targetEntityLocalToWorld.Up);
+                    selfLocalTransformRef.Rotation = math.mul(selfLocalTransformRef.Rotation, pitchRotation);
                 }
 
-                float3 cameraForward = MathUtilities.GetForwardFromRotation(selfLocalTransformRef.ValueRO.Rotation);
+                float3 cameraForward = MathUtilities.GetForwardFromRotation(selfLocalTransformRef.Rotation);
 
                 // Distance input
-                float desiredDistanceMovementFromInput = inputsRO.ValueRO.Zoom * orbitCameraRW.ValueRO.DistanceMovementSpeed * deltaTime;
-                orbitCameraRW.ValueRW.TargetDistance = math.clamp(orbitCameraRW.ValueRO.TargetDistance + desiredDistanceMovementFromInput, orbitCameraRW.ValueRO.MinDistance, orbitCameraRW.ValueRO.MaxDistance);
-                orbitCameraRW.ValueRW.CurrentDistanceFromMovement = math.lerp(orbitCameraRW.ValueRO.CurrentDistanceFromMovement, orbitCameraRW.ValueRO.TargetDistance, MathUtilities.GetSharpnessInterpolant(orbitCameraRW.ValueRO.DistanceMovementSharpness, deltaTime));
+                float desiredDistanceMovementFromInput = inputsRO.Zoom * orbitCameraRW.DistanceMovementSpeed * deltaTime;
+                orbitCameraRW.TargetDistance = math.clamp(orbitCameraRW.TargetDistance + desiredDistanceMovementFromInput, orbitCameraRW.MinDistance, orbitCameraRW.MaxDistance);
+                orbitCameraRW.CurrentDistanceFromMovement = math.lerp(orbitCameraRW.CurrentDistanceFromMovement, orbitCameraRW.TargetDistance, MathUtilities.GetSharpnessInterpolant(orbitCameraRW.DistanceMovementSharpness, deltaTime));
 
                 // Obstructions
-                if (orbitCameraRW.ValueRO.ObstructionRadius > 0f)
+                if (orbitCameraRW.ObstructionRadius > 0f)
                 {
-                    float obstructionCheckDistance = orbitCameraRW.ValueRO.CurrentDistanceFromMovement;
+                    float obstructionCheckDistance = orbitCameraRW.CurrentDistanceFromMovement;
 
                     CameraObstructionHitsCollector collector = new CameraObstructionHitsCollector(ignoredEntitiesBuffer, cameraForward);
                     collisionWorld.SphereCastCustom<CameraObstructionHitsCollector>(
                         targetEntityLocalToWorld.Position,
-                        orbitCameraRW.ValueRO.ObstructionRadius,
+                        orbitCameraRW.ObstructionRadius,
                         -cameraForward,
                         obstructionCheckDistance,
                         ref collector,
@@ -105,17 +117,17 @@ public partial class OrbitCameraSystem : SystemBase
                         newObstructedDistance = obstructionCheckDistance * collector.ClosestHit.Fraction;
 
                         // Redo cast with the interpolated body transform to prevent FixedUpdate jitter in obstruction detection
-                        if (orbitCameraRW.ValueRO.PreventFixedUpdateJitter)
+                        if (orbitCameraRW.PreventFixedUpdateJitter)
                         {
                             RigidBody hitBody = collisionWorld.Bodies[collector.ClosestHit.RigidBodyIndex];
-                            LocalToWorld hitBodyLocalToWorld = SystemAPI.GetComponent<LocalToWorld>(hitBody.Entity);
+                            LocalToWorld hitBodyLocalToWorld = ltwLookup.GetRefRO(hitBody.Entity).ValueRO;
 
                             hitBody.WorldFromBody = new RigidTransform(quaternion.LookRotationSafe(hitBodyLocalToWorld.Forward, hitBodyLocalToWorld.Up), hitBodyLocalToWorld.Position);
 
                             collector = new CameraObstructionHitsCollector(ignoredEntitiesBuffer, cameraForward);
                             hitBody.SphereCastCustom<CameraObstructionHitsCollector>(
                                 targetEntityLocalToWorld.Position,
-                                orbitCameraRW.ValueRO.ObstructionRadius,
+                                orbitCameraRW.ObstructionRadius,
                                 -cameraForward,
                                 obstructionCheckDistance,
                                 ref collector,
@@ -130,35 +142,59 @@ public partial class OrbitCameraSystem : SystemBase
                     }
 
                     // Update current distance based on obstructed distance
-                    if (orbitCameraRW.ValueRO.CurrentDistanceFromObstruction < newObstructedDistance)
+                    if (orbitCameraRW.CurrentDistanceFromObstruction < newObstructedDistance)
                     {
                         // Move outer
-                        orbitCameraRW.ValueRW.CurrentDistanceFromObstruction = math.lerp(orbitCameraRW.ValueRO.CurrentDistanceFromObstruction,
-                            newObstructedDistance, MathUtilities.GetSharpnessInterpolant(orbitCameraRW.ValueRO.ObstructionOuterSmoothingSharpness, deltaTime));
+                        orbitCameraRW.CurrentDistanceFromObstruction = math.lerp(orbitCameraRW.CurrentDistanceFromObstruction,
+                            newObstructedDistance, MathUtilities.GetSharpnessInterpolant(orbitCameraRW.ObstructionOuterSmoothingSharpness, deltaTime));
                     }
-                    else if (orbitCameraRW.ValueRO.CurrentDistanceFromObstruction > newObstructedDistance)
+                    else if (orbitCameraRW.CurrentDistanceFromObstruction > newObstructedDistance)
                     {
                         // Move inner
-                        orbitCameraRW.ValueRW.CurrentDistanceFromObstruction = math.lerp(orbitCameraRW.ValueRO.CurrentDistanceFromObstruction,
-                            newObstructedDistance, MathUtilities.GetSharpnessInterpolant(orbitCameraRW.ValueRO.ObstructionInnerSmoothingSharpness, deltaTime));
+                        orbitCameraRW.CurrentDistanceFromObstruction = math.lerp(orbitCameraRW.CurrentDistanceFromObstruction,
+                            newObstructedDistance, MathUtilities.GetSharpnessInterpolant(orbitCameraRW.ObstructionInnerSmoothingSharpness, deltaTime));
                     }
                 }
                 else
                 {
-                    orbitCameraRW.ValueRW.CurrentDistanceFromObstruction = orbitCameraRW.ValueRO.CurrentDistanceFromMovement;
+                    orbitCameraRW.CurrentDistanceFromObstruction = orbitCameraRW.CurrentDistanceFromMovement;
                 }
 
                 // Calculate final camera position from targetposition + rotation + distance
-                selfLocalTransformRef.ValueRW.Position = targetEntityLocalToWorld.Position + (-cameraForward * orbitCameraRW.ValueRO.CurrentDistanceFromObstruction);
-
+                selfLocalTransformRef.Position = targetEntityLocalToWorld.Position + (-cameraForward * orbitCameraRW.CurrentDistanceFromObstruction); //math.lerp(selfLocalTransformRef.Position, targetEntityLocalToWorld.Position + (-cameraForward * orbitCameraRW.CurrentDistanceFromObstruction), fixedDeltaTime * 5);
+                //selfLocalTransformRef.Rotation = 
                 // Manually calculate the LocalToWorld since this is updating after the Transform systems, and the LtW is what rendering uses
                 LocalToWorld cameraLocalToWorld = new LocalToWorld();
-                cameraLocalToWorld.Value = new float4x4(selfLocalTransformRef.ValueRO.Rotation, selfLocalTransformRef.ValueRO.Position);
-                SystemAPI.SetComponent(entity, cameraLocalToWorld);
+                cameraLocalToWorld.Value = new float4x4(selfLocalTransformRef.Rotation, selfLocalTransformRef.Position);
+
+                ltwLookup.GetRefRW(entity).ValueRW = cameraLocalToWorld;
+
             }
         }
     }
+    protected unsafe override void OnUpdate()
+    {
+
+        float fixedDeltaTime = World.GetExistingSystemManaged<FixedStepSimulationSystemGroup>().RateManager.Timestep;
+
+        float deltaTime = fixedDeltaTime;//SystemAPI.Time.DeltaTime;
+        CollisionWorld collisionWorld = SystemAPI.GetSingleton<BuildPhysicsWorldData>().PhysicsData.PhysicsWorld.CollisionWorld;
+
+
+        Dependency = new CameraJob
+        {
+            deltaTime = deltaTime,
+            fixedDeltaTime = fixedDeltaTime,
+            ltwLookup = SystemAPI.GetComponentLookup<LocalToWorld>(isReadOnly: true),
+            camTarglookup = SystemAPI.GetComponentLookup<CameraTarget>(isReadOnly: true),
+            collisionWorld = collisionWorld,
+            kinLookup = SystemAPI.GetComponentLookup<KinematicCharacterBody>(isReadOnly: true)
+        }.Schedule(Dependency);
+
+
+    }
 }
+
 
 public struct CameraObstructionHitsCollector : ICollector<ColliderCastHit>
 {

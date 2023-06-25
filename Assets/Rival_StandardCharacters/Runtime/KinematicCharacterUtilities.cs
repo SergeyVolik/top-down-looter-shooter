@@ -33,12 +33,14 @@ namespace Rival
         StepUpHit,
     }
 
+    
     [UpdateInGroup(typeof(PhysicsSystemGroup))]
     [UpdateBefore(typeof(PhysicsInitializeGroup))]
     //[UpdateAfter(typeof(ExportPhysicsWorld))]
     [UpdateAfter(typeof(TrackedTransformFixedSimulationSystem))]
     public partial class KinematicCharacterUpdateGroup : ComponentSystemGroup
     {
+
     }
 
     public interface IKinematicCharacterProcessor

@@ -17,6 +17,13 @@ namespace SV.ECS
     [WorldSystemFilter(WorldSystemFilterFlags.ClientSimulation)]
     public partial class ConnectCamera : SystemBase
     {
+        protected override void OnCreate()
+        {
+            base.OnCreate();
+            RequireForUpdate<OrbitCamera>();
+            RequireForUpdate<NetworkStreamInGame>();
+
+        }
 
         protected override void OnUpdate()
         {

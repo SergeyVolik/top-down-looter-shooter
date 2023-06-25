@@ -43,15 +43,17 @@ namespace Rival
                 // Copy all Translation & Rotation to the character interpolation component
                 {
 
+                    for (int i = 0; i < chunkCharacterInterpolations.Length; i++)
+                    {
+                        var inter = chunkCharacterInterpolations[i];
 
-                    UnsafeUtility.MemCpyStride(
-                        (void*)((long)chunkInterpolationsPtr),
-                        sizeCharacterInterpolation,
-                        chunkTranslations.GetUnsafeReadOnlyPtr(),
-                        sizeTranslation,
-                        sizeTranslation,
-                        chunkCount
-                    );
+                        inter.PreviousTransform.pos = chunkTranslations[i].Position;
+                        inter.PreviousTransform.rot = chunkTranslations[i].Rotation;
+
+                        chunkCharacterInterpolations[i] = inter;
+                    }
+
+                  
                 }
             }
         }
