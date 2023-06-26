@@ -2,6 +2,7 @@ using System;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
+using Unity.NetCode;
 using Unity.Transforms;
 
 namespace Rival
@@ -10,9 +11,13 @@ namespace Rival
     [WriteGroup(typeof(LocalToWorld))]
     public struct CharacterInterpolation : IComponentData
     {
+        [GhostField]
         public RigidTransform PreviousTransform;
+        [GhostField]
         public byte InterpolateTranslation;
+        [GhostField]
         public byte InterpolateRotation;
+        [GhostField]
         public byte InterpolationSkipping;
 
         public void SkipNextInterpolation()

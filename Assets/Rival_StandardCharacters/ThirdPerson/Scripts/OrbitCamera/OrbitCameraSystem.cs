@@ -10,9 +10,8 @@ using Rival;
 using Unity.NetCode;
 
 [WorldSystemFilter(WorldSystemFilterFlags.ClientSimulation)]
-[UpdateInGroup(typeof(PresentationSystemGroup))]
-//[UpdateAfter(typeof(CharacterInterpolationFixedUpdateSystem))]
-//[UpdateBefore(typeof(LocalToWorldSystem))]
+[UpdateAfter(typeof(TransformSystemGroup))]
+[UpdateBefore(typeof(EndSimulationEntityCommandBufferSystem))]
 public partial class OrbitCameraSystem : SystemBase
 {
 

@@ -3,6 +3,7 @@ using System.Runtime.CompilerServices;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
+using Unity.NetCode;
 using UnityEngine;
 
 namespace Rival
@@ -10,8 +11,10 @@ namespace Rival
     [Serializable]
     public struct TrackedTransform : IComponentData
     {
+        [GhostField]
         [HideInInspector]
         public RigidTransform CurrentFixedRateTransform;
+        [GhostField]
         [HideInInspector]
         public RigidTransform PreviousFixedRateTransform;
 

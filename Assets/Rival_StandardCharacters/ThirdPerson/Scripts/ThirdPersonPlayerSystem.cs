@@ -22,6 +22,7 @@ public partial class ThirdPersonPlayerSystem : SystemBase
     }
 
 
+    [WithAll(typeof(ThirdPersonPlayer), typeof(GhostOwnerIsLocal))]
     [BurstCompile]
     public partial struct ThirdPersonPlayerSystemJob : IJobEntity
     {
@@ -38,7 +39,7 @@ public partial class ThirdPersonPlayerSystem : SystemBase
         public ComponentLookup<OrbitCameraInputs> orbitalCameraInputLookup;
 
         [BurstCompile]
-        public void Execute(ref ThirdPersonPlayer player, ref ThirdPersonCharacterInputs characterInputs)
+        public void Execute(ref ThirdPersonCharacterInputs characterInputs)
         {
 
 
@@ -51,14 +52,7 @@ public partial class ThirdPersonPlayerSystem : SystemBase
             characterInputs.MoveVector = (moveInput.y * cameraForwardOnUpPlane) + (moveInput.x * cameraRight);
             characterInputs.MoveVector = Rival.MathUtilities.ClampToMaxLength(characterInputs.MoveVector, 1f);
             characterInputs.JumpRequested = default;
-            // Jump
-            // Punctual input presses need special handling when they will be used in a fixed step system.
-            // We essentially need to remember if the button was pressed at any point over the last fixed update
-            //if (player.LastInputsProcessingTick == fixedTick)
-            //{
-            //    if (jumpInput || characterInputs.JumpRequested.IsSet)
-            //        characterInputs.JumpRequested.Set();
-            //}
+           
             if (jumpInput)
             {
                 characterInputs.JumpRequested.Set();
@@ -77,7 +71,7 @@ public partial class ThirdPersonPlayerSystem : SystemBase
 
             }
 
-            player.LastInputsProcessingTick = fixedTick;
+           
         }
     }
 

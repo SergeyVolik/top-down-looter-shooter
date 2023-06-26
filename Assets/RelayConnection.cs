@@ -12,6 +12,7 @@ using Unity.Services.Authentication;
 using Unity.Services.Core;
 using Unity.Services.Relay;
 using Unity.Services.Relay.Models;
+using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -255,6 +256,60 @@ public class RelayConnection : MonoBehaviour
 
     #endregion
 
+
+
+    public void StartClientServerLocal(ushort port = 7979)
+    {
+        if (ClientServerBootstrap.RequestedPlayType != ClientServerBootstrap.PlayType.ClientAndServer)
+        {
+            Debug.LogError($"Creating client/server worlds is not allowed if playmode is set to {ClientServerBootstrap.RequestedPlayType}");
+            return;
+        }
+
+        var server = ClientServerBootstrap.CreateServerWorld("ServerWorld");
+        var client = ClientServerBootstrap.CreateClientWorld("ClientWorld");
+
+     
+
+        //Destroy the local simulation world to avoid the game scene to be loaded into it
+        //This prevent rendering (rendering from multiple world with presentation is not greatly supported)
+        //and other issues.
+        DestroyLocalSimulationWorld();
+        if (World.DefaultGameObjectInjectionWorld == null)
+            World.DefaultGameObjectInjectionWorld = server;
+
+
+     
+
+        NetworkEndpoint ep = NetworkEndpoint.AnyIpv4.WithPort(port);
+        {
+            using var drvQuery = server.EntityManager.CreateEntityQuery(ComponentType.ReadWrite<NetworkStreamDriver>());
+            drvQuery.GetSingletonRW<NetworkStreamDriver>().ValueRW.Listen(ep);
+        }
+
+        ep = NetworkEndpoint.LoopbackIpv4.WithPort(port);
+        {
+            using var drvQuery = client.EntityManager.CreateEntityQuery(ComponentType.ReadWrite<NetworkStreamDriver>());
+            drvQuery.GetSingletonRW<NetworkStreamDriver>().ValueRW.Connect(client.EntityManager, ep);
+        }
+    }
+
+    public void ConnectToServer(string ip = "127.0.0.1", ushort port = 7979)
+    {
+        var client = ClientServerBootstrap.CreateClientWorld("ClientWorld");
+        SceneManager.LoadScene("FrontendHUD");
+        DestroyLocalSimulationWorld();
+        ;
+        if (World.DefaultGameObjectInjectionWorld == null)
+            World.DefaultGameObjectInjectionWorld = client;
+      
+
+        var ep = NetworkEndpoint.Parse(ip, port);
+        {
+            using var drvQuery = client.EntityManager.CreateEntityQuery(ComponentType.ReadWrite<NetworkStreamDriver>());
+            drvQuery.GetSingletonRW<NetworkStreamDriver>().ValueRW.Connect(client.EntityManager, ep);
+        }
+    }
 }
 
 public struct JoinCode : IComponentData

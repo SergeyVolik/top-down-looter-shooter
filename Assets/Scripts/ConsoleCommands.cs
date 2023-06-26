@@ -229,4 +229,30 @@ public class ConsoleCommands : MonoBehaviour
     {
         LocalPlayerData.Player.DisplayName.Value = name;
     }
+    [Command("start-local-server")]
+    public static void StartLocalServerAndClient(ushort port)
+    {
+        if(port <= 0)
+            RelayConnection.Instance.StartClientServerLocal();
+        else RelayConnection.Instance.StartClientServerLocal(port);
+
+        var handle = SceneManager.UnloadSceneAsync(1);
+
+        handle.completed += (res) =>
+        {
+            SceneManager.LoadSceneAsync(2, LoadSceneMode.Additive);
+        };
+    }
+
+    [Command("join-with-ip")]
+    public static void JoinWithIp(string ip,  ushort port)
+    {
+        RelayConnection.Instance.ConnectToServer(ip, port);
+        var handle = SceneManager.UnloadSceneAsync(1);
+
+        handle.completed += (res) =>
+        {
+            SceneManager.LoadSceneAsync(2, LoadSceneMode.Additive);
+        };
+    }
 }

@@ -10,17 +10,28 @@ using UnityEngine;
 [UpdateBefore(typeof(OrbitCameraSystem))]
 public partial class MainCameraSystem : SystemBase
 {
-    public Transform CameraGameObjectTransform;
+
+    protected override void OnCreate()
+    {
+        base.OnCreate();
+
+
+        //RequireForUpdate<SystemAPI.ManagedAPI.UnityEngineComponent<Camera>>();
+    }
 
     protected override void OnUpdate()
     {
-        if (CameraGameObjectTransform && HasSingleton<MainEntityCamera>())
+        if (SystemAPI.ManagedAPI.TryGetSingleton<Camera>(out var camera))
         {
-            Entity mainEntityCameraEntity = GetSingletonEntity<MainEntityCamera>();
+         
+            if (camera && SystemAPI.HasSingleton<MainEntityCamera>())
+            {
+                Entity mainEntityCameraEntity = SystemAPI.GetSingletonEntity<MainEntityCamera>();
 
-            LocalToWorld targetLocalToWorld = GetComponent<LocalToWorld>(mainEntityCameraEntity);
-            CameraGameObjectTransform.position = targetLocalToWorld.Position;
-            CameraGameObjectTransform.rotation = targetLocalToWorld.Rotation;
+                LocalToWorld targetLocalToWorld = SystemAPI.GetComponent<LocalToWorld>(mainEntityCameraEntity);
+                camera.transform.position = targetLocalToWorld.Position;
+                camera.transform.rotation = targetLocalToWorld.Rotation;
+            }
         }
     }
 }

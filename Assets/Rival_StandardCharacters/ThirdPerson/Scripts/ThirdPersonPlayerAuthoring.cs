@@ -16,12 +16,11 @@ public struct CameraConnected : IComponentData
 
 }
 
-[Serializable]
+
 public struct ThirdPersonPlayer : IComponentData
 {
 
-    [NonSerialized]
-    public uint LastInputsProcessingTick;
+   
 }
 
 public class ThirdPersonPlayerAuthoringBaker : Baker<ThirdPersonPlayerAuthoring>
