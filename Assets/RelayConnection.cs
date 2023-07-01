@@ -1,6 +1,5 @@
 using SV.ECS;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -9,14 +8,10 @@ using Unity.Entities;
 using Unity.NetCode;
 using Unity.Networking.Transport;
 using Unity.Networking.Transport.Relay;
-using Unity.Services.Authentication;
-using Unity.Services.Core;
 using Unity.Services.Relay;
 using Unity.Services.Relay.Models;
-using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using UnityEngine.UI;
 
 public class RelayConnection : MonoBehaviour
 {
@@ -299,7 +294,7 @@ public class RelayConnection : MonoBehaviour
         var client = ClientServerBootstrap.CreateClientWorld("ClientWorld");
         SceneManager.LoadScene("FrontendHUD");
         DestroyLocalSimulationWorld();
-        ;
+
         if (World.DefaultGameObjectInjectionWorld == null)
             World.DefaultGameObjectInjectionWorld = client;
 
@@ -310,6 +305,8 @@ public class RelayConnection : MonoBehaviour
             drvQuery.GetSingletonRW<NetworkStreamDriver>().ValueRW.Connect(client.EntityManager, ep);
         }
     }
+
+
 }
 
 public struct JoinCode : IComponentData
@@ -348,18 +345,6 @@ public class RelayDriverConstructor : INetworkStreamDriverConstructor
         DefaultDriverBuilder.RegisterServerDriver(world, ref driverStore, netDebug, ref m_RelayServerData);
     }
 }
-
-
-
-/// <summary>
-/// Responsible for contacting relay server and setting up <see cref="RelayServerData"/> and <see cref="JoinCode"/>.
-/// Steps include:
-/// 1. Initializing services
-/// 2. Logging in
-/// 3. Allocating number of players that are allowed to join.
-/// 4. Retrieving join code
-/// 5. Getting relay server information. I.e. IP-address, etc.
-/// </summary>
 
 
 public static class RelayUtilities
@@ -402,26 +387,3 @@ public partial class GoInGameSystem : SystemBase
 public partial class HelloNetcodeSystemGroup : ComponentSystemGroup
 { }
 
-
-[WorldSystemFilter(WorldSystemFilterFlags.ServerSimulation)]
-public partial class RenderJoinCodeSystem : SystemBase
-{
-    protected override void OnCreate()
-    {
-        base.OnCreate();
-        RequireForUpdate<JoinCode>();
-    }
-
-    public TMPro.TextMeshProUGUI text;
-
-    protected override void OnUpdate()
-    {
-        if (text == null)
-            return;
-
-        foreach (var item in SystemAPI.Query<RefRO<JoinCode>>())
-        {
-            text.text = item.ValueRO.Value.ToString();
-        }
-    }
-}

@@ -368,7 +368,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1179253706413430224, guid: ceca7a87fbe2e294ba5f73b866879234, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 0
+      value: -0.000061035156
       objectReference: {fileID: 0}
     - target: {fileID: 2501655318096111608, guid: ceca7a87fbe2e294ba5f73b866879234, type: 3}
       propertyPath: m_Pivot.x
@@ -1131,7 +1131,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1548183302}
-  - component: {fileID: 1548183301}
+  - component: {fileID: 1548183303}
   m_Layer: 0
   m_Name: JoinCodeRenderSetup
   m_TagString: Untagged
@@ -1139,19 +1139,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1548183301
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1548183300}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 92ffade6d24de7440b94c6e0979337b3, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  text: {fileID: 814126974}
 --- !u!4 &1548183302
 Transform:
   m_ObjectHideFlags: 0
@@ -1167,6 +1154,19 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 6
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1548183303
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1548183300}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: af194a85530921243a288d0ab2aff940, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  JoinCodeLabel: {fileID: 814126974}
 --- !u!1 &1599811137
 GameObject:
   m_ObjectHideFlags: 0

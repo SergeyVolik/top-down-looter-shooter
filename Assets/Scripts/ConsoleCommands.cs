@@ -244,6 +244,18 @@ public class ConsoleCommands : MonoBehaviour
         };
     }
 
+    [Command("join-local")]
+    public static void JoinLocalServer(ushort port)
+    {
+        RelayConnection.Instance.ConnectToServer(port: port);
+        var handle = SceneManager.UnloadSceneAsync(1);
+
+        handle.completed += (res) =>
+        {
+            SceneManager.LoadSceneAsync(2, LoadSceneMode.Additive);
+        };
+    }
+
     [Command("join-with-ip")]
     public static void JoinWithIp(string ip,  ushort port)
     {

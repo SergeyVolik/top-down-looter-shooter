@@ -70,3 +70,4 @@ public struct ThirdPersonCharacterInputs : IInputComponentData
     [GhostField(Quantization = 1000)] public float3 MoveVector;
     [GhostField] public InputEvent JumpRequested;
 }
+
