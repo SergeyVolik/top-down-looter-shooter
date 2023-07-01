@@ -81,7 +81,7 @@ namespace SV.ECS
         protected override void OnUpdate()
         {
 
-            var playerControll = SystemAPI.GetSingletonRW<ThirdPersonPlayer>();
+           
             var prefab = SystemAPI.GetSingleton<PlayerSpawnP>().playerPrefab;
             var commandBuffer = new EntityCommandBuffer(Allocator.Temp);
             Entities.WithName("SpawnPlayer").WithStoreEntityQueryInField(ref m_NewPlayers).WithNone<PlayerSpawned>().ForEach(
