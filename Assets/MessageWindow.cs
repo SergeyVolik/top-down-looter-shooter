@@ -70,6 +70,17 @@ public static class WorldExt
 
         return null;
     }
+
+    public static World GetServerWorld()
+    {
+        foreach (var item in World.All)
+        {
+            if (item.IsServer())
+                return item;
+        }
+
+        return null;
+    }
 }
 
 public struct ClearMWComponent : IComponentData

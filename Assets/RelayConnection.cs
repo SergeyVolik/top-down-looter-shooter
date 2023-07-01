@@ -30,8 +30,8 @@ public class RelayConnection : MonoBehaviour
     }
     private Allocation allocation;
     private JoinAllocation joinAllocation;
-    
-   
+
+
     private void OnDestroy()
     {
         DestroyClientServerWorlds();
@@ -47,7 +47,7 @@ public class RelayConnection : MonoBehaviour
         {
             SceneManager.LoadSceneAsync(1, LoadSceneMode.Additive);
         };
-     
+
 
     }
 
@@ -73,7 +73,7 @@ public class RelayConnection : MonoBehaviour
         {
             if (world.Flags == WorldFlags.Game)
             {
-                
+
                 world.Dispose();
                 break;
             }
@@ -151,6 +151,7 @@ public class RelayConnection : MonoBehaviour
 
 
 
+
     public async Task<string> HostServerAndClient()
     {
         if (ClientServerBootstrap.RequestedPlayType != ClientServerBootstrap.PlayType.ClientAndServer)
@@ -161,10 +162,6 @@ public class RelayConnection : MonoBehaviour
 
         DestroyClientServerWorlds();
 
-        //Debug.Log("HostServerAndClient");
-        //var regionList = await RelayService.Instance.ListRegionsAsync();
-        //var targetRegion = regionList[0].Id;
-        //Debug.Log($"Region found region: {targetRegion}");
 
         allocation = await RelayService.Instance.CreateAllocationAsync(LobbyManager.maxPlayers);
         Debug.Log("RelayService CreateAllocationAsync executed");
@@ -176,7 +173,7 @@ public class RelayConnection : MonoBehaviour
 
         joinAllocation = await RelayService.Instance.JoinAllocationAsync(hostServerJoinCode);
 
-        
+
         CreateServerClientWorlds();
 
         return hostServerJoinCode;
@@ -251,7 +248,7 @@ public class RelayConnection : MonoBehaviour
     }
 
 
- 
+
     private string hostServerJoinCode;
 
 
@@ -270,7 +267,7 @@ public class RelayConnection : MonoBehaviour
         var server = ClientServerBootstrap.CreateServerWorld("ServerWorld");
         var client = ClientServerBootstrap.CreateClientWorld("ClientWorld");
 
-     
+
 
         //Destroy the local simulation world to avoid the game scene to be loaded into it
         //This prevent rendering (rendering from multiple world with presentation is not greatly supported)
@@ -280,7 +277,9 @@ public class RelayConnection : MonoBehaviour
             World.DefaultGameObjectInjectionWorld = server;
 
 
-     
+        var joinCodeEntity = server.EntityManager.CreateEntity(ComponentType.ReadOnly<JoinCode>());
+        server.EntityManager.SetName(joinCodeEntity, "joinCode");
+        server.EntityManager.SetComponentData(joinCodeEntity, new JoinCode { Value = $"127.0.0.1:{port}" });
 
         NetworkEndpoint ep = NetworkEndpoint.AnyIpv4.WithPort(port);
         {
@@ -303,7 +302,7 @@ public class RelayConnection : MonoBehaviour
         ;
         if (World.DefaultGameObjectInjectionWorld == null)
             World.DefaultGameObjectInjectionWorld = client;
-      
+
 
         var ep = NetworkEndpoint.Parse(ip, port);
         {
@@ -403,3 +402,26 @@ public partial class GoInGameSystem : SystemBase
 public partial class HelloNetcodeSystemGroup : ComponentSystemGroup
 { }
 
+
+[WorldSystemFilter(WorldSystemFilterFlags.ServerSimulation)]
+public partial class RenderJoinCodeSystem : SystemBase
+{
+    protected override void OnCreate()
+    {
+        base.OnCreate();
+        RequireForUpdate<JoinCode>();
+    }
+
+    public TMPro.TextMeshProUGUI text;
+
+    protected override void OnUpdate()
+    {
+        if (text == null)
+            return;
+
+        foreach (var item in SystemAPI.Query<RefRO<JoinCode>>())
+        {
+            text.text = item.ValueRO.Value.ToString();
+        }
+    }
+}
