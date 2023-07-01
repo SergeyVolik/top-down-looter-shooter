@@ -13,6 +13,7 @@ namespace SV.ECS
         public Entity Entity;
     }
 
+    [UpdateBefore(typeof(OrbitCameraSystem))]
     [UpdateInGroup(typeof(HelloNetcodeSystemGroup))]
     [WorldSystemFilter(WorldSystemFilterFlags.ClientSimulation)]
     public partial class ConnectCamera : SystemBase
@@ -34,7 +35,7 @@ namespace SV.ECS
             var camera = SystemAPI.GetSingletonEntity<OrbitCamera>();
 
             var orbitCamera = SystemAPI.GetComponentLookup<OrbitCamera>();
-            var ignoreItems = SystemAPI.GetBufferLookup<OrbitCameraIgnoredEntityBufferElement>();
+            var ignoreItems = SystemAPI.GetBufferLookup<OrbitCameraIgnoredEntityBufferElement>(isReadOnly: false);
 
             var commandBuffer2 = new EntityCommandBuffer(Allocator.Temp);
             //ConnectCamera

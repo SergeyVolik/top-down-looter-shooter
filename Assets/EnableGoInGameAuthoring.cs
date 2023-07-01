@@ -1,7 +1,7 @@
 using Unity.Entities;
 using UnityEngine;
 
-namespace Samples.HelloNetcode
+namespace SV.ECS
 {
     public struct EnableGoInGame : IComponentData { }
 

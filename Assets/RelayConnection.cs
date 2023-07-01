@@ -1,3 +1,4 @@
+using SV.ECS;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -402,18 +403,3 @@ public partial class GoInGameSystem : SystemBase
 public partial class HelloNetcodeSystemGroup : ComponentSystemGroup
 { }
 
-public struct EnableGoInGame : IComponentData { }
-
-[DisallowMultipleComponent]
-public class EnableGoInGameAuthoring : MonoBehaviour
-{
-    class Baker : Baker<EnableGoInGameAuthoring>
-    {
-        public override void Bake(EnableGoInGameAuthoring authoring)
-        {
-            EnableGoInGame component = default(EnableGoInGame);
-            var entity = GetEntity(TransformUsageFlags.Dynamic);
-            AddComponent(entity, component);
-        }
-    }
-}

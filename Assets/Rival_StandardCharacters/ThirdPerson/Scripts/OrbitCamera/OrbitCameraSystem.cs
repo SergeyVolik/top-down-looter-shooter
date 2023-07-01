@@ -21,6 +21,7 @@ public partial class OrbitCameraSystem : SystemBase
     {
         base.OnCreate();
 
+        RequireForUpdate<CameraConnected>();
         //Enabled = false;
 
     }
