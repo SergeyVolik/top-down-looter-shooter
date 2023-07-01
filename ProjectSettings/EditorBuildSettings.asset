@@ -12,6 +12,6 @@ EditorBuildSettings:
     path: Assets/Scenes/MainSceneNew.unity
     guid: c2181744f4b276b4aa0581fc6449ef2e
   - enabled: 1
-    path: Assets/Samples/HelloNetcode/2_Intermediate/01_CharacterController/CharacterController.unity
+    path: Assets/Scenes/CharacterController.unity
     guid: 9becba3d8791e41dc88d2151be0640f7
   m_configObjects: {}
