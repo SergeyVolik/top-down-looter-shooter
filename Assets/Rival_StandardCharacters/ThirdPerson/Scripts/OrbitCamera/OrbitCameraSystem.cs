@@ -10,6 +10,7 @@ using Rival;
 using Unity.NetCode;
 
 [WorldSystemFilter(WorldSystemFilterFlags.ClientSimulation)]
+[UpdateInGroup(typeof(SimulationSystemGroup))]
 [UpdateAfter(typeof(TransformSystemGroup))]
 [UpdateBefore(typeof(EndSimulationEntityCommandBufferSystem))]
 public partial class OrbitCameraSystem : SystemBase
@@ -30,7 +31,7 @@ public partial class OrbitCameraSystem : SystemBase
         [ReadOnly]
         public ComponentLookup<CameraTarget> camTarglookup;
 
-        [ReadOnly]
+        
         public ComponentLookup<LocalToWorld> ltwLookup;
 
         [ReadOnly]
@@ -163,10 +164,10 @@ public partial class OrbitCameraSystem : SystemBase
                 selfLocalTransformRef.Position = targetEntityLocalToWorld.Position + (-cameraForward * orbitCameraRW.CurrentDistanceFromObstruction); //math.lerp(selfLocalTransformRef.Position, targetEntityLocalToWorld.Position + (-cameraForward * orbitCameraRW.CurrentDistanceFromObstruction), fixedDeltaTime * 5);
                 //selfLocalTransformRef.Rotation = 
                 // Manually calculate the LocalToWorld since this is updating after the Transform systems, and the LtW is what rendering uses
-                //LocalToWorld cameraLocalToWorld = new LocalToWorld();
-                //cameraLocalToWorld.Value = new float4x4(selfLocalTransformRef.Rotation, selfLocalTransformRef.Position);
+                LocalToWorld cameraLocalToWorld = new LocalToWorld();
+                cameraLocalToWorld.Value = new float4x4(selfLocalTransformRef.Rotation, selfLocalTransformRef.Position);
 
-                //ltwLookup.GetRefRW(entity).ValueRW = cameraLocalToWorld;
+                ltwLookup.GetRefRW(entity).ValueRW = cameraLocalToWorld;
 
             }
         }
@@ -184,7 +185,7 @@ public partial class OrbitCameraSystem : SystemBase
         {
             deltaTime = deltaTime,
             fixedDeltaTime = fixedDeltaTime,
-            ltwLookup = SystemAPI.GetComponentLookup<LocalToWorld>(isReadOnly: true),
+            ltwLookup = SystemAPI.GetComponentLookup<LocalToWorld>(isReadOnly: false),
             camTarglookup = SystemAPI.GetComponentLookup<CameraTarget>(isReadOnly: true),
             collisionWorld = collisionWorld,
             kinLookup = SystemAPI.GetComponentLookup<KinematicCharacterBody>(isReadOnly: true)

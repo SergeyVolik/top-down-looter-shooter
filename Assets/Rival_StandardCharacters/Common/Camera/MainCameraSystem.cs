@@ -6,8 +6,8 @@ using Unity.Mathematics;
 using Unity.Transforms;
 using UnityEngine;
 
+[WorldSystemFilter(WorldSystemFilterFlags.ClientSimulation)]
 [UpdateInGroup(typeof(PresentationSystemGroup))]
-[UpdateBefore(typeof(OrbitCameraSystem))]
 public partial class MainCameraSystem : SystemBase
 {
 
@@ -28,7 +28,7 @@ public partial class MainCameraSystem : SystemBase
             {
                 Entity mainEntityCameraEntity = SystemAPI.GetSingletonEntity<MainEntityCamera>();
 
-                LocalToWorld targetLocalToWorld = SystemAPI.GetComponent<LocalToWorld>(mainEntityCameraEntity);
+                var targetLocalToWorld = SystemAPI.GetComponent<LocalToWorld>(mainEntityCameraEntity);
                 camera.transform.position = targetLocalToWorld.Position;
                 camera.transform.rotation = targetLocalToWorld.Rotation;
             }
