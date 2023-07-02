@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: New Audio SFX Database
   m_EditorClassIdentifier: 
   items:
+  - {fileID: 11400000, guid: c4cdb70d0b59e8f4bba0b058d0698e9f, type: 2}
   - {fileID: 11400000, guid: 303752d9863259c4f8da16e95a226afc, type: 2}
   - {fileID: 11400000, guid: 698c54de8566ab24aa03b5b1101adda1, type: 2}
   - {fileID: 11400000, guid: 8c4b19531643e2948b3d906711d12d44, type: 2}

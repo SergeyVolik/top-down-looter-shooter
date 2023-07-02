@@ -17,6 +17,7 @@ GameObject:
   - component: {fileID: -8831542197352041301}
   - component: {fileID: -6779310110363527622}
   - component: {fileID: 511700517316928817}
+  - component: {fileID: 6071239254962037300}
   m_Layer: 0
   m_Name: ThirdPersonCharacter
   m_TagString: Untagged
@@ -225,6 +226,7 @@ MonoBehaviour:
   ThirdPersonCharacter:
     RotationSharpness: 25
     GroundMaxSpeed: 10
+    GroundMaxSprintSpeed: 14
     GroundedMovementSharpness: 15
     AirAcceleration: 50
     AirMaxSpeed: 10
@@ -330,6 +332,24 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ServerPrefab: {fileID: 0}
   ClientPrefab: {fileID: 4058876522487219934, guid: 76da8b2946f617348bbead111d955642, type: 3}
+--- !u!114 &6071239254962037300
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1692896102597148395}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bfdaa6c06fe64fbda2b16e07a4ee0b25, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ComponentOverrides:
+  - FullTypeName: ThirdPersonCharacterInputs1
+    EntityIndex: 0
+    PrefabType: 6
+    SendTypeOptimization: -1
+    VariantHash: 0
 --- !u!1 &1692896103431116738
 GameObject:
   m_ObjectHideFlags: 0

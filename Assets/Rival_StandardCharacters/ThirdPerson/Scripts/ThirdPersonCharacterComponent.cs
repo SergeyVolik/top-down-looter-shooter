@@ -11,6 +11,7 @@ public struct ThirdPersonCharacterComponent : IComponentData
     [Header("Movement")]
     public float RotationSharpness;
     public float GroundMaxSpeed;
+    public float GroundMaxSprintSpeed;
     public float GroundedMovementSharpness;
     public float AirAcceleration;
     public float AirMaxSpeed;
@@ -64,10 +65,4 @@ public struct ThirdPersonCharacterComponent : IComponentData
 }
 
 
-[GhostComponent(PrefabType = GhostPrefabType.AllPredicted, OwnerSendType = SendToOwnerType.SendToNonOwner)]
-public struct ThirdPersonCharacterInputs : IInputComponentData
-{
-    [GhostField(Quantization = 1000)] public float3 MoveVector;
-    [GhostField] public InputEvent JumpRequested;
-}
 

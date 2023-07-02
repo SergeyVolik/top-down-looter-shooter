@@ -1,3 +1,4 @@
+using Rival;
 using System.Collections;
 using System.Collections.Generic;
 using Unity.Entities;
@@ -10,27 +11,31 @@ public class CharacterAnimationSync : MonoBehaviour
 {
     private GhostPresentationGameObjectEntityOwner m_EntityOwner;
     private Animator m_Animator;
-     
+
     private static readonly int moveParam = Animator.StringToHash("Move");
+    private static readonly int IsGrounded = Animator.StringToHash("IsGrounded");
     private void Start()
     {
         m_EntityOwner = GetComponent<GhostPresentationGameObjectEntityOwner>();
         m_Animator = GetComponent<Animator>();
         m_Animator.fireEvents = false;
-     
+
     }
 
     private void Update()
     {
-        if (!HasComponentData<ThirdPersonCharacterInputs>())
+        if (!HasComponentData<KinematicCharacterBody>())
         {
-            Debug.LogError("ThirdPersonCharacterInputs not exist");
+            Debug.LogError("KinematicCharacterBody not exist");
             return;
         }
-        var input = GetEntityComponentData<ThirdPersonCharacterInputs>();
-        m_Animator.SetFloat(moveParam, math.length(input.MoveVector));
 
-        //SetEntityComponentData(input);
+        var controller = GetEntityComponentData<KinematicCharacterBody>();
+
+
+        m_Animator.SetFloat(moveParam, controller.sprint ? math.length(controller.MoveVector * 2) : math.clamp(math.length(controller.MoveVector), 0, 1));
+        m_Animator.SetBool(IsGrounded, controller.IsGrounded);
+
     }
 
     void SetEntityComponentData<T>(T data) where T : unmanaged, IComponentData

@@ -97,6 +97,7 @@ namespace Rival
         public float GroundSnappingDistance;
         public float MaxGroundedSlopeDotProduct;
 
+       
         public bool DetectMovementCollisions;
         public bool DecollideFromOverlaps;
         public bool ProjectVelocityOnInitialOverlaps;
@@ -113,6 +114,9 @@ namespace Rival
         [HideInInspector]
         public float3 RelativeVelocity;
 
+        [GhostField(Quantization = 1000)] public float3 MoveVector;
+        [GhostField]
+        public bool sprint;
         [GhostField]
         [HideInInspector]
         public bool IsGrounded;
@@ -137,7 +141,8 @@ namespace Rival
             SnapToGround = forAuthoring.SnapToGround;
             GroundSnappingDistance = forAuthoring.GroundSnappingDistance;
             MaxGroundedSlopeDotProduct = MathUtilities.AngleRadiansToDotRatio(math.radians(forAuthoring.MaxGroundedSlopeAngle));
-
+            sprint = false;
+            MoveVector = default; 
             DetectMovementCollisions = forAuthoring.DetectMovementCollisions;
             DecollideFromOverlaps = forAuthoring.DecollideFromOverlaps;
             ProjectVelocityOnInitialOverlaps = forAuthoring.ProjectVelocityOnInitialOverlaps;

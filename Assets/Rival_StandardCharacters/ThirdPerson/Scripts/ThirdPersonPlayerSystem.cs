@@ -12,6 +12,7 @@ using UnityEngine;
 public partial class ThirdPersonPlayerSystem : SystemBase
 {
     public FixedUpdateTickSystem FixedUpdateTickSystem;
+    private PlayerControlls m_Input;
 
     protected override void OnCreate()
     {
@@ -19,6 +20,8 @@ public partial class ThirdPersonPlayerSystem : SystemBase
 
         RequireForUpdate<OrbitCamera>();
         FixedUpdateTickSystem = World.GetOrCreateSystemManaged<FixedUpdateTickSystem>();
+        m_Input = new PlayerControlls();
+        m_Input.Enable();
     }
 
 
@@ -28,6 +31,7 @@ public partial class ThirdPersonPlayerSystem : SystemBase
     {
         public float2 moveInput;
         public bool jumpInput;
+        public bool sprint;
         public float cameraZoomInput;
         public float2 cameraLookInput;
         public uint fixedTick;
@@ -52,12 +56,13 @@ public partial class ThirdPersonPlayerSystem : SystemBase
             characterInputs.MoveVector = (moveInput.y * cameraForwardOnUpPlane) + (moveInput.x * cameraRight);
             characterInputs.MoveVector = Rival.MathUtilities.ClampToMaxLength(characterInputs.MoveVector, 1f);
             characterInputs.JumpRequested = default;
-           
+            characterInputs.sprint = sprint;
             if (jumpInput)
             {
                 characterInputs.JumpRequested.Set();
             }
 
+            
 
 
 
@@ -71,25 +76,29 @@ public partial class ThirdPersonPlayerSystem : SystemBase
 
             }
 
-           
+
         }
     }
 
+    bool sprint;
     protected override void OnUpdate()
     {
         uint fixedTick = FixedUpdateTickSystem.FixedTick;
 
         // Gather raw input
-        float2 moveInput = float2.zero;
-        moveInput.y += Input.GetKey(KeyCode.W) ? 1f : 0f;
-        moveInput.y += Input.GetKey(KeyCode.S) ? -1f : 0f;
-        moveInput.x += Input.GetKey(KeyCode.D) ? 1f : 0f;
-        moveInput.x += Input.GetKey(KeyCode.A) ? -1f : 0f;
+        float2 moveInput = m_Input.Controlls.Move.ReadValue<Vector2>();
+       
 
         var orbitCamera = SystemAPI.GetSingletonEntity<OrbitCamera>();
-        bool jumpInput = Input.GetKeyDown(KeyCode.Space);
-        float2 cameraLookInput = new float2(Input.GetAxis("Mouse X"), Input.GetAxis("Mouse Y"));
-        float cameraZoomInput = -Input.mouseScrollDelta.y;
+        bool jumpInput = m_Input.Controlls.Jump.phase == UnityEngine.InputSystem.InputActionPhase.Performed;
+       
+        if (m_Input.Controlls.Sprint.triggered)
+        {
+            sprint = !sprint;
+        }
+       
+        float2 cameraLookInput = m_Input.Controlls.Camera.ReadValue<Vector2>();// new float2(Input.GetAxis("Mouse X"), Input.GetAxis("Mouse Y"));
+        float cameraZoomInput =   -m_Input.Controlls.Zoom.ReadValue<float>();
 
         var job = new ThirdPersonPlayerSystemJob
         {
@@ -100,7 +109,8 @@ public partial class ThirdPersonPlayerSystem : SystemBase
             moveInput = moveInput,
             localTransformLookup = SystemAPI.GetComponentLookup<LocalTransform>(isReadOnly: true),
             orbitalCameraInputLookup = SystemAPI.GetComponentLookup<OrbitCameraInputs>(isReadOnly: false),
-            cameraEntity = orbitCamera
+            cameraEntity = orbitCamera,
+            sprint = sprint
         };
         //job.Run();
         Dependency = job.Schedule(Dependency);

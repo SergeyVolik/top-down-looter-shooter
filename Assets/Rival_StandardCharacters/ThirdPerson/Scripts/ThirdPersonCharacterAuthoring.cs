@@ -25,5 +25,6 @@ public class ThirdPersonCharacterAuthoringBaker : Baker<ThirdPersonCharacterAuth
 
         AddComponent(entity, authoring.ThirdPersonCharacter);
         AddComponent(entity, new ThirdPersonCharacterInputs());
+
     }
 }

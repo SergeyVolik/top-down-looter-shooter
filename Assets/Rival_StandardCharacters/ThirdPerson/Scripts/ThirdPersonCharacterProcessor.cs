@@ -179,10 +179,17 @@ public struct ThirdPersonCharacterProcessor : IKinematicCharacterProcessor
 
     public unsafe void HandleCharacterControl()
     {
+        CharacterBody.sprint = false;
+        CharacterBody.MoveVector = ThirdPersonCharacterInputs.MoveVector;
         if (CharacterBody.IsGrounded)
         {
             // Move on ground
-            float3 targetVelocity = ThirdPersonCharacterInputs.MoveVector * ThirdPersonCharacter.GroundMaxSpeed;
+            CharacterBody.sprint = ThirdPersonCharacterInputs.sprint;
+            var mult = CharacterBody.sprint ? ThirdPersonCharacter.GroundMaxSprintSpeed : ThirdPersonCharacter.GroundMaxSpeed;
+            float3 targetVelocity = ThirdPersonCharacterInputs.MoveVector * mult;
+            
+          
+           
             CharacterControlUtilities.StandardGroundMove_Interpolated(ref CharacterBody.RelativeVelocity, targetVelocity, ThirdPersonCharacter.GroundedMovementSharpness, DeltaTime, ThirdPersonCharacter.GroundingUp, CharacterBody.GroundHit.Normal);
 
             // Jump
@@ -190,6 +197,8 @@ public struct ThirdPersonCharacterProcessor : IKinematicCharacterProcessor
             {
                 CharacterControlUtilities.StandardJump(ref CharacterBody, ThirdPersonCharacter.GroundingUp * ThirdPersonCharacter.JumpSpeed, true, ThirdPersonCharacter.GroundingUp);
             }
+
+           
         }
         else
         {
