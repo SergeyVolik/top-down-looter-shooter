@@ -10,6 +10,7 @@ namespace SV.ECS
 
     public struct ConnectionOwner : IComponentData
     {
+        [GhostField]
         public Entity Entity;
     }
 
@@ -94,7 +95,7 @@ namespace SV.ECS
                     // The network ID owner must be set on the ghost owner component on the players
                     // this is used internally for example to set up the CommandTarget properly
                     commandBuffer.SetComponent(player, new GhostOwner { NetworkId = networkId.Value });
-
+                    
                     // This is to support thin client players and you don't normally need to do this when the
                     // auto command target feature is used (enabled on the ghost authoring component on the prefab).
                     // See the ThinClients sample for more details.

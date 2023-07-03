@@ -89,6 +89,15 @@ public partial class @PlayerControlls: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Activate"",
+                    ""type"": ""Button"",
+                    ""id"": ""ed6fdc8f-bd70-499d-846c-6670e904f11d"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -333,6 +342,28 @@ public partial class @PlayerControlls: IInputActionCollection2, IDisposable
                     ""action"": ""Attack"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""1c1e8a08-7892-4f63-8829-86861a678d16"",
+                    ""path"": ""<Keyboard>/e"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Activate"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""81f4da0d-3e31-44c6-a500-73ac99277612"",
+                    ""path"": ""<Gamepad>/buttonNorth"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Activate"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         }
@@ -371,6 +402,7 @@ public partial class @PlayerControlls: IInputActionCollection2, IDisposable
         m_Controlls_Sprint = m_Controlls.FindAction("Sprint", throwIfNotFound: true);
         m_Controlls_Zoom = m_Controlls.FindAction("Zoom", throwIfNotFound: true);
         m_Controlls_Attack = m_Controlls.FindAction("Attack", throwIfNotFound: true);
+        m_Controlls_Activate = m_Controlls.FindAction("Activate", throwIfNotFound: true);
     }
 
     public void Dispose()
@@ -439,6 +471,7 @@ public partial class @PlayerControlls: IInputActionCollection2, IDisposable
     private readonly InputAction m_Controlls_Sprint;
     private readonly InputAction m_Controlls_Zoom;
     private readonly InputAction m_Controlls_Attack;
+    private readonly InputAction m_Controlls_Activate;
     public struct ControllsActions
     {
         private @PlayerControlls m_Wrapper;
@@ -450,6 +483,7 @@ public partial class @PlayerControlls: IInputActionCollection2, IDisposable
         public InputAction @Sprint => m_Wrapper.m_Controlls_Sprint;
         public InputAction @Zoom => m_Wrapper.m_Controlls_Zoom;
         public InputAction @Attack => m_Wrapper.m_Controlls_Attack;
+        public InputAction @Activate => m_Wrapper.m_Controlls_Activate;
         public InputActionMap Get() { return m_Wrapper.m_Controlls; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -480,6 +514,9 @@ public partial class @PlayerControlls: IInputActionCollection2, IDisposable
             @Attack.started += instance.OnAttack;
             @Attack.performed += instance.OnAttack;
             @Attack.canceled += instance.OnAttack;
+            @Activate.started += instance.OnActivate;
+            @Activate.performed += instance.OnActivate;
+            @Activate.canceled += instance.OnActivate;
         }
 
         private void UnregisterCallbacks(IControllsActions instance)
@@ -505,6 +542,9 @@ public partial class @PlayerControlls: IInputActionCollection2, IDisposable
             @Attack.started -= instance.OnAttack;
             @Attack.performed -= instance.OnAttack;
             @Attack.canceled -= instance.OnAttack;
+            @Activate.started -= instance.OnActivate;
+            @Activate.performed -= instance.OnActivate;
+            @Activate.canceled -= instance.OnActivate;
         }
 
         public void RemoveCallbacks(IControllsActions instance)
@@ -549,5 +589,6 @@ public partial class @PlayerControlls: IInputActionCollection2, IDisposable
         void OnSprint(InputAction.CallbackContext context);
         void OnZoom(InputAction.CallbackContext context);
         void OnAttack(InputAction.CallbackContext context);
+        void OnActivate(InputAction.CallbackContext context);
     }
 }

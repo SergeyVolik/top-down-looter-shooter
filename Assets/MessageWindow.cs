@@ -1,3 +1,4 @@
+using SV.ECS;
 using System;
 using System.Text;
 using Unity.Burst;
@@ -6,6 +7,7 @@ using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using Unity.NetCode;
 using UnityEngine;
+using UnityEngine.SocialPlatforms.Impl;
 using UnityEngine.UI;
 
 public class MessageWindow : MonoBehaviour
@@ -95,6 +97,7 @@ public struct ChatMessage : IRpcCommand
 public struct UpdateNameRpc : IRpcCommand
 {
     public FixedString128Bytes Name;
+    public int networkIdToUpdate;
 }
 public struct UserName : IComponentData
 {
@@ -180,6 +183,7 @@ public partial class RpcClientSystem : SystemBase
 
 
 
+
         foreach (var (network, e) in SystemAPI.Query<RefRO<NetworkId>>().WithNone<UserName>().WithEntityAccess())
         {
             FixedString128Bytes name = LocalPlayerData.Player.DisplayName.Value;
@@ -189,12 +193,28 @@ public partial class RpcClientSystem : SystemBase
             buffer.AddComponent<SendRpcCommandRequest>(toServerEntity);
             buffer.AddComponent(toServerEntity, new UpdateNameRpc
             {
-                Name = name
+                Name = name,
+                networkIdToUpdate = network.ValueRO.Value
             });
         }
 
 
+        foreach (var (rpcCmd, updateName, entity) in SystemAPI.Query<RefRW<ReceiveRpcCommandRequest>, RefRW<UpdateNameRpc>>().WithEntityAccess())
+        {
 
+            foreach (var (pn, owner) in SystemAPI.Query<PlayerNickName, GhostOwner>())
+            {
+                if (owner.NetworkId == updateName.ValueRO.networkIdToUpdate)
+                {
+                    var tm = SystemAPI.ManagedAPI.GetComponent<TextMesh>(pn.nickName);
+                    tm.text = updateName.ValueRO.Name.ToString();
+                }
+            }
+
+            buffer.DestroyEntity(entity);
+
+
+        }
         m_CommandBufferSystem.AddJobHandleForProducer(Dependency);
     }
 }
@@ -235,7 +255,7 @@ public partial class RpcServerSystem : SystemBase
         m_Users.Dispose();
     }
 
-   
+
 
     protected override void OnUpdate()
     {
@@ -249,7 +269,7 @@ public partial class RpcServerSystem : SystemBase
 
 
 
-       
+
 
         foreach (var (rpcCmd, chat, entity) in SystemAPI.Query<RefRW<ReceiveRpcCommandRequest>, RefRW<UpdateNameRpc>>().WithEntityAccess())
         {
@@ -266,7 +286,13 @@ public partial class RpcServerSystem : SystemBase
                     Name = chat.ValueRO.Name,
                 });
             }
+            var toClients = buffer.CreateEntity();
 
+            
+
+
+            buffer.AddComponent<SendRpcCommandRequest>(toClients);
+            buffer.AddComponent(toClients, chat.ValueRO);
             buffer.DestroyEntity(entity);
         }
 
@@ -340,6 +366,45 @@ public partial class RpcServerSystem : SystemBase
 
     }
 }
+
+[WorldSystemFilter(WorldSystemFilterFlags.ServerSimulation)]
+[UpdateInGroup(typeof(InitializationSystemGroup))]
+public partial class DisableAllTextMeshOnServerSystem : SystemBase
+{
+    protected override void OnUpdate()
+    {
+        var buffer = SystemAPI.GetSingleton<EndInitializationEntityCommandBufferSystem.Singleton>().CreateCommandBuffer(World.Unmanaged);
+
+        foreach (var (tm, e) in SystemAPI.Query<SystemAPI.ManagedAPI.UnityEngineComponent<TextMesh>>().WithNone<Disabled>().WithEntityAccess())
+        {
+            buffer.AddComponent<Disabled>(e);
+        }
+    }
+}
+
+[WorldSystemFilter(WorldSystemFilterFlags.ClientSimulation)]
+public partial class UpdateCharacterNameSystem : SystemBase
+{
+    protected override void OnUpdate()
+    {
+
+        
+
+        var buffer = SystemAPI.GetSingleton<BeginSimulationEntityCommandBufferSystem.Singleton>().CreateCommandBuffer(World.Unmanaged);
+        foreach (var (nick, ownde, entity) in SystemAPI.Query<PlayerNickName, GhostOwner>().WithNone<UserName>().WithEntityAccess())
+        {
+            var toServet = buffer.CreateEntity();
+            buffer.AddComponent<SendRpcCommandRequest>(toServet);
+            buffer.AddComponent(toServet, new UpdateNameRpc { Name = LocalPlayerData.Player.DisplayName.Value, networkIdToUpdate = ownde.NetworkId });
+            buffer.AddComponent<UserName>(entity);
+
+
+        }
+
+
+    }
+}
+
 
 public partial class MessageWindowGroup : ComponentSystemGroup
 {

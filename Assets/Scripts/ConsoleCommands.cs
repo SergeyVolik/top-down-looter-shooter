@@ -243,6 +243,20 @@ public class ConsoleCommands : MonoBehaviour
             SceneManager.LoadSceneAsync(2, LoadSceneMode.Additive);
         };
     }
+    [Command("start-local-server")]
+    public static void StartLocalServerAndClient()
+    {
+       
+            RelayConnection.Instance.StartClientServerLocal();
+      
+        var handle = SceneManager.UnloadSceneAsync(1);
+
+        handle.completed += (res) =>
+        {
+            SceneManager.LoadSceneAsync(2, LoadSceneMode.Additive);
+        };
+    }
+
 
     [Command("join-local")]
     public static void JoinLocalServer(ushort port)
