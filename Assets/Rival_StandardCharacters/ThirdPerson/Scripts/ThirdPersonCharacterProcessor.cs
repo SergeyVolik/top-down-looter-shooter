@@ -180,6 +180,7 @@ public struct ThirdPersonCharacterProcessor : IKinematicCharacterProcessor
     public unsafe void HandleCharacterControl()
     {
         CharacterBody.sprint = false;
+        CharacterBody.attack = ThirdPersonCharacterInputs.AttackRequested.IsSet;
         CharacterBody.MoveVector = ThirdPersonCharacterInputs.MoveVector;
         if (CharacterBody.IsGrounded)
         {

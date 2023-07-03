@@ -7,6 +7,7 @@ public struct ThirdPersonCharacterInputs : IInputComponentData
 {
     [GhostField(Quantization = 1000)] public float3 MoveVector;
     [GhostField] public InputEvent JumpRequested;
+    [GhostField] public InputEvent AttackRequested;
     [GhostField] public bool sprint;
 }
 

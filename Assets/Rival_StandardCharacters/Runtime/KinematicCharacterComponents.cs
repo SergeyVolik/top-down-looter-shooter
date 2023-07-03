@@ -118,6 +118,8 @@ namespace Rival
         [GhostField]
         public bool sprint;
         [GhostField]
+        public bool attack;
+        [GhostField]
         [HideInInspector]
         public bool IsGrounded;
         [HideInInspector]
@@ -142,7 +144,8 @@ namespace Rival
             GroundSnappingDistance = forAuthoring.GroundSnappingDistance;
             MaxGroundedSlopeDotProduct = MathUtilities.AngleRadiansToDotRatio(math.radians(forAuthoring.MaxGroundedSlopeAngle));
             sprint = false;
-            MoveVector = default; 
+            MoveVector = default;
+            attack = false;
             DetectMovementCollisions = forAuthoring.DetectMovementCollisions;
             DecollideFromOverlaps = forAuthoring.DecollideFromOverlaps;
             ProjectVelocityOnInitialOverlaps = forAuthoring.ProjectVelocityOnInitialOverlaps;

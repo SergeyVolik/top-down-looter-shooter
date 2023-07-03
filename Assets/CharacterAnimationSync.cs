@@ -14,6 +14,7 @@ public class CharacterAnimationSync : MonoBehaviour
 
     private static readonly int moveParam = Animator.StringToHash("Move");
     private static readonly int IsGrounded = Animator.StringToHash("IsGrounded");
+    private static readonly int Attack = Animator.StringToHash("Attack");
     private void Start()
     {
         m_EntityOwner = GetComponent<GhostPresentationGameObjectEntityOwner>();
@@ -36,6 +37,10 @@ public class CharacterAnimationSync : MonoBehaviour
         m_Animator.SetFloat(moveParam, controller.sprint ? math.length(controller.MoveVector * 2) : math.clamp(math.length(controller.MoveVector), 0, 1));
         m_Animator.SetBool(IsGrounded, controller.IsGrounded);
 
+        if (controller.attack)
+        {
+            m_Animator.SetTrigger(Attack);
+        }
     }
 
     void SetEntityComponentData<T>(T data) where T : unmanaged, IComponentData

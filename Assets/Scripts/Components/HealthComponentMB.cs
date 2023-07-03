@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using Unity.Entities;
+using Unity.NetCode;
 using Unity.VisualScripting;
 using UnityEngine;
 
@@ -20,10 +21,12 @@ namespace SV.ECS
     }
     public struct HealthComponent : IComponentData
     {
+        [GhostField]
         public int value;
     }
     public struct MaxHealthComponent : IComponentData
     {
+        [GhostField]
         public int value;
     }
 

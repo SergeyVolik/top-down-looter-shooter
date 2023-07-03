@@ -32,6 +32,7 @@ public partial class ThirdPersonPlayerSystem : SystemBase
         public float2 moveInput;
         public bool jumpInput;
         public bool sprint;
+        public bool attack;
         public float cameraZoomInput;
         public float2 cameraLookInput;
         public uint fixedTick;
@@ -56,13 +57,17 @@ public partial class ThirdPersonPlayerSystem : SystemBase
             characterInputs.MoveVector = (moveInput.y * cameraForwardOnUpPlane) + (moveInput.x * cameraRight);
             characterInputs.MoveVector = Rival.MathUtilities.ClampToMaxLength(characterInputs.MoveVector, 1f);
             characterInputs.JumpRequested = default;
+            characterInputs.AttackRequested = default;
             characterInputs.sprint = sprint;
             if (jumpInput)
             {
                 characterInputs.JumpRequested.Set();
             }
 
-            
+            if (attack)
+            {
+                characterInputs.AttackRequested.Set();
+            }
 
 
 
@@ -90,8 +95,8 @@ public partial class ThirdPersonPlayerSystem : SystemBase
        
 
         var orbitCamera = SystemAPI.GetSingletonEntity<OrbitCamera>();
-        bool jumpInput = m_Input.Controlls.Jump.phase == UnityEngine.InputSystem.InputActionPhase.Performed;
-       
+        bool jumpInput = m_Input.Controlls.Jump.triggered;
+        bool attckInput = m_Input.Controlls.Attack.triggered;
         if (m_Input.Controlls.Sprint.triggered)
         {
             sprint = !sprint;
@@ -110,7 +115,8 @@ public partial class ThirdPersonPlayerSystem : SystemBase
             localTransformLookup = SystemAPI.GetComponentLookup<LocalTransform>(isReadOnly: true),
             orbitalCameraInputLookup = SystemAPI.GetComponentLookup<OrbitCameraInputs>(isReadOnly: false),
             cameraEntity = orbitCamera,
-            sprint = sprint
+            sprint = sprint,
+            attack = attckInput,
         };
         //job.Run();
         Dependency = job.Schedule(Dependency);

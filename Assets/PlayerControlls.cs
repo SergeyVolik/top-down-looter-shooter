@@ -80,6 +80,15 @@ public partial class @PlayerControlls: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": true
+                },
+                {
+                    ""name"": ""Attack"",
+                    ""type"": ""Button"",
+                    ""id"": ""e27b4d6d-6f15-4cf2-8477-f29e5e969eb0"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -302,6 +311,28 @@ public partial class @PlayerControlls: IInputActionCollection2, IDisposable
                     ""action"": ""Zoom"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""e2219fd6-d9db-49a7-9349-f7131a64663b"",
+                    ""path"": ""<Mouse>/leftButton"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Attack"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""028e9a0b-6256-4976-ac03-ce9a5601836f"",
+                    ""path"": ""<Gamepad>/rightTrigger"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Attack"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         }
@@ -339,6 +370,7 @@ public partial class @PlayerControlls: IInputActionCollection2, IDisposable
         m_Controlls_Jump = m_Controlls.FindAction("Jump", throwIfNotFound: true);
         m_Controlls_Sprint = m_Controlls.FindAction("Sprint", throwIfNotFound: true);
         m_Controlls_Zoom = m_Controlls.FindAction("Zoom", throwIfNotFound: true);
+        m_Controlls_Attack = m_Controlls.FindAction("Attack", throwIfNotFound: true);
     }
 
     public void Dispose()
@@ -406,6 +438,7 @@ public partial class @PlayerControlls: IInputActionCollection2, IDisposable
     private readonly InputAction m_Controlls_Jump;
     private readonly InputAction m_Controlls_Sprint;
     private readonly InputAction m_Controlls_Zoom;
+    private readonly InputAction m_Controlls_Attack;
     public struct ControllsActions
     {
         private @PlayerControlls m_Wrapper;
@@ -416,6 +449,7 @@ public partial class @PlayerControlls: IInputActionCollection2, IDisposable
         public InputAction @Jump => m_Wrapper.m_Controlls_Jump;
         public InputAction @Sprint => m_Wrapper.m_Controlls_Sprint;
         public InputAction @Zoom => m_Wrapper.m_Controlls_Zoom;
+        public InputAction @Attack => m_Wrapper.m_Controlls_Attack;
         public InputActionMap Get() { return m_Wrapper.m_Controlls; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -443,6 +477,9 @@ public partial class @PlayerControlls: IInputActionCollection2, IDisposable
             @Zoom.started += instance.OnZoom;
             @Zoom.performed += instance.OnZoom;
             @Zoom.canceled += instance.OnZoom;
+            @Attack.started += instance.OnAttack;
+            @Attack.performed += instance.OnAttack;
+            @Attack.canceled += instance.OnAttack;
         }
 
         private void UnregisterCallbacks(IControllsActions instance)
@@ -465,6 +502,9 @@ public partial class @PlayerControlls: IInputActionCollection2, IDisposable
             @Zoom.started -= instance.OnZoom;
             @Zoom.performed -= instance.OnZoom;
             @Zoom.canceled -= instance.OnZoom;
+            @Attack.started -= instance.OnAttack;
+            @Attack.performed -= instance.OnAttack;
+            @Attack.canceled -= instance.OnAttack;
         }
 
         public void RemoveCallbacks(IControllsActions instance)
@@ -508,5 +548,6 @@ public partial class @PlayerControlls: IInputActionCollection2, IDisposable
         void OnJump(InputAction.CallbackContext context);
         void OnSprint(InputAction.CallbackContext context);
         void OnZoom(InputAction.CallbackContext context);
+        void OnAttack(InputAction.CallbackContext context);
     }
 }
