@@ -29,14 +29,14 @@ namespace SV.ECS
         }
     }
 
-   
+    [WorldSystemFilter(WorldSystemFilterFlags.ClientSimulation | WorldSystemFilterFlags.ServerSimulation)]
     public partial struct MoveWithEntitySystem : ISystem
     {
         public void OnUpdate(ref SystemState state)
         {
             var localToWorldLookup = SystemAPI.GetComponentLookup<LocalToWorld>(isReadOnly: true);
 
-            
+
             var ecb = SystemAPI.GetSingleton<BeginSimulationEntityCommandBufferSystem.Singleton>().CreateCommandBuffer(state.WorldUnmanaged);
             foreach (var (trans, mwe, e) in SystemAPI.Query<RefRW<LocalTransform>, RefRO<MoveWithEntityComponent>>().WithEntityAccess())
             {
@@ -44,7 +44,7 @@ namespace SV.ECS
                 {
                     ecb.DestroyEntity(e);
                     continue;
-                   
+
                 }
                 var pos = localToWorldLookup.GetRefRO(mwe.ValueRO.target).ValueRO.Position;
                 trans.ValueRW.Position = pos;

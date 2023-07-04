@@ -11,7 +11,7 @@ using UnityEngine;
 [UpdateInGroup(typeof(GhostInputSystemGroup), OrderFirst = true)]
 public partial class ThirdPersonPlayerInputSystem : SystemBase
 {
-    public FixedUpdateTickSystem FixedUpdateTickSystem;
+   
     private PlayerControlls m_Input;
 
     protected override void OnCreate()
@@ -19,7 +19,7 @@ public partial class ThirdPersonPlayerInputSystem : SystemBase
         base.OnCreate();
 
         RequireForUpdate<OrbitCamera>();
-        FixedUpdateTickSystem = World.GetOrCreateSystemManaged<FixedUpdateTickSystem>();
+       
         m_Input = new PlayerControlls();
         m_Input.Enable();
     }
@@ -35,7 +35,7 @@ public partial class ThirdPersonPlayerInputSystem : SystemBase
         public bool attack;
         public float cameraZoomInput;
         public float2 cameraLookInput;
-        public uint fixedTick;
+       
 
         public Entity cameraEntity;
 
@@ -88,7 +88,7 @@ public partial class ThirdPersonPlayerInputSystem : SystemBase
     bool sprint;
     protected override void OnUpdate()
     {
-        uint fixedTick = FixedUpdateTickSystem.FixedTick;
+     
 
         // Gather raw input
         float2 moveInput = m_Input.Controlls.Move.ReadValue<Vector2>();
@@ -97,19 +97,19 @@ public partial class ThirdPersonPlayerInputSystem : SystemBase
         var orbitCamera = SystemAPI.GetSingletonEntity<OrbitCamera>();
         bool jumpInput = m_Input.Controlls.Jump.triggered;
         bool attckInput = m_Input.Controlls.Attack.triggered;
+
         if (m_Input.Controlls.Sprint.triggered)
         {
             sprint = !sprint;
         }
        
-        float2 cameraLookInput = m_Input.Controlls.Camera.ReadValue<Vector2>();// new float2(Input.GetAxis("Mouse X"), Input.GetAxis("Mouse Y"));
-        float cameraZoomInput = -m_Input.Controlls.Zoom.ReadValue<Vector2>().y; //-Input.mouseScrollDelta.y;//
+        float2 cameraLookInput = m_Input.Controlls.Camera.ReadValue<Vector2>();
+        float cameraZoomInput = -m_Input.Controlls.Zoom.ReadValue<Vector2>().y;
 
         var job = new ThirdPersonPlayerSystemJob
         {
             cameraLookInput = cameraLookInput,
-            cameraZoomInput = cameraZoomInput,
-            fixedTick = fixedTick,
+            cameraZoomInput = cameraZoomInput,           
             jumpInput = jumpInput,
             moveInput = moveInput,
             localTransformLookup = SystemAPI.GetComponentLookup<LocalTransform>(isReadOnly: true),
