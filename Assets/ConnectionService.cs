@@ -13,11 +13,11 @@ using Unity.Services.Relay.Models;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-public class RelayConnection : MonoBehaviour
+public class ConnectionService : MonoBehaviour
 {
 
 
-    public static RelayConnection Instance { get; private set; }
+    public static ConnectionService Instance { get; private set; }
 
     private void Awake()
     {

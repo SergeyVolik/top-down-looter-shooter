@@ -1,6 +1,8 @@
+using SV.ECS;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.NetCode;
+using UnityEngine;
 
 [UpdateInGroup(typeof(HelloNetcodeSystemGroup))]
 [WorldSystemFilter(WorldSystemFilterFlags.ServerSimulation)]
@@ -66,6 +68,35 @@ public partial class RpcServerSystem : SystemBase
 
             buffer.AddComponent<SendRpcCommandRequest>(toClients);
             buffer.AddComponent(toClients, chat.ValueRO);
+            buffer.DestroyEntity(entity);
+        }
+
+        foreach (var (rpcCmd, chat, entity) in SystemAPI.Query<RefRW<ReceiveRpcCommandRequest>, RefRW<GetNameRpc>>().WithEntityAccess())
+        {
+            var sourceEntity = rpcCmd.ValueRO.SourceConnection;
+
+
+            var toClients = buffer.CreateEntity();
+
+
+            foreach (var (pn, username) in SystemAPI.Query<NetworkId, UserName>())
+            {
+                if (pn.Value == chat.ValueRO.networkId)
+                {
+                    buffer.AddComponent<SendRpcCommandRequest>(toClients, new SendRpcCommandRequest
+                    {
+                        TargetConnection = sourceEntity
+                    });
+                    buffer.AddComponent(toClients, new GetNameResultRpc
+                    {
+                        networkId = chat.ValueRO.networkId,
+                        Name = username.Name
+                    });
+
+                }
+            }
+
+
             buffer.DestroyEntity(entity);
         }
 

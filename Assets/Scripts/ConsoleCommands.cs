@@ -186,7 +186,7 @@ public class ConsoleCommands : MonoBehaviour
     [Command("start-client-server")]
     public async static void StartClientServer()
     {
-        await RelayConnection.Instance.HostServerAndClient();
+        await ConnectionService.Instance.HostServerAndClient();
 
         var handle = SceneManager.UnloadSceneAsync(1);
 
@@ -201,7 +201,7 @@ public class ConsoleCommands : MonoBehaviour
     [Command("join-server")]
     public async static void JoinServer(string relayCode)
     {
-        await RelayConnection.Instance.JoinAsClient(relayCode);
+        await ConnectionService.Instance.JoinAsClient(relayCode);
 
         var handle = SceneManager.UnloadSceneAsync(1);
 
@@ -214,7 +214,7 @@ public class ConsoleCommands : MonoBehaviour
     [Command("leave-server")]
     public static void LeaveServer()
     {
-        RelayConnection.Instance.LeaveGame();
+        ConnectionService.Instance.LeaveGame();
 
         var handle = SceneManager.UnloadSceneAsync(2);
 
@@ -232,9 +232,9 @@ public class ConsoleCommands : MonoBehaviour
     [Command("start-local-server")]
     public static void StartLocalServerAndClient(ushort port)
     {
-        if(port <= 0)
-            RelayConnection.Instance.StartClientServerLocal();
-        else RelayConnection.Instance.StartClientServerLocal(port);
+        if (port <= 0)
+            ConnectionService.Instance.StartClientServerLocal();
+        else ConnectionService.Instance.StartClientServerLocal(port);
 
         var handle = SceneManager.UnloadSceneAsync(1);
 
@@ -246,9 +246,9 @@ public class ConsoleCommands : MonoBehaviour
     [Command("start-local-server")]
     public static void StartLocalServerAndClient()
     {
-       
-            RelayConnection.Instance.StartClientServerLocal();
-      
+
+        ConnectionService.Instance.StartClientServerLocal();
+
         var handle = SceneManager.UnloadSceneAsync(1);
 
         handle.completed += (res) =>
@@ -256,12 +256,16 @@ public class ConsoleCommands : MonoBehaviour
             SceneManager.LoadSceneAsync(2, LoadSceneMode.Additive);
         };
     }
-
+    [Command("join-local")]
+    public static void JoinLocalServer()
+    {
+        JoinLocalServerWithPort();
+    }
 
     [Command("join-local")]
-    public static void JoinLocalServer(ushort port)
+    public static void JoinLocalServerWithPort(ushort port = 7979)
     {
-        RelayConnection.Instance.ConnectToServer(port: port);
+        ConnectionService.Instance.ConnectToServer(port: port);
         var handle = SceneManager.UnloadSceneAsync(1);
 
         handle.completed += (res) =>
@@ -271,9 +275,9 @@ public class ConsoleCommands : MonoBehaviour
     }
 
     [Command("join-with-ip")]
-    public static void JoinWithIp(string ip,  ushort port)
+    public static void JoinWithIp(string ip, ushort port)
     {
-        RelayConnection.Instance.ConnectToServer(ip, port);
+        ConnectionService.Instance.ConnectToServer(ip, port);
         var handle = SceneManager.UnloadSceneAsync(1);
 
         handle.completed += (res) =>

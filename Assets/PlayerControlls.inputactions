@@ -52,9 +52,9 @@
                 },
                 {
                     "name": "Zoom",
-                    "type": "Value",
+                    "type": "PassThrough",
                     "id": "c0dadfd4-60ed-4993-9eca-ec7f3d77d1e0",
-                    "expectedControlType": "Delta",
+                    "expectedControlType": "Vector2",
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": true
@@ -293,7 +293,7 @@
                     "id": "f278dcff-03a7-4ea4-a414-66b0167a8f72",
                     "path": "<Mouse>/scroll",
                     "interactions": "",
-                    "processors": "",
+                    "processors": "NormalizeVector2",
                     "groups": "Keyboard",
                     "action": "Zoom",
                     "isComposite": false,

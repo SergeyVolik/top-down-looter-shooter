@@ -80,6 +80,23 @@ public partial class RpcClientSystem : SystemBase
 
 
         }
+
+        foreach (var (rpcCmd, updateName, entity) in SystemAPI.Query<RefRW<ReceiveRpcCommandRequest>, RefRW<GetNameResultRpc>>().WithEntityAccess())
+        {
+
+            foreach (var (pn, owner) in SystemAPI.Query<PlayerNickName, GhostOwner>())
+            {
+                if (owner.NetworkId == updateName.ValueRO.networkId)
+                {
+                    var tm = SystemAPI.ManagedAPI.GetComponent<TextMesh>(pn.nickName);
+                    tm.text = updateName.ValueRO.Name.ToString();
+                }
+            }
+
+            buffer.DestroyEntity(entity);
+
+
+        }
         m_CommandBufferSystem.AddJobHandleForProducer(Dependency);
     }
 }

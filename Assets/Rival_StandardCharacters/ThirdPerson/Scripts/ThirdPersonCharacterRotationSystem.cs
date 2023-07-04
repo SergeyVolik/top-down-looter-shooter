@@ -8,7 +8,7 @@ using Rival;
 using Unity.NetCode;
 
 [UpdateInGroup(typeof(SimulationSystemGroup), OrderFirst = true)]
-[UpdateAfter(typeof(ThirdPersonPlayerSystem))]
+[UpdateAfter(typeof(ThirdPersonPlayerInputSystem))]
 [UpdateBefore(typeof(FixedStepSimulationSystemGroup))]
 [UpdateBefore(typeof(TransformSystemGroup))]
 [WorldSystemFilter(WorldSystemFilterFlags.ClientSimulation | WorldSystemFilterFlags.ServerSimulation)]

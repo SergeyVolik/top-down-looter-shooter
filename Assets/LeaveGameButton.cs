@@ -9,7 +9,7 @@ public class LeaveGameButton : MonoBehaviour
     {
         GetComponent<Button>().onClick.AddListener(() =>
         {
-            RelayConnection.Instance.LeaveGame();
+            ConnectionService.Instance.LeaveGame();
         });
     }
 }

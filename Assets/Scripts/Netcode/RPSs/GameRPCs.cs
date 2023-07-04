@@ -10,6 +10,17 @@ public struct UpdateNameRpc : IRpcCommand
     public int networkIdToUpdate;
 }
 
+public struct GetNameRpc : IRpcCommand
+{
+    public int networkId;
+}
+
+public struct GetNameResultRpc : IRpcCommand
+{
+    public FixedString128Bytes Name;
+    public int networkId;
+}
+
 public struct ChatMessageRpc : IRpcCommand
 {
     public FixedString128Bytes Message;

@@ -60,7 +60,7 @@ namespace SV.UI
             m_StartGameButton.onClick.AddListener(async () =>
             {
 
-                var joinCode = await RelayConnection.Instance.HostServerAndClient();
+                var joinCode = await ConnectionService.Instance.HostServerAndClient();
 
                 var asyncOp = SceneManager.UnloadSceneAsync(1);
                 asyncOp.completed += (op) =>
@@ -170,7 +170,7 @@ namespace SV.UI
 
                 if (!LobbyManager.Instance.IsHost())
                 {
-                    await RelayConnection.Instance.JoinAsClient(LobbyManager.Instance.Lobby.GetReplayCode());
+                    await ConnectionService.Instance.JoinAsClient(LobbyManager.Instance.Lobby.GetReplayCode());
 
                     var asyncOp = SceneManager.UnloadSceneAsync(1);
                     asyncOp.completed += (op) =>

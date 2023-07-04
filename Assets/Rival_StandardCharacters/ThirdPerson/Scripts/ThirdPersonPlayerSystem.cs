@@ -9,7 +9,7 @@ using UnityEngine;
 
 [WorldSystemFilter(WorldSystemFilterFlags.ClientSimulation)]
 [UpdateInGroup(typeof(GhostInputSystemGroup), OrderFirst = true)]
-public partial class ThirdPersonPlayerSystem : SystemBase
+public partial class ThirdPersonPlayerInputSystem : SystemBase
 {
     public FixedUpdateTickSystem FixedUpdateTickSystem;
     private PlayerControlls m_Input;
@@ -103,7 +103,7 @@ public partial class ThirdPersonPlayerSystem : SystemBase
         }
        
         float2 cameraLookInput = m_Input.Controlls.Camera.ReadValue<Vector2>();// new float2(Input.GetAxis("Mouse X"), Input.GetAxis("Mouse Y"));
-        float cameraZoomInput =   -m_Input.Controlls.Zoom.ReadValue<float>();
+        float cameraZoomInput = -m_Input.Controlls.Zoom.ReadValue<Vector2>().y; //-Input.mouseScrollDelta.y;//
 
         var job = new ThirdPersonPlayerSystemJob
         {
