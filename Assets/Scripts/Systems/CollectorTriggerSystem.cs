@@ -8,17 +8,18 @@ using UnityEngine;
 
 namespace SV.ECS
 {
+    [WorldSystemFilter(WorldSystemFilterFlags.ServerSimulation)]
     [UpdateAfter(typeof(StatefulTriggerEventBufferSystem))]
     [UpdateInGroup(typeof(GameFixedStepSystemGroup))]
     public partial struct CollectorTriggerSystem : ISystem
     {
         public void OnUpdate(ref SystemState state)
         {
-            var collectableLookup = SystemAPI.GetComponentLookup<CollectableComponent>( isReadOnly: true);
+            var collectableLookup = SystemAPI.GetComponentLookup<CollectableComponent>(isReadOnly: true);
             var collectedLookup = SystemAPI.GetComponentLookup<CollectedComponent>(isReadOnly: false);
             var ecb = SystemAPI.GetSingleton<BeginSimulationEntityCommandBufferSystem.Singleton>().CreateCommandBuffer(state.WorldUnmanaged);
 
-            
+
             new CollectorJob
             {
                 collectableLookup = collectableLookup,
@@ -28,15 +29,15 @@ namespace SV.ECS
         }
 
 
-      
+
         [BurstCompile]
         [WithAll(typeof(CollectorComponent))]
-       
+
         public partial struct CollectorJob : IJobEntity
         {
             [ReadOnly]
             public ComponentLookup<CollectableComponent> collectableLookup;
-          
+
             public ComponentLookup<CollectedComponent> collectedLookup;
 
             public EntityCommandBuffer ecb;

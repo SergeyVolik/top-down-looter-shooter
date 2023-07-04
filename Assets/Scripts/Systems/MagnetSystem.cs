@@ -11,6 +11,7 @@ using UnityEngine;
 namespace SV.ECS
 {
 
+    [WorldSystemFilter( WorldSystemFilterFlags.ServerSimulation)]
     [UpdateAfter(typeof(StatefulTriggerEventBufferSystem))]
     public partial struct MagnetTriggerSystem : ISystem
     {
@@ -38,8 +39,9 @@ namespace SV.ECS
         }
     }
 
-   
 
+
+    [WorldSystemFilter(WorldSystemFilterFlags.ServerSimulation)]
     public partial struct MagnetMoveSystem : ISystem
     {
         [BurstCompile]
