@@ -14,7 +14,7 @@ public partial class UpdateCharacterNameSystem : SystemBase
 
 
         var buffer = SystemAPI.GetSingleton<BeginSimulationEntityCommandBufferSystem.Singleton>().CreateCommandBuffer(World.Unmanaged);
-        foreach (var (nick, ownde, entity) in SystemAPI.Query<PlayerNickName, GhostOwner>().WithNone<UserName>().WithEntityAccess())
+        foreach (var (nick, ownde, entity) in SystemAPI.Query<PlayerNickName, GhostOwner>().WithNone<UserName>().WithAll<GhostOwnerIsLocal>().WithEntityAccess())
         {
             var toServet = buffer.CreateEntity();
             buffer.AddComponent<SendRpcCommandRequest>(toServet);

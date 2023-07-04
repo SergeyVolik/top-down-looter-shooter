@@ -25,30 +25,11 @@ public class OrbitCameraAuthoringBaker : Baker<OrbitCameraAuthoring>
         authoring.OrbitCamera.CurrentDistanceFromObstruction = authoring.OrbitCamera.TargetDistance;
         authoring.OrbitCamera.PlanarForward = -math.forward();
 
-        //if (authoring.FollowedCharacter)
-        //{
-        //    authoring.OrbitCamera.FollowedCharacterEntity = GetEntity(authoring.FollowedCharacter, TransformUsageFlags.Dynamic);
-        //}
 
         
         AddComponent(entity, authoring.OrbitCamera);
         AddComponent(entity, new OrbitCameraInputs());
 
-        DynamicBuffer<OrbitCameraIgnoredEntityBufferElement> ignoredEntitiesBuffer = AddBuffer<OrbitCameraIgnoredEntityBufferElement>(entity);
-
-        //if (authoring.OrbitCamera.FollowedCharacterEntity != Entity.Null)
-        //{
-        //    ignoredEntitiesBuffer.Add(new OrbitCameraIgnoredEntityBufferElement
-        //    {
-        //        Entity = authoring.OrbitCamera.FollowedCharacterEntity,
-        //    });
-        //}
-        for (int i = 0; i < authoring.IgnoredEntities.Count; i++)
-        {
-            ignoredEntitiesBuffer.Add(new OrbitCameraIgnoredEntityBufferElement
-            {
-                Entity = GetEntity(authoring.IgnoredEntities[i], TransformUsageFlags.Dynamic),
-            });
-        }
+    
     }
 }

@@ -35,19 +35,14 @@ public partial class ConnectCamera : SystemBase
         var camera = SystemAPI.GetSingletonEntity<OrbitCamera>();
 
         var orbitCamera = SystemAPI.GetComponentLookup<OrbitCamera>();
-        var ignoreItems = SystemAPI.GetBufferLookup<OrbitCameraIgnoredEntityBufferElement>(isReadOnly: false);
+    
 
         var commandBuffer2 = new EntityCommandBuffer(Allocator.Temp);
         //ConnectCamera
         foreach (var (tpp, e) in SystemAPI.Query<ThirdPersonPlayer>().WithAll<GhostOwnerIsLocal>().WithNone<CameraConnected>().WithEntityAccess())
         {
             Debug.Log("Camera Connected");
-            if (ignoreItems.TryGetBuffer(camera, out var buffer))
-            {
-                buffer.Add(new OrbitCameraIgnoredEntityBufferElement { Entity = e });
-
-
-            }
+            
 
             if (orbitCamera.HasComponent(camera))
             {

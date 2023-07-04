@@ -73,8 +73,3 @@ public struct OrbitCameraInputs : IComponentData
     public float Zoom;
 }
 
-[Serializable]
-public struct OrbitCameraIgnoredEntityBufferElement : IBufferElementData
-{
-    public Entity Entity;
-}

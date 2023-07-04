@@ -31,8 +31,9 @@ public partial class OrbitCameraSystem : SystemBase
 
         [ReadOnly]
         public ComponentLookup<CameraTarget> camTarglookup;
+        [ReadOnly]
+        public ComponentLookup<CameraIgnore> cameraIgnorelookup;
 
-        
         public ComponentLookup<LocalToWorld> ltwLookup;
 
         [ReadOnly]
@@ -41,7 +42,7 @@ public partial class OrbitCameraSystem : SystemBase
         public float fixedDeltaTime;
 
         public float deltaTime;
-        public void Execute(Entity entity, ref OrbitCamera orbitCameraRW, in OrbitCameraInputs inputsRO, ref LocalTransform selfLocalTransformRef, DynamicBuffer<OrbitCameraIgnoredEntityBufferElement> ignoredEntitiesBuffer)
+        public void Execute(Entity entity, ref OrbitCamera orbitCameraRW, in OrbitCameraInputs inputsRO, ref LocalTransform selfLocalTransformRef)
         {
             //var selfLocalTransformRef = SystemAPI.GetComponentRW<LocalTransform>(entity);
 
@@ -102,7 +103,7 @@ public partial class OrbitCameraSystem : SystemBase
                 {
                     float obstructionCheckDistance = orbitCameraRW.CurrentDistanceFromMovement;
 
-                    CameraObstructionHitsCollector collector = new CameraObstructionHitsCollector(ignoredEntitiesBuffer, cameraForward);
+                    CameraObstructionHitsCollector collector = new CameraObstructionHitsCollector(cameraIgnorelookup, cameraForward);
                     collisionWorld.SphereCastCustom<CameraObstructionHitsCollector>(
                         targetEntityLocalToWorld.Position,
                         orbitCameraRW.ObstructionRadius,
@@ -125,7 +126,7 @@ public partial class OrbitCameraSystem : SystemBase
 
                             hitBody.WorldFromBody = new RigidTransform(quaternion.LookRotationSafe(hitBodyLocalToWorld.Forward, hitBodyLocalToWorld.Up), hitBodyLocalToWorld.Position);
 
-                            collector = new CameraObstructionHitsCollector(ignoredEntitiesBuffer, cameraForward);
+                            collector = new CameraObstructionHitsCollector(cameraIgnorelookup, cameraForward);
                             hitBody.SphereCastCustom<CameraObstructionHitsCollector>(
                                 targetEntityLocalToWorld.Position,
                                 orbitCameraRW.ObstructionRadius,
@@ -182,14 +183,15 @@ public partial class OrbitCameraSystem : SystemBase
         CollisionWorld collisionWorld = SystemAPI.GetSingleton<BuildPhysicsWorldData>().PhysicsData.PhysicsWorld.CollisionWorld;
 
 
-        Dependency = new CameraJob   
+        Dependency = new CameraJob
         {
             deltaTime = deltaTime,
             fixedDeltaTime = fixedDeltaTime,
             ltwLookup = SystemAPI.GetComponentLookup<LocalToWorld>(isReadOnly: false),
             camTarglookup = SystemAPI.GetComponentLookup<CameraTarget>(isReadOnly: true),
             collisionWorld = collisionWorld,
-            kinLookup = SystemAPI.GetComponentLookup<KinematicCharacterBody>(isReadOnly: true)
+            kinLookup = SystemAPI.GetComponentLookup<KinematicCharacterBody>(isReadOnly: true),
+            cameraIgnorelookup = SystemAPI.GetComponentLookup<CameraIgnore>(isReadOnly: true),
         }.Schedule(Dependency);
 
 
@@ -204,19 +206,18 @@ public struct CameraObstructionHitsCollector : ICollector<ColliderCastHit>
     public int NumHits { get; private set; }
 
     public ColliderCastHit ClosestHit;
-
+    private ComponentLookup<CameraIgnore> _lookup;
     private float _closestHitFraction;
     private float3 _cameraDirection;
-    private DynamicBuffer<OrbitCameraIgnoredEntityBufferElement> _ignoredEntitiesBuffer;
 
-    public CameraObstructionHitsCollector(DynamicBuffer<OrbitCameraIgnoredEntityBufferElement> ignoredEntitiesBuffer, float3 cameraDirection)
+
+    public CameraObstructionHitsCollector(ComponentLookup<CameraIgnore> lookup, float3 cameraDirection)
     {
         NumHits = 0;
         ClosestHit = default;
-
+        _lookup = lookup;
         _closestHitFraction = float.MaxValue;
         _cameraDirection = cameraDirection;
-        _ignoredEntitiesBuffer = ignoredEntitiesBuffer;
     }
 
     public bool AddHit(ColliderCastHit hit)
@@ -226,13 +227,12 @@ public struct CameraObstructionHitsCollector : ICollector<ColliderCastHit>
             return false;
         }
 
-        for (int i = 0; i < _ignoredEntitiesBuffer.Length; i++)
+
+        if (_lookup.HasComponent(hit.Entity))
         {
-            if (_ignoredEntitiesBuffer[i].Entity == hit.Entity)
-            {
-                return false;
-            }
+            return false;
         }
+
 
         // Process valid hit
         if (hit.Fraction < _closestHitFraction)
