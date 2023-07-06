@@ -2,6 +2,7 @@ using SV.ECS;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.NetCode;
+using Unity.Transforms;
 using UnityEngine;
 
 [UpdateInGroup(typeof(HelloNetcodeSystemGroup))]
@@ -35,7 +36,7 @@ public partial class SpawnPlayerServer : SystemBase
                 // The network ID owner must be set on the ghost owner component on the players
                 // this is used internally for example to set up the CommandTarget properly
                 commandBuffer.SetComponent(player, new GhostOwner { NetworkId = networkId.Value });
-
+                //commandBuffer.SetComponent<LocalTransform>()
                 // This is to support thin client players and you don't normally need to do this when the
                 // auto command target feature is used (enabled on the ghost authoring component on the prefab).
                 // See the ThinClients sample for more details.
