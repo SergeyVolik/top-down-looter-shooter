@@ -28,7 +28,7 @@ public struct OrbitCamera : IComponentData
     public float ObstructionInnerSmoothingSharpness;
     public float ObstructionOuterSmoothingSharpness;
     public bool PreventFixedUpdateJitter;
-
+   
     // Data in calculations
     [HideInInspector]
     public float CurrentDistanceFromMovement;
@@ -38,6 +38,8 @@ public struct OrbitCamera : IComponentData
     public float PitchAngle;
     [HideInInspector]
     public float3 PlanarForward;
+
+    //public float3 cameraRotation;
 
     public static OrbitCamera GetDefault()
     {

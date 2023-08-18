@@ -64,32 +64,34 @@ public partial class OrbitCameraSystem : SystemBase
                     targetEntityLocalToWorld = ltwLookup.GetRefRO(orbitCameraRW.FollowedCharacterEntity).ValueRO;
                 }
 
-                // Rotation
-                {
-                    selfLocalTransformRef.Rotation = quaternion.LookRotationSafe(orbitCameraRW.PlanarForward, targetEntityLocalToWorld.Up);
+                //// Rotation
+                //{
+                //    selfLocalTransformRef.Rotation = quaternion.LookRotationSafe(orbitCameraRW.PlanarForward, targetEntityLocalToWorld.Up);
 
-                    // Handle rotating the camera along with character's parent entity (moving platform)
-                    if (orbitCameraRW.RotateWithCharacterParent && kinLookup.HasComponent(orbitCameraRW.FollowedCharacterEntity))
-                    {
-                        KinematicCharacterBody characterBody = kinLookup.GetRefRO(orbitCameraRW.FollowedCharacterEntity).ValueRO;
-                        KinematicCharacterUtilities.ApplyParentRotationToTargetRotation(ref selfLocalTransformRef, in characterBody, fixedDeltaTime, deltaTime);
-                        orbitCameraRW.PlanarForward = math.normalizesafe(MathUtilities.ProjectOnPlane(MathUtilities.GetForwardFromRotation(selfLocalTransformRef.Rotation), targetEntityLocalToWorld.Up));
-                    }
+                //    // Handle rotating the camera along with character's parent entity (moving platform)
+                //    if (orbitCameraRW.RotateWithCharacterParent && kinLookup.HasComponent(orbitCameraRW.FollowedCharacterEntity))
+                //    {
+                //        KinematicCharacterBody characterBody = kinLookup.GetRefRO(orbitCameraRW.FollowedCharacterEntity).ValueRO;
+                //        KinematicCharacterUtilities.ApplyParentRotationToTargetRotation(ref selfLocalTransformRef, in characterBody, fixedDeltaTime, deltaTime);
+                //        orbitCameraRW.PlanarForward = math.normalizesafe(MathUtilities.ProjectOnPlane(MathUtilities.GetForwardFromRotation(selfLocalTransformRef.Rotation), targetEntityLocalToWorld.Up));
+                //    }
 
-                    // Yaw
-                    float yawAngleChange = inputsRO.Look.x * orbitCameraRW.RotationSpeed;
-                    quaternion yawRotation = quaternion.Euler(targetEntityLocalToWorld.Up * math.radians(yawAngleChange));
-                    orbitCameraRW.PlanarForward = math.rotate(yawRotation, orbitCameraRW.PlanarForward);
+                //    // Yaw
+                //    float yawAngleChange = inputsRO.Look.x * orbitCameraRW.RotationSpeed;
+                //    quaternion yawRotation = quaternion.Euler(targetEntityLocalToWorld.Up * math.radians(yawAngleChange));
+                //    orbitCameraRW.PlanarForward = math.rotate(yawRotation, orbitCameraRW.PlanarForward);
 
-                    // Pitch
-                    orbitCameraRW.PitchAngle += -inputsRO.Look.y * orbitCameraRW.RotationSpeed;
-                    orbitCameraRW.PitchAngle = math.clamp(orbitCameraRW.PitchAngle, orbitCameraRW.MinVAngle, orbitCameraRW.MaxVAngle);
-                    quaternion pitchRotation = quaternion.Euler(math.right() * math.radians(orbitCameraRW.PitchAngle));
+                //    // Pitch
+                //    orbitCameraRW.PitchAngle += -inputsRO.Look.y * orbitCameraRW.RotationSpeed;
+                //    orbitCameraRW.PitchAngle = math.clamp(orbitCameraRW.PitchAngle, orbitCameraRW.MinVAngle, orbitCameraRW.MaxVAngle);
+                //    quaternion pitchRotation = quaternion.Euler(math.right() * math.radians(orbitCameraRW.PitchAngle));
 
-                    // Final rotation
-                    selfLocalTransformRef.Rotation = quaternion.LookRotationSafe(orbitCameraRW.PlanarForward, targetEntityLocalToWorld.Up);
-                    selfLocalTransformRef.Rotation = math.mul(selfLocalTransformRef.Rotation, pitchRotation);
-                }
+                //    // Final rotation
+                //    selfLocalTransformRef.Rotation = quaternion.LookRotationSafe(orbitCameraRW.PlanarForward, targetEntityLocalToWorld.Up);
+                //    selfLocalTransformRef.Rotation = math.mul(selfLocalTransformRef.Rotation, pitchRotation);
+                //}
+
+                //selfLocalTransformRef.Rotation = quaternion.Euler(orbitCameraRW.cameraRotation);
 
                 float3 cameraForward = MathUtilities.GetForwardFromRotation(selfLocalTransformRef.Rotation);
 
