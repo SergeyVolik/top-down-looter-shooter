@@ -10,12 +10,6 @@
         "com.unity.modules.ui": "1.0.0"
       }
     },
-    "com.sv.dots-terrain": {
-      "version": "file:E:/UnityProjects/dots-terrain",
-      "depth": 0,
-      "source": "local",
-      "dependencies": {}
-    },
     "com.sv.logger": {
       "version": "file:E:/UnityProjects/com.sv.logger",
       "depth": 0,
